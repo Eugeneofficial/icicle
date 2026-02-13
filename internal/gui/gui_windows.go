@@ -56,6 +56,9 @@ type guiState struct {
 	gitAutoUpdate bool
 	moves         []moveRecord
 	heavyCache    map[string]heavyCacheEntry
+	storageCache  []volumeSnapshot
+	storageAt     time.Time
+	hintCache     map[string]hintCacheEntry
 }
 
 type heavyCacheEntry struct {
@@ -63,6 +66,21 @@ type heavyCacheEntry struct {
 	Seen    int
 	Limited bool
 	At      time.Time
+}
+
+type volumeSnapshot struct {
+	Drive      string
+	Total      int64
+	Free       int64
+	Used       int64
+	UsedHuman  string
+	TotalHuman string
+	UsedRatio  float64
+}
+
+type hintCacheEntry struct {
+	Kind string
+	At   time.Time
 }
 
 type moveRecord struct {
@@ -143,6 +161,50 @@ func (s *guiState) setHeavyCache(path string, n int, maxFiles int, entry heavyCa
 			delete(s.heavyCache, list[i].k)
 		}
 	}
+}
+
+func (s *guiState) getStorageCache() ([]volumeSnapshot, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if len(s.storageCache) == 0 || time.Since(s.storageAt) > 10*time.Second {
+		return nil, false
+	}
+	out := make([]volumeSnapshot, len(s.storageCache))
+	copy(out, s.storageCache)
+	return out, true
+}
+
+func (s *guiState) setStorageCache(items []volumeSnapshot) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := make([]volumeSnapshot, len(items))
+	copy(out, items)
+	s.storageCache = out
+	s.storageAt = time.Now()
+}
+
+func (s *guiState) getHintCache(path string) (string, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.hintCache == nil {
+		return "", false
+	}
+	key := strings.ToLower(filepath.Clean(path))
+	h, ok := s.hintCache[key]
+	if !ok || time.Since(h.At) > 20*time.Second {
+		return "", false
+	}
+	return h.Kind, true
+}
+
+func (s *guiState) setHintCache(path, kind string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.hintCache == nil {
+		s.hintCache = map[string]hintCacheEntry{}
+	}
+	key := strings.ToLower(filepath.Clean(path))
+	s.hintCache[key] = hintCacheEntry{Kind: kind, At: time.Now()}
 }
 
 func (s *guiState) getLog() (string, bool) {
@@ -765,6 +827,10 @@ func Run(appPath string) error {
 		}()
 	})
 	mux.HandleFunc("/api/system/storage", func(w http.ResponseWriter, r *http.Request) {
+		if cached, ok := state.getStorageCache(); ok {
+			_ = json.NewEncoder(w).Encode(map[string]any{"items": cached, "cached": true})
+			return
+		}
 		volumes, err := SystemStorage()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -795,7 +861,20 @@ func Run(appPath string) error {
 				UsedRatio:  ratio,
 			})
 		}
-		_ = json.NewEncoder(w).Encode(map[string]any{"items": out})
+		snapshot := make([]volumeSnapshot, 0, len(out))
+		for _, v := range out {
+			snapshot = append(snapshot, volumeSnapshot{
+				Drive:      v.Drive,
+				Total:      v.Total,
+				Free:       v.Free,
+				Used:       v.Used,
+				UsedHuman:  v.UsedHuman,
+				TotalHuman: v.TotalHuman,
+				UsedRatio:  v.UsedRatio,
+			})
+		}
+		state.setStorageCache(snapshot)
+		_ = json.NewEncoder(w).Encode(map[string]any{"items": out, "cached": false})
 	})
 	mux.HandleFunc("/api/system/open-drive", func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
@@ -843,6 +922,18 @@ func Run(appPath string) error {
 			return
 		}
 		_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	})
+	mux.HandleFunc("/api/path/pick", func(w http.ResponseWriter, r *http.Request) {
+		path, err := pickFolderDialog()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if strings.TrimSpace(path) == "" {
+			_ = json.NewEncoder(w).Encode(map[string]any{"status": "cancelled"})
+			return
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"status": "ok", "path": path})
 	})
 	mux.HandleFunc("/api/path/reveal", func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
@@ -979,8 +1070,13 @@ func Run(appPath string) error {
 		if path == "" {
 			path = downloads
 		}
+		if kind, ok := state.getHintCache(path); ok {
+			_ = json.NewEncoder(w).Encode(map[string]any{"kind": kind, "cached": true})
+			return
+		}
 		kind := detectFolderKind(path)
-		_ = json.NewEncoder(w).Encode(map[string]string{"kind": kind})
+		state.setHintCache(path, kind)
+		_ = json.NewEncoder(w).Encode(map[string]any{"kind": kind, "cached": false})
 	})
 	mux.HandleFunc("/api/heavy", func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
@@ -1249,7 +1345,7 @@ body{
     linear-gradient(180deg,var(--bg-grad-1),var(--bg-grad-2) 35%,var(--bg));
 }
 .wrap{max-width:1380px;margin:0 auto;padding:12px}
-.shell{display:grid;grid-template-columns:300px 1fr;gap:12px;min-height:calc(100vh - 24px)}
+.shell{display:grid;grid-template-columns:290px 1fr;gap:12px;min-height:calc(100vh - 24px)}
 .side{
   background:var(--card);
   border:1px solid var(--line);
@@ -1334,6 +1430,25 @@ label{font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--mu
 .storageNums{font-size:12px;color:var(--muted);margin-bottom:4px}
 .storageActions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:6px}
 .storageActions button{padding:6px 6px;font-size:11px}
+.storageRow{
+  display:grid;
+  grid-template-columns:54px 1fr;
+  gap:8px;
+  align-items:center;
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:8px;
+  background:var(--surface);
+  cursor:pointer;
+}
+.storageRow:hover{border-color:var(--accent)}
+.storageBadge{
+  display:flex;align-items:center;justify-content:center;
+  height:32px;border-radius:6px;background:rgba(59,130,246,.16);font-weight:800
+}
+.storageMeta{display:flex;flex-direction:column;gap:2px}
+.storageMeta small{color:var(--muted)}
+.selectedRow{outline:1px solid var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .bar{height:7px;border-radius:999px;background:rgba(100,116,139,.25);overflow:hidden;margin-top:6px}
 .barFill{height:100%;background:linear-gradient(90deg,var(--accent),var(--cold))}
 .heavy{width:100%;border-collapse:collapse;font-size:12px}
@@ -1393,17 +1508,23 @@ background:radial-gradient(circle at center,rgba(56,189,248,.28),rgba(15,23,42,.
           </div>
         </div>
         <div class="row"><span class="pill" id="driveSelected">-</span></div>
+        <div class="row storageActions" style="margin-bottom:8px">
+          <button onclick="runSelectedDriveAction('use')" data-i18n="diskUsePath">Use Path</button>
+          <button onclick="runSelectedDriveAction('tree')" data-i18n="diskTree">Tree</button>
+          <button onclick="runSelectedDriveAction('heavy')" data-i18n="diskHeavy">Heavy</button>
+          <button onclick="runSelectedDriveAction('open')" data-i18n="diskOpen">Open</button>
+        </div>
         <div id="storageSummary" class="storageSummary"></div>
         <div id="storageGrid" class="storageGrid"></div>
       </div>
     </aside>
 
     <main class="main">
-      <section class="panel">
+      <section class="panel" id="overviewPane">
         <div class="grid">
           <div>
             <div class="row"><label data-i18n="pathLabel">Path</label></div>
-            <div class="row"><input id="path" placeholder="C:\\Users\\you\\Downloads"/><span id="folderKind" class="folderTag" data-i18n="unknown">Unknown</span></div>
+            <div class="row"><input id="path" placeholder="C:\\Users\\you\\Downloads"/><button onclick="pickPath()" data-i18n="browse">Browse</button><span id="folderKind" class="folderTag" data-i18n="unknown">Unknown</span></div>
             <div class="row">
               <button onclick="setPathQuick('home')" data-i18n="qHome">Home</button>
               <button onclick="setPathQuick('downloads')" data-i18n="qDownloads">Downloads</button>
@@ -1491,7 +1612,7 @@ background:radial-gradient(circle at center,rgba(56,189,248,.28),rgba(15,23,42,.
         </table>
       </section>
 
-      <section class="panel"><pre id="log">icicle GUI ready
+      <section class="panel" id="logPane"><pre id="log">icicle GUI ready
 </pre></section>
     </main>
   </div>
@@ -1515,9 +1636,10 @@ const I18N = {
     startWatch: 'Start Watch', stopWatch: 'Stop Watch', dryRun: 'dry-run', clearLog: 'Clear Log', exitApp: 'Exit App',
     quickMove: 'Quick Move Destination', size: 'Size', file: 'File', actions: 'Actions',
     systemStorage: 'System Storage', refreshStorage: 'Refresh Storage', storageCollapse: 'Collapse', storageExpand: 'Expand', storageUsed: 'used', storageOverall: 'overall',
+    totalLabel: 'total',
     diskUsePath: 'Use Path', diskTree: 'Tree', diskHeavy: 'Heavy', diskOpen: 'Open',
     diskSelected: 'Selected Disk',
-    qHome: 'Home', qDownloads: 'Downloads', qDesktop: 'Desktop', qDocuments: 'Documents', openPath: 'Open Path', analyzePath: 'Analyze',
+    qHome: 'Home', qDownloads: 'Downloads', qDesktop: 'Desktop', qDocuments: 'Documents', openPath: 'Open Path', analyzePath: 'Analyze', browse: 'Browse',
     applyFilter: 'Apply Filter', clearFilter: 'Clear Filter', refreshHeavy: 'Refresh Heavy',
     fastScan: 'Fast scan', safeDelete: 'Safe delete (Recycle Bin)', heavyIdle: 'idle', heavyCached: 'cached', heavyScanned: 'scanned',
     selectAll: 'Select All', clearSelection: 'Clear Selection',
@@ -1564,10 +1686,12 @@ const I18N = {
   }
 };
 Object.assign(I18N.ru || {}, {
+  browse: 'Выбрать',
   storageCollapse: 'Свернуть',
   storageExpand: 'Развернуть',
   storageUsed: 'занято',
   storageOverall: 'всего',
+  totalLabel: 'всего',
   fastScan: 'Быстрое сканирование',
   safeDelete: 'Безопасное удаление (Корзина)',
   heavyIdle: 'ожидание',
@@ -1738,7 +1862,10 @@ async function removeSelectedFolder(){
   await refreshFolders();
 }
 function useSelectedFolder(){ const path = savedEl.value || ''; if(path){ pathEl.value = path; updateFolderHint(); } }
-function escapeHtml(s){ return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+function escapeHtml(s){
+  s = String(s == null ? '' : s);
+  return s.split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;');
+}
 function normDrive(d){
   if(!d){ return ''; }
   d = d.trim().replace(/[\\\/]+$/g,'');
@@ -1783,6 +1910,16 @@ async function openCurrentPath(){
   const r = await fetch('/api/path/open',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({path})});
   if(!r.ok){ append('[error] '+await r.text()+'\n'); }
 }
+async function pickPath(){
+  const r = await fetch('/api/path/pick',{method:'POST'});
+  if(!r.ok){ append('[error] '+await r.text()+'\n'); return; }
+  const d = await r.json();
+  if(d.status !== 'ok' || !d.path){ return; }
+  pathEl.value = d.path;
+  selectedDrive = normDrive(pathEl.value);
+  updateDriveSelectedPill();
+  updateFolderHint();
+}
 async function analyzeCurrentPath(){
   await runCmd('tree');
   setHeavyOpen(true, true);
@@ -1825,6 +1962,14 @@ async function runDrive(mode, drive){
   if(mode === 'tree'){ await runCmd('tree'); }
   else if(mode === 'heavy'){ await runCmd('heavy'); }
 }
+async function runSelectedDriveAction(action){
+  const drv = normDrive(selectedDrive || pathEl.value || '');
+  if(!drv){ return; }
+  if(action === 'use'){ selectDrive(drv); return; }
+  if(action === 'tree'){ await runDrive('tree', drv); return; }
+  if(action === 'heavy'){ await runDrive('heavy', drv); return; }
+  if(action === 'open'){ await openDrive(drv); return; }
+}
 function renderStorage(items){
   if(!items || items.length===0){
     storageGrid.innerHTML = '<div class="storageCard">No disk data</div>';
@@ -1847,15 +1992,13 @@ function renderStorage(items){
   for(const d of items){
     const pct = Math.max(0, Math.min(100, Math.round((d.usedRatio || 0) * 100)));
     const drv = normDrive(d.drive || '');
-    html += '<div class="storageCard">'
-      + '<div class="storageHead"><b>'+escapeHtml(drv)+'</b><span>'+pct+'%</span></div>'
-      + '<div class="storageNums">'+escapeHtml(d.usedHuman)+' / '+escapeHtml(d.totalHuman)+'</div>'
+    const selectedCls = (drv && drv === normDrive(selectedDrive)) ? ' selectedRow' : '';
+    html += '<div class="storageRow'+selectedCls+'" data-dact="use" data-drive="'+drv+'">'
+      + '<div class="storageBadge">'+escapeHtml(drv)+'</div>'
+      + '<div class="storageMeta">'
+      + '<div>'+escapeHtml(d.usedHuman)+' / '+escapeHtml(d.totalHuman)+' <b>'+pct+'%</b></div>'
       + '<div class="bar"><div class="barFill" style="width:'+pct+'%"></div></div>'
-      + '<div class="storageActions">'
-      + '<button data-dact="use" data-drive="'+drv+'">'+t('diskUsePath')+'</button>'
-      + '<button data-dact="tree" data-drive="'+drv+'">'+t('diskTree')+'</button>'
-      + '<button data-dact="heavy" data-drive="'+drv+'">'+t('diskHeavy')+'</button>'
-      + '<button data-dact="open" data-drive="'+drv+'">'+t('diskOpen')+'</button>'
+      + '<small>'+escapeHtml((d.totalHuman || '')+' '+t('totalLabel'))+'</small>'
       + '</div>'
       + '</div>';
   }
@@ -2042,7 +2185,7 @@ async function bulkDelete(){
 function exportHeavyCSV(){
   const rows = [['size_bytes','size_human','path']];
   for(const it of heavyViewItems){ rows.push([String(it.size||0), String(it.human||''), String(it.path||'')]); }
-  const csv = rows.map(r => r.map(v => '"'+v.replaceAll('"','""')+'"').join(',')).join('\n');
+  const csv = rows.map(r => r.map(v => '"'+String(v == null ? '' : v).split('"').join('""')+'"').join(',')).join('\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);

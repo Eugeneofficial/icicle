@@ -7,8 +7,11 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"syscall"
 )
 
@@ -157,7 +160,11 @@ func shouldSkipDirByName(d fs.DirEntry) bool {
 	if d == nil || !d.IsDir() {
 		return false
 	}
-	name := strings.ToLower(d.Name())
+	return shouldSkipDirName(d.Name())
+}
+
+func shouldSkipDirName(name string) bool {
+	name = strings.ToLower(strings.TrimSpace(name))
 	return name == "$recycle.bin" || name == "system volume information"
 }
 
@@ -192,13 +199,114 @@ type HeavyStats struct {
 	TopFiles []FileInfo
 }
 
+func walkFilesConcurrent(root string, maxFiles int, onFile func(path string, size int64)) (int, bool, error) {
+	root = filepath.Clean(root)
+	workers := runtime.NumCPU()
+	if workers < 4 {
+		workers = 4
+	}
+	if workers > 16 {
+		workers = 16
+	}
+	sem := make(chan struct{}, workers)
+	var wg sync.WaitGroup
+	var seen atomic.Int64
+	var stop atomic.Bool
+	var firstErr error
+	var errMu sync.Mutex
+
+	setErr := func(err error) {
+		if err == nil {
+			return
+		}
+		errMu.Lock()
+		if firstErr == nil {
+			firstErr = err
+		}
+		errMu.Unlock()
+		stop.Store(true)
+	}
+
+	var walkDir func(dir string)
+	walkDir = func(dir string) {
+		if stop.Load() {
+			return
+		}
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			if !isAccessDenied(err) {
+				setErr(err)
+			}
+			return
+		}
+		for _, e := range entries {
+			if stop.Load() {
+				return
+			}
+			name := e.Name()
+			full := filepath.Join(dir, name)
+			t := e.Type()
+			if t&os.ModeSymlink != 0 {
+				continue
+			}
+			if e.IsDir() {
+				if shouldSkipDirName(name) {
+					continue
+				}
+				// Try to process subdir in parallel; fallback to inline walk to avoid deadlocks.
+				select {
+				case sem <- struct{}{}:
+					wg.Add(1)
+					go func(p string) {
+						defer func() {
+							<-sem
+							wg.Done()
+						}()
+						walkDir(p)
+					}(full)
+				default:
+					walkDir(full)
+				}
+				continue
+			}
+			info, err := e.Info()
+			if err != nil {
+				if !isAccessDenied(err) {
+					setErr(err)
+				}
+				continue
+			}
+			onFile(full, info.Size())
+			n := int(seen.Add(1))
+			if maxFiles > 0 && n >= maxFiles {
+				stop.Store(true)
+				return
+			}
+		}
+	}
+
+	// Root scan runs in current goroutine; spawned subdir goroutines are tracked via WaitGroup.
+	walkDir(root)
+	wg.Wait()
+
+	errMu.Lock()
+	err := firstErr
+	errMu.Unlock()
+	count := int(seen.Load())
+	limited := maxFiles > 0 && count >= maxFiles
+	return count, limited, err
+}
+
 func ScanTopFiles(root string, topN int) (*HeavyStats, error) {
 	root = filepath.Clean(root)
 	stats := &HeavyStats{Root: root}
 	top := NewTopFiles(topN)
-	err := WalkAll(root, func(path string, size int64) {
+	var mu sync.Mutex
+	_, _, err := walkFilesConcurrent(root, 0, func(path string, size int64) {
+		mu.Lock()
 		stats.Total += size
 		top.Push(FileInfo{Path: path, Size: size})
+		mu.Unlock()
 	})
 	if err != nil {
 		return nil, err
@@ -211,15 +319,17 @@ func ScanTopFilesLimited(root string, topN int, maxFiles int) (*HeavyStats, int,
 	root = filepath.Clean(root)
 	stats := &HeavyStats{Root: root}
 	top := NewTopFiles(topN)
-	seen, err := WalkAllLimit(root, maxFiles, func(path string, size int64) {
+	var mu sync.Mutex
+	seen, limited, err := walkFilesConcurrent(root, maxFiles, func(path string, size int64) {
+		mu.Lock()
 		stats.Total += size
 		top.Push(FileInfo{Path: path, Size: size})
+		mu.Unlock()
 	})
 	if err != nil {
 		return nil, seen, false, err
 	}
 	stats.TopFiles = top.ListDesc()
-	limited := maxFiles > 0 && seen >= maxFiles
 	return stats, seen, limited, nil
 }
 
@@ -227,24 +337,30 @@ func ScanTree(root string, topN int) (*TreeStats, error) {
 	root = filepath.Clean(root)
 	stats := &TreeStats{Root: root, ByChild: map[string]int64{}}
 	top := NewTopFiles(topN)
-
-	err := WalkAll(root, func(path string, size int64) {
+	rootPrefix := root
+	if !strings.HasSuffix(rootPrefix, string(filepath.Separator)) {
+		rootPrefix += string(filepath.Separator)
+	}
+	var mu sync.Mutex
+	_, _, err := walkFilesConcurrent(root, 0, func(path string, size int64) {
+		mu.Lock()
 		stats.Total += size
-		rel, err := filepath.Rel(root, path)
-		if err != nil {
-			return
+		rel := path
+		if strings.HasPrefix(path, rootPrefix) {
+			rel = path[len(rootPrefix):]
 		}
-		parts := strings.Split(rel, string(filepath.Separator))
-		if len(parts) == 0 {
-			return
-		}
-		if len(parts) == 1 || parts[0] == "." || parts[0] == "" {
+		if rel == "" {
 			stats.RootFiles += size
 		} else {
-			child := parts[0]
-			stats.ByChild[child] += size
+			idx := strings.IndexAny(rel, `\/`)
+			if idx < 0 {
+				stats.RootFiles += size
+			} else if idx > 0 {
+				stats.ByChild[rel[:idx]] += size
+			}
 		}
 		top.Push(FileInfo{Path: path, Size: size})
+		mu.Unlock()
 	})
 	if err != nil {
 		return nil, err
