@@ -1184,9 +1184,7 @@ background:radial-gradient(circle at center,rgba(255,159,74,.32),rgba(9,7,4,.93)
       <div class="brand">icicle</div>
       <div class="sub">Windows release</div>
       <div class="controlsTop">
-        <span class="pill">RELEASE</span>
-        <button class="ghost" id="updateBtn" onclick="handleUpdateClick()" data-i18n="checkUpdate">Check Update</button>
-        <button class="ghost" id="gitUpdateBtn" onclick="toggleGitAutoUpdate()" data-i18n="gitAutoOn">Git Auto: ON</button>
+        <span class="pill" id="buildPill">v1.0.1</span>
         <button class="ghost" id="themeBtn" onclick="toggleTheme()">Dark</button>
         <button class="ghost" id="langBtn" onclick="toggleLang()">RU</button>
       </div>
@@ -1327,11 +1325,6 @@ const I18N = {
     unknown: 'Unknown',
     errPathEmpty: '[error] path is empty\n', errMoveEmpty: '[error] move destination is empty\n',
     confirmDelete: 'Delete file permanently?\n',
-    checkUpdate: 'Check Update', installUpdate: 'Install Update',
-    updateAvailable: '[update] available version ', updateLatest: '[update] already latest\n',
-    updateApplying: '[update] applying update and restarting...\n',
-    gitAutoOn: 'Git Auto: ON', gitAutoOff: 'Git Auto: OFF',
-    gitAutoChanged: '[settings] git auto-update: ',
     konamiBtn: 'Konami Test', konamiTitle: 'Konami Unlocked', konamiSub: 'Congrats, you are old school.'
   },
   ru: {
@@ -1359,11 +1352,6 @@ const I18N = {
     unknown: 'Неизвестно',
     errPathEmpty: '[ошибка] путь пустой\n', errMoveEmpty: '[ошибка] путь назначения пустой\n',
     confirmDelete: 'Удалить файл навсегда?\n',
-    checkUpdate: 'Проверить обновление', installUpdate: 'Установить обновление',
-    updateAvailable: '[обновление] доступна версия ', updateLatest: '[обновление] уже последняя версия\n',
-    updateApplying: '[обновление] установка и перезапуск...\n',
-    gitAutoOn: 'Git авто: ВКЛ', gitAutoOff: 'Git авто: ВЫКЛ',
-    gitAutoChanged: '[настройки] git автообновление: ',
     konamiBtn: 'Тест Konami', konamiTitle: 'Konami активирован', konamiSub: 'Поздравляем, ты олд.'
   }
 };
@@ -1386,8 +1374,6 @@ const konamiBtn = document.getElementById('konamiBtn');
 const driveSelectedEl = document.getElementById('driveSelected');
 const themeBtn = document.getElementById('themeBtn');
 const langBtn = document.getElementById('langBtn');
-const updateBtn = document.getElementById('updateBtn');
-const gitUpdateBtn = document.getElementById('gitUpdateBtn');
 let lang = localStorage.getItem('icicle_lang') || 'en';
 let theme = localStorage.getItem('icicle_theme') || 'light';
 let lastLogLen = logEl.textContent.length;
@@ -1400,8 +1386,6 @@ const selectedPaths = new Set();
 let autoRefreshHeavy = false;
 let autoRefreshTimer = null;
 let heavySnapshot = [];
-let pendingUpdate = null;
-let gitAutoUpdate = true;
 let userDefaults = { home:'', downloads:'', desktop:'', documents:'' };
 const konamiSeq = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
 let konamiPos = 0;
@@ -1417,75 +1401,7 @@ function applyLang(){
   updateAutoRefreshLabel();
   updateSelectionInfo();
   updateDriveSelectedPill();
-  updateUpdateButton();
-  updateGitAutoButton();
   langBtn.textContent = lang === 'ru' ? 'EN' : 'RU';
-}
-function updateUpdateButton(){
-  if(!updateBtn){ return; }
-  if(pendingUpdate && pendingUpdate.latest){
-    updateBtn.textContent = t('installUpdate') + ' ' + pendingUpdate.latest;
-  } else {
-    updateBtn.textContent = t('checkUpdate');
-  }
-}
-function updateGitAutoButton(){
-  if(!gitUpdateBtn){ return; }
-  gitUpdateBtn.textContent = gitAutoUpdate ? t('gitAutoOn') : t('gitAutoOff');
-}
-async function checkUpdate(silent){
-  const r = await fetch('/api/update/check');
-  if(!r.ok){
-    if(!silent){ append('[error] '+await r.text()+'\n'); }
-    return;
-  }
-  const d = await r.json();
-  if(d.hasUpdate){
-    pendingUpdate = d;
-    updateUpdateButton();
-    if(!silent){ append(t('updateAvailable') + d.latest + '\n'); }
-    return;
-  }
-  pendingUpdate = null;
-  updateUpdateButton();
-  if(!silent){ append(t('updateLatest')); }
-}
-async function toggleGitAutoUpdate(){
-  gitAutoUpdate = !gitAutoUpdate;
-  const r = await fetch('/api/settings/git-auto-update',{
-    method:'POST',
-    headers:{'content-type':'application/json'},
-    body:JSON.stringify({enabled:gitAutoUpdate}),
-  });
-  if(!r.ok){
-    append('[error] '+await r.text()+'\n');
-    gitAutoUpdate = !gitAutoUpdate;
-  } else {
-    append(t('gitAutoChanged') + (gitAutoUpdate ? 'ON' : 'OFF') + '\n');
-  }
-  updateGitAutoButton();
-}
-async function applyUpdate(){
-  const r = await fetch('/api/update/apply',{method:'POST'});
-  if(!r.ok){
-    append('[error] '+await r.text()+'\n');
-    return;
-  }
-  const d = await r.json();
-  if(d.status === 'uptodate'){
-    pendingUpdate = null;
-    updateUpdateButton();
-    append(t('updateLatest'));
-    return;
-  }
-  append(t('updateApplying'));
-}
-async function handleUpdateClick(){
-  if(pendingUpdate && pendingUpdate.hasUpdate){
-    await applyUpdate();
-    return;
-  }
-  await checkUpdate(false);
 }
 async function toggleLang(){
   lang = lang === 'ru' ? 'en' : 'ru';
@@ -1506,6 +1422,8 @@ async function setDefaults(){
   try{
     const r = await fetch('/api/defaults');
     const d = await r.json();
+    const buildPill = document.getElementById('buildPill');
+    if(buildPill){ buildPill.textContent = 'v' + (d.build || '0.0.0'); }
     userDefaults = {
       home: d.home || '',
       downloads: d.downloads || '',
@@ -1513,16 +1431,13 @@ async function setDefaults(){
       documents: d.documents || '',
     };
     if(!pathEl.value.trim()){ pathEl.value = d.downloads || d.home || ''; }
-    if(typeof d.gitAutoUpdate === 'boolean'){ gitAutoUpdate = d.gitAutoUpdate; }
     selectedDrive = normDrive(pathEl.value);
     updateDriveSelectedPill();
-    updateGitAutoButton();
-  }catch(_){}
+    }catch(_){}
   await refreshFolders();
   await updateFolderHint();
   setHeavyOpen(false, false);
   await loadStorage();
-  await checkUpdate(true);
 }
 async function runCmd(command){
   const path = pathEl.value.trim();

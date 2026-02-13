@@ -3,9 +3,9 @@
 `icicle` is a fast Windows-first CLI for disk hygiene.
 
 Core commands:
-- `icicle watch <path>`: watches a folder and auto-sorts new files by extension.
-- `icicle heavy <path>`: shows top-N largest files.
-- `icicle tree <path>`: prints a size tree with colored bars.
+- `icicle watch [path]`: watches a folder and auto-sorts new files by extension.
+- `icicle heavy [path]`: shows top-N largest files.
+- `icicle tree [path]`: prints a size tree with colored bars.
 
 ## Install
 
@@ -69,21 +69,17 @@ go build ./cmd/icicle
 powershell -ExecutionPolicy Bypass -File .\scripts\release.ps1
 ```
 
-## Auto Update (GUI)
+## Update (Batch Script)
 
-- GUI now supports one-click update:
-  - `Check Update` -> checks latest GitHub release.
-  - `Install Update` -> downloads asset, swaps `icicle.exe`, restarts app.
-- Release asset supported by updater:
-  - `icicle.exe`, or
-  - `.zip` that contains `icicle.exe`.
-- Default release repo: `Eugeneofficial/icicle`
-- Override repo without rebuild:
+Use `update.bat` from repo root:
 
 ```powershell
-$env:ICICLE_UPDATE_REPO = "your-user/your-repo"
-.\icicle.exe
+.\update.bat
 ```
+
+It does:
+- `git pull --ff-only`
+- rebuild `icicle.exe` (if Go is installed)
 
 ## Auto Update (Git Pull Launcher)
 
@@ -96,9 +92,7 @@ If you want update flow exactly via Git:
    - optional hook: `scripts/post_update.bat`
    - starts updated `icicle.exe`
 
-You can control this from GUI:
-- top button `Git Auto: ON/OFF`
-- setting is saved to `%APPDATA%\icicle\launcher.env`
+Launcher setting is saved to `%APPDATA%\icicle\launcher.env`.
 
 Notes:
 - Disable pull check for one launch:

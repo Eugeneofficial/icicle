@@ -27,6 +27,7 @@ Copy-Item LICENSE $pkg
 Copy-Item CHANGELOG.md $pkg
 Copy-Item VERSION $pkg
 Copy-Item icicle.bat $pkg
+Copy-Item update.bat $pkg
 
 $zip = "$pkg.zip"
 if (Test-Path $zip) { Remove-Item -Force $zip }
