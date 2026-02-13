@@ -17,6 +17,8 @@ Fast scans, heavy file analysis, folder watch auto-sort, and practical file acti
 - `heavy`: top-N largest files
 - `watch`: auto-sort new files by extension
 - GUI with quick actions: move, delete, reveal
+- Optional safe delete to Recycle Bin
+- Fast scan mode for very large folders (with max files limit)
 - Bulk actions + filters + export (CSV/JSON/Markdown)
 - Drive usage dashboard
 - RU/EN language + Light/Dark theme
@@ -75,6 +77,22 @@ It runs:
 - `git pull --ff-only`
 - rebuild `icicle.exe` (if Go is installed)
 
+## Portable Build
+
+Create portable package:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\portable.ps1
+```
+
+Run portable mode:
+
+```powershell
+.\icicle-portable.bat
+```
+
+Portable mode stores runtime data in `portable-data/` near the app.
+
 ## Release
 
 ```powershell
@@ -87,6 +105,10 @@ Release artifacts are generated in `dist/`.
 
 See: [ROADMAP.md](ROADMAP.md)
 
+## Testing
+
+See: [TESTING.md](TESTING.md)
+
 ## Contributing
 
 Issues and PRs are welcome:
@@ -96,4 +118,4 @@ Issues and PRs are welcome:
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT - see [LICENSE](LICENSE).

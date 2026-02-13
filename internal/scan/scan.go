@@ -3,6 +3,7 @@ package scan
 import (
 	"container/heap"
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -15,6 +16,8 @@ type FileInfo struct {
 	Path string
 	Size int64
 }
+
+var errStopWalk = fmt.Errorf("scan stop")
 
 type TopFiles struct {
 	max int
@@ -100,6 +103,56 @@ func WalkAll(root string, onFile func(path string, size int64)) error {
 	})
 }
 
+// WalkAllLimit walks files up to maxFiles and then stops gracefully.
+func WalkAllLimit(root string, maxFiles int, onFile func(path string, size int64)) (int, error) {
+	if maxFiles <= 0 {
+		err := WalkAll(root, onFile)
+		return 0, err
+	}
+	root = filepath.Clean(root)
+	count := 0
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			if isAccessDenied(err) {
+				if d != nil && d.IsDir() {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+			return err
+		}
+		if shouldSkipDirByName(d) {
+			return filepath.SkipDir
+		}
+		if d.Type()&os.ModeSymlink != 0 {
+			if d.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if d.IsDir() {
+			return nil
+		}
+		info, err := d.Info()
+		if err != nil {
+			if isAccessDenied(err) {
+				return nil
+			}
+			return err
+		}
+		onFile(path, info.Size())
+		count++
+		if count >= maxFiles {
+			return errStopWalk
+		}
+		return nil
+	})
+	if err != nil && !errors.Is(err, errStopWalk) {
+		return count, err
+	}
+	return count, nil
+}
+
 func shouldSkipDirByName(d fs.DirEntry) bool {
 	if d == nil || !d.IsDir() {
 		return false
@@ -152,6 +205,22 @@ func ScanTopFiles(root string, topN int) (*HeavyStats, error) {
 	}
 	stats.TopFiles = top.ListDesc()
 	return stats, nil
+}
+
+func ScanTopFilesLimited(root string, topN int, maxFiles int) (*HeavyStats, int, bool, error) {
+	root = filepath.Clean(root)
+	stats := &HeavyStats{Root: root}
+	top := NewTopFiles(topN)
+	seen, err := WalkAllLimit(root, maxFiles, func(path string, size int64) {
+		stats.Total += size
+		top.Push(FileInfo{Path: path, Size: size})
+	})
+	if err != nil {
+		return nil, seen, false, err
+	}
+	stats.TopFiles = top.ListDesc()
+	limited := maxFiles > 0 && seen >= maxFiles
+	return stats, seen, limited, nil
 }
 
 func ScanTree(root string, topN int) (*TreeStats, error) {

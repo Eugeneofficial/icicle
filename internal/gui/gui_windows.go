@@ -55,6 +55,14 @@ type guiState struct {
 	launcherCfg   string
 	gitAutoUpdate bool
 	moves         []moveRecord
+	heavyCache    map[string]heavyCacheEntry
+}
+
+type heavyCacheEntry struct {
+	Items   []heavyItem
+	Seen    int
+	Limited bool
+	At      time.Time
 }
 
 type moveRecord struct {
@@ -86,6 +94,54 @@ func (s *guiState) appendLog(line string) {
 		b := s.log.Bytes()
 		s.log.Reset()
 		s.log.Write(b[len(b)-1024*1024:])
+	}
+}
+
+func (s *guiState) heavyCacheKey(path string, n int, maxFiles int) string {
+	return strings.ToLower(filepath.Clean(path)) + "|" + strconv.Itoa(n) + "|" + strconv.Itoa(maxFiles)
+}
+
+func (s *guiState) getHeavyCache(path string, n int, maxFiles int) (heavyCacheEntry, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.heavyCache == nil {
+		return heavyCacheEntry{}, false
+	}
+	key := s.heavyCacheKey(path, n, maxFiles)
+	entry, ok := s.heavyCache[key]
+	if !ok {
+		return heavyCacheEntry{}, false
+	}
+	if time.Since(entry.At) > 25*time.Second {
+		delete(s.heavyCache, key)
+		return heavyCacheEntry{}, false
+	}
+	return entry, true
+}
+
+func (s *guiState) setHeavyCache(path string, n int, maxFiles int, entry heavyCacheEntry) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.heavyCache == nil {
+		s.heavyCache = map[string]heavyCacheEntry{}
+	}
+	key := s.heavyCacheKey(path, n, maxFiles)
+	entry.At = time.Now()
+	s.heavyCache[key] = entry
+	if len(s.heavyCache) > 24 {
+		// Drop oldest entries to keep memory bounded.
+		type kv struct {
+			k string
+			t time.Time
+		}
+		list := make([]kv, 0, len(s.heavyCache))
+		for k, v := range s.heavyCache {
+			list = append(list, kv{k: k, t: v.At})
+		}
+		sort.Slice(list, func(i, j int) bool { return list[i].t.Before(list[j].t) })
+		for i := 0; i < len(list)-24; i++ {
+			delete(s.heavyCache, list[i].k)
+		}
 	}
 }
 
@@ -926,8 +982,10 @@ func Run(appPath string) error {
 	})
 	mux.HandleFunc("/api/heavy", func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
-			Path string `json:"path"`
-			TopN string `json:"topN"`
+			Path     string `json:"path"`
+			TopN     string `json:"topN"`
+			FastMode bool   `json:"fastMode"`
+			MaxFiles int    `json:"maxFiles"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -943,7 +1001,29 @@ func Run(appPath string) error {
 				n = parsed
 			}
 		}
-		stats, err := scan.ScanTopFiles(path, n)
+		maxFiles := req.MaxFiles
+		if req.FastMode {
+			if maxFiles <= 0 {
+				maxFiles = 180000
+			}
+			if maxFiles > 1000000 {
+				maxFiles = 1000000
+			}
+		} else {
+			maxFiles = 0
+		}
+
+		if cached, ok := state.getHeavyCache(path, n, maxFiles); ok {
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"items":   cached.Items,
+				"cached":  true,
+				"seen":    cached.Seen,
+				"limited": cached.Limited,
+			})
+			return
+		}
+
+		stats, seen, limited, err := scan.ScanTopFilesLimited(path, n, maxFiles)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -953,11 +1033,22 @@ func Run(appPath string) error {
 			items = append(items, heavyItem{Path: f.Path, Size: f.Size, Human: ui.HumanBytes(f.Size)})
 		}
 		sort.Slice(items, func(i, j int) bool { return items[i].Size > items[j].Size })
-		_ = json.NewEncoder(w).Encode(map[string]any{"items": items})
+		state.setHeavyCache(path, n, maxFiles, heavyCacheEntry{
+			Items:   items,
+			Seen:    seen,
+			Limited: limited,
+		})
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"items":   items,
+			"cached":  false,
+			"seen":    seen,
+			"limited": limited,
+		})
 	})
 	mux.HandleFunc("/api/file/delete", func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			Path string `json:"path"`
+			Safe bool   `json:"safe"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -973,11 +1064,19 @@ func Run(appPath string) error {
 			http.Error(w, "refusing to delete directory", http.StatusBadRequest)
 			return
 		}
-		if err := os.Remove(path); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
+		if req.Safe {
+			if err := deleteToRecycleBin(path); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			state.appendLog("[recycle] " + path)
+		} else {
+			if err := os.Remove(path); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			state.appendLog("[delete] " + path)
 		}
-		state.appendLog("[delete] " + path)
 		_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
 	mux.HandleFunc("/api/file/move", func(w http.ResponseWriter, r *http.Request) {
@@ -1269,6 +1368,12 @@ background:radial-gradient(circle at center,rgba(255,159,74,.32),rgba(9,7,4,.93)
           <button onclick="refreshHeavy()" data-i18n="refreshHeavy">Refresh Heavy</button>
         </div>
         <div class="row">
+          <label><input id="fastScan" type="checkbox" checked/> <span data-i18n="fastScan">Fast scan</span></label>
+          <input id="maxFiles" type="number" min="10000" max="1000000" step="10000" value="180000" style="max-width:160px" />
+          <label><input id="safeDelete" type="checkbox" checked/> <span data-i18n="safeDelete">Safe delete (Recycle Bin)</span></label>
+          <span class="pill" id="heavyMeta" data-i18n="heavyIdle">idle</span>
+        </div>
+        <div class="row">
           <button onclick="selectAllVisible()" data-i18n="selectAll">Select All</button>
           <button onclick="clearSelection()" data-i18n="clearSelection">Clear Selection</button>
           <button onclick="bulkAutoMove()" data-i18n="bulkAutoMove">Bulk Auto Move</button>
@@ -1313,6 +1418,7 @@ const I18N = {
     diskSelected: 'Selected Disk',
     qHome: 'Home', qDownloads: 'Downloads', qDesktop: 'Desktop', qDocuments: 'Documents', openPath: 'Open Path', analyzePath: 'Analyze',
     applyFilter: 'Apply Filter', clearFilter: 'Clear Filter', refreshHeavy: 'Refresh Heavy',
+    fastScan: 'Fast scan', safeDelete: 'Safe delete (Recycle Bin)', heavyIdle: 'idle', heavyCached: 'cached', heavyScanned: 'scanned',
     selectAll: 'Select All', clearSelection: 'Clear Selection',
     bulkAutoMove: 'Bulk Auto Move', bulkMoveTo: 'Bulk Move To', bulkDelete: 'Bulk Delete',
     exportCSV: 'Export CSV', exportJSON: 'Export JSON', copyPaths: 'Copy Paths',
@@ -1322,6 +1428,7 @@ const I18N = {
     reveal: 'Reveal',
     autoMove: 'Auto Move', moveTo: 'Move To', delete: 'Delete',
     noHeavy: 'No heavy list loaded.', noSaved: '(no saved folders)',
+    selectedLabel: 'selected',
     unknown: 'Unknown',
     errPathEmpty: '[error] path is empty\n', errMoveEmpty: '[error] move destination is empty\n',
     confirmDelete: 'Delete file permanently?\n',
@@ -1355,6 +1462,14 @@ const I18N = {
     konamiBtn: 'Тест Konami', konamiTitle: 'Konami активирован', konamiSub: 'Поздравляем, ты олд.'
   }
 };
+Object.assign(I18N.ru || {}, {
+  fastScan: 'Быстрое сканирование',
+  safeDelete: 'Безопасное удаление (Корзина)',
+  heavyIdle: 'ожидание',
+  heavyCached: 'из кэша',
+  heavyScanned: 'просканировано',
+  selectedLabel: 'выбрано',
+});
 const logEl = document.getElementById('log');
 const pathEl = document.getElementById('path');
 const folderKindEl = document.getElementById('folderKind');
@@ -1366,7 +1481,11 @@ const autoRefreshBtn = document.getElementById('autoRefreshBtn');
 const heavySearchEl = document.getElementById('heavySearch');
 const minSizeMBEl = document.getElementById('minSizeMB');
 const sortModeEl = document.getElementById('sortMode');
+const fastScanEl = document.getElementById('fastScan');
+const maxFilesEl = document.getElementById('maxFiles');
+const safeDeleteEl = document.getElementById('safeDelete');
 const selectionInfoEl = document.getElementById('selectionInfo');
+const heavyMetaEl = document.getElementById('heavyMeta');
 const storageGrid = document.getElementById('storageGrid');
 const konamiEl = document.getElementById('konami');
 const konamiBurst = document.getElementById('konamiBurst');
@@ -1396,6 +1515,17 @@ function applyLang(){
   document.documentElement.lang = lang === 'ru' ? 'ru' : 'en';
   const nodes = document.querySelectorAll('[data-i18n]');
   for(const n of nodes){ n.textContent = t(n.getAttribute('data-i18n')); }
+  if(heavySearchEl){ heavySearchEl.placeholder = lang === 'ru' ? 'фильтр по имени/пути' : 'filter by name/path'; }
+  if(minSizeMBEl){ minSizeMBEl.title = lang === 'ru' ? 'Мин. размер (MB)' : 'Min size MB'; }
+  if(maxFilesEl){ maxFilesEl.title = lang === 'ru' ? 'Макс. файлов для fast scan' : 'Max files for fast scan'; }
+  const moveDestEl = document.getElementById('moveDest');
+  if(moveDestEl){ moveDestEl.placeholder = lang === 'ru' ? 'C:\\\\Users\\\\you\\\\Desktop\\\\temp (необязательно)' : 'C:\\\\Users\\\\you\\\\Desktop\\\\temp (optional)'; }
+  if(sortModeEl){
+    const labels = lang === 'ru'
+      ? ['размер ↓','размер ↑','имя A-Z','имя Z-A']
+      : ['size desc','size asc','name a-z','name z-a'];
+    for(let i=0;i<sortModeEl.options.length && i<labels.length;i++){ sortModeEl.options[i].text = labels[i]; }
+  }
   if(konamiBtn){ konamiBtn.textContent = t('konamiBtn'); }
   updateHeavyToggleLabel();
   updateAutoRefreshLabel();
@@ -1438,6 +1568,7 @@ async function setDefaults(){
   await updateFolderHint();
   setHeavyOpen(false, false);
   await loadStorage();
+  setHeavyMeta(t('heavyIdle'));
 }
 async function runCmd(command){
   const path = pathEl.value.trim();
@@ -1476,7 +1607,7 @@ async function saveCurrentFolder(){
   const path = pathEl.value.trim();
   if(!path){ append(t('errPathEmpty')); return; }
   const r = await fetch('/api/folders/add',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({path})});
-  if(!r.ok){ append('[error] '+await r.text()+'\n'); return; }
+  if(!r.ok){ append('[error] '+await r.text()+'\n'); setHeavyMeta(t('heavyIdle')); return; }
   await refreshFolders();
 }
 async function removeSelectedFolder(){
@@ -1629,7 +1760,11 @@ function toggleAutoRefresh(){
 }
 function updateSelectionInfo(){
   if(!selectionInfoEl){ return; }
-  selectionInfoEl.textContent = 'selected: ' + selectedPaths.size;
+  selectionInfoEl.textContent = t('selectedLabel') + ': ' + selectedPaths.size;
+}
+function setHeavyMeta(text){
+  if(!heavyMetaEl){ return; }
+  heavyMetaEl.textContent = text || t('heavyIdle');
 }
 function getFilteredHeavyItems(){
   let items = [...lastHeavyItems];
@@ -1664,13 +1799,20 @@ function renderHeavy(items){
 async function loadHeavyActions(){
   const path = pathEl.value.trim();
   const topN = document.getElementById('topN').value.trim();
-  const r = await fetch('/api/heavy',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({path,topN})});
+  const fastMode = !!(fastScanEl && fastScanEl.checked);
+  const maxFiles = Number(maxFilesEl && maxFilesEl.value ? maxFilesEl.value : 0) || 0;
+  setHeavyMeta('...');
+  const r = await fetch('/api/heavy',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({path,topN,fastMode,maxFiles})});
   if(!r.ok){ append('[error] '+await r.text()+'\n'); return; }
   const d = await r.json();
   lastHeavyItems = d.items || [];
   heavyViewItems = getFilteredHeavyItems();
   selectedPaths.clear();
   renderHeavy(heavyViewItems);
+  const source = d.cached ? t('heavyCached') : t('heavyScanned');
+  const seen = d.seen ? String(d.seen) : '0';
+  const limited = d.limited ? ' limit' : '';
+  setHeavyMeta(source + ': ' + seen + limited);
 }
 function applyHeavyFilter(){
   heavyViewItems = getFilteredHeavyItems();
@@ -1857,7 +1999,8 @@ async function undoMove(){
 }
 async function deleteFile(path){
   if(!confirm(t('confirmDelete')+path)){ return; }
-  const r = await fetch('/api/file/delete',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({path})});
+  const safe = !!(safeDeleteEl && safeDeleteEl.checked);
+  const r = await fetch('/api/file/delete',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({path,safe})});
   if(!r.ok){ append('[error] '+await r.text()+'\n'); return; }
   await loadHeavyActions(); await poll();
 }
