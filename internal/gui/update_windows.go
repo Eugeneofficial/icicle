@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-const defaultUpdateRepo = "mrjek/icicle"
+const defaultUpdateRepo = "Eugeneofficial/icicle"
 
 type releaseAsset struct {
 	Name string `json:"name"`

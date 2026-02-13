@@ -77,7 +77,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\release.ps1
 - Release asset supported by updater:
   - `icicle.exe`, or
   - `.zip` that contains `icicle.exe`.
-- Default release repo: `mrjek/icicle`
+- Default release repo: `Eugeneofficial/icicle`
 - Override repo without rebuild:
 
 ```powershell
