@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -201,13 +202,7 @@ type HeavyStats struct {
 
 func walkFilesConcurrent(root string, maxFiles int, onFile func(path string, size int64)) (int, bool, error) {
 	root = filepath.Clean(root)
-	workers := runtime.NumCPU()
-	if workers < 4 {
-		workers = 4
-	}
-	if workers > 16 {
-		workers = 16
-	}
+	workers := scanWorkers()
 	sem := make(chan struct{}, workers)
 	var wg sync.WaitGroup
 	var seen atomic.Int64
@@ -244,7 +239,7 @@ func walkFilesConcurrent(root string, maxFiles int, onFile func(path string, siz
 				return
 			}
 			name := e.Name()
-			full := filepath.Join(dir, name)
+			full := fastJoin(dir, name)
 			t := e.Type()
 			if t&os.ModeSymlink != 0 {
 				continue
@@ -295,6 +290,40 @@ func walkFilesConcurrent(root string, maxFiles int, onFile func(path string, siz
 	count := int(seen.Load())
 	limited := maxFiles > 0 && count >= maxFiles
 	return count, limited, err
+}
+
+func scanWorkers() int {
+	// IO-bound scanning benefits from higher concurrency than CPU count.
+	workers := runtime.NumCPU() * 2
+	if workers < 8 {
+		workers = 8
+	}
+	if workers > 32 {
+		workers = 32
+	}
+	if raw := strings.TrimSpace(os.Getenv("ICICLE_SCAN_WORKERS")); raw != "" {
+		if n, err := strconv.Atoi(raw); err == nil {
+			if n < 1 {
+				n = 1
+			}
+			if n > 128 {
+				n = 128
+			}
+			workers = n
+		}
+	}
+	return workers
+}
+
+func fastJoin(dir, name string) string {
+	if dir == "" {
+		return name
+	}
+	last := dir[len(dir)-1]
+	if os.IsPathSeparator(last) {
+		return dir + name
+	}
+	return dir + string(filepath.Separator) + name
 }
 
 func ScanTopFiles(root string, topN int) (*HeavyStats, error) {
