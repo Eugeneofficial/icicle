@@ -520,11 +520,11 @@ func Run(appPath string) error {
 	if err != nil {
 		return err
 	}
-	home, _ := os.UserHomeDir()
-	if home == "" {
-		home = "."
-	}
-	downloads := filepath.Join(home, "Downloads")
+	folders := detectUserFolders()
+	home := folders.Home
+	downloads := folders.Downloads
+	desktop := folders.Desktop
+	documents := folders.Documents
 	cfgDir, _ := os.UserConfigDir()
 	if cfgDir == "" {
 		cfgDir = home
@@ -638,6 +638,8 @@ func Run(appPath string) error {
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"home":          home,
 			"downloads":     downloads,
+			"desktop":       desktop,
+			"documents":     documents,
 			"build":         meta.Version,
 			"repo":          updateRepo(),
 			"gitAutoUpdate": state.getGitAutoUpdate(),
@@ -1203,7 +1205,7 @@ background:radial-gradient(circle at center,rgba(255,159,74,.32),rgba(9,7,4,.93)
         <div class="grid">
           <div>
             <div class="row"><label data-i18n="pathLabel">Path</label></div>
-            <div class="row"><input id="path" placeholder="C:\\Users\\you\\Downloads"/><span id="folderKind" class="folderTag">Unknown</span></div>
+            <div class="row"><input id="path" placeholder="C:\\Users\\you\\Downloads"/><span id="folderKind" class="folderTag" data-i18n="unknown">Unknown</span></div>
             <div class="row">
               <button onclick="setPathQuick('home')" data-i18n="qHome">Home</button>
               <button onclick="setPathQuick('downloads')" data-i18n="qDownloads">Downloads</button>
@@ -1322,6 +1324,7 @@ const I18N = {
     reveal: 'Reveal',
     autoMove: 'Auto Move', moveTo: 'Move To', delete: 'Delete',
     noHeavy: 'No heavy list loaded.', noSaved: '(no saved folders)',
+    unknown: 'Unknown',
     errPathEmpty: '[error] path is empty\n', errMoveEmpty: '[error] move destination is empty\n',
     confirmDelete: 'Delete file permanently?\n',
     checkUpdate: 'Check Update', installUpdate: 'Install Update',
@@ -1334,24 +1337,26 @@ const I18N = {
   ru: {
     pathLabel: 'Путь', topNLabel: 'Топ N',
     refreshFolders: 'Обновить папки', saveCurrent: 'Сохранить текущую', useSelected: 'Использовать', removeSelected: 'Удалить из списка',
-    runTree: 'Построить дерево', runHeavy: 'Тяжелые файлы', heavyActions: 'Действия по файлам', help: 'Справка',
+    runTree: 'Построить дерево', runHeavy: 'Тяжёлые файлы', heavyActions: 'Действия по файлам', help: 'Справка',
+    showHeavyActions: 'Показать действия', hideHeavyActions: 'Скрыть действия',
     undoMove: 'Отменить перенос',
     startWatch: 'Старт слежения', stopWatch: 'Стоп слежения', dryRun: 'тестовый режим', clearLog: 'Очистить лог', exitApp: 'Выйти',
     quickMove: 'Быстрый перенос в', size: 'Размер', file: 'Файл', actions: 'Действия',
     systemStorage: 'Место на дисках', refreshStorage: 'Обновить диски',
-    diskUsePath: 'В путь', diskTree: 'Дерево', diskHeavy: 'Тяжелые', diskOpen: 'Открыть',
+    diskUsePath: 'В путь', diskTree: 'Дерево', diskHeavy: 'Тяжёлые', diskOpen: 'Открыть',
     diskSelected: 'Выбранный диск',
     qHome: 'Домой', qDownloads: 'Загрузки', qDesktop: 'Рабочий стол', qDocuments: 'Документы', openPath: 'Открыть путь', analyzePath: 'Анализ',
-    applyFilter: 'Применить фильтр', clearFilter: 'Сбросить фильтр', refreshHeavy: 'Обновить heavy',
+    applyFilter: 'Применить фильтр', clearFilter: 'Сбросить фильтр', refreshHeavy: 'Обновить тяжёлые',
     selectAll: 'Выбрать все', clearSelection: 'Сброс выбора',
     bulkAutoMove: 'Массовый авто перенос', bulkMoveTo: 'Массовый перенос в', bulkDelete: 'Массовое удаление',
     exportCSV: 'Экспорт CSV', exportJSON: 'Экспорт JSON', copyPaths: 'Копировать пути',
     autoRefreshOff: 'Автообновление: Выкл', autoRefreshOn: 'Автообновление: Вкл',
     saveSnapshot: 'Сохранить снимок', compareSnapshot: 'Сравнить снимок',
-    cleanEmpty: 'Очистить пустые папки', extBreakdown: 'Разбор расширений', findDupes: 'Найти дубли', exportReport: 'Экспорт отчета',
+    cleanEmpty: 'Очистить пустые папки', extBreakdown: 'Разбор расширений', findDupes: 'Найти дубли', exportReport: 'Экспорт отчёта',
     reveal: 'Показать',
     autoMove: 'Авто перенос', moveTo: 'Перенести в', delete: 'Удалить',
-    noHeavy: 'Список еще не загружен.', noSaved: '(нет сохраненных папок)',
+    noHeavy: 'Список ещё не загружен.', noSaved: '(нет сохранённых папок)',
+    unknown: 'Неизвестно',
     errPathEmpty: '[ошибка] путь пустой\n', errMoveEmpty: '[ошибка] путь назначения пустой\n',
     confirmDelete: 'Удалить файл навсегда?\n',
     checkUpdate: 'Проверить обновление', installUpdate: 'Установить обновление',
@@ -1397,6 +1402,7 @@ let autoRefreshTimer = null;
 let heavySnapshot = [];
 let pendingUpdate = null;
 let gitAutoUpdate = true;
+let userDefaults = { home:'', downloads:'', desktop:'', documents:'' };
 const konamiSeq = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
 let konamiPos = 0;
 function t(k){ return (I18N[lang] && I18N[lang][k]) || (I18N.en && I18N.en[k]) || k; }
@@ -1489,6 +1495,7 @@ async function toggleLang(){
   try{
     await refreshFolders();
     await loadStorage();
+    await updateFolderHint();
   }catch(e){
     append('[js error] '+(e && e.message ? e.message : String(e))+'\n');
   }
@@ -1499,6 +1506,12 @@ async function setDefaults(){
   try{
     const r = await fetch('/api/defaults');
     const d = await r.json();
+    userDefaults = {
+      home: d.home || '',
+      downloads: d.downloads || '',
+      desktop: d.desktop || '',
+      documents: d.documents || '',
+    };
     if(!pathEl.value.trim()){ pathEl.value = d.downloads || d.home || ''; }
     if(typeof d.gitAutoUpdate === 'boolean'){ gitAutoUpdate = d.gitAutoUpdate; }
     selectedDrive = normDrive(pathEl.value);
@@ -1587,19 +1600,14 @@ async function openDrive(drive){
   if(!r.ok){ append('[error] '+await r.text()+'\n'); }
 }
 function setPathQuick(kind){
-  const p = pathEl.value.trim();
-  let base = '';
-  if(p){ base = p; }
-  if(!base){
-    base = 'C:\\Users\\';
-  }
-  let userHome = base;
-  const m = p.match(/^([A-Za-z]:\\Users\\[^\\]+)/);
-  if(m && m[1]){ userHome = m[1]; }
-  if(kind === 'home'){ pathEl.value = userHome; }
-  if(kind === 'downloads'){ pathEl.value = userHome + '\\Downloads'; }
-  if(kind === 'desktop'){ pathEl.value = userHome + '\\Desktop'; }
-  if(kind === 'documents'){ pathEl.value = userHome + '\\Documents'; }
+  const home = userDefaults.home || pathEl.value.trim() || '';
+  const downloads = userDefaults.downloads || (home ? home + '\\Downloads' : '');
+  const desktop = userDefaults.desktop || (home ? home + '\\Desktop' : '');
+  const documents = userDefaults.documents || (home ? home + '\\Documents' : '');
+  if(kind === 'home'){ pathEl.value = home; }
+  if(kind === 'downloads'){ pathEl.value = downloads; }
+  if(kind === 'desktop'){ pathEl.value = desktop; }
+  if(kind === 'documents'){ pathEl.value = documents; }
   selectedDrive = normDrive(pathEl.value);
   updateDriveSelectedPill();
   updateFolderHint();
@@ -1941,9 +1949,9 @@ async function deleteFile(path){
 async function updateFolderHint(){
   const path = pathEl.value.trim();
   const r = await fetch('/api/folder/hint',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({path})});
-  if(!r.ok){ folderKindEl.textContent = 'Unknown'; return; }
+  if(!r.ok){ folderKindEl.textContent = t('unknown'); return; }
   const d = await r.json();
-  folderKindEl.textContent = d.kind || 'Unknown';
+  folderKindEl.textContent = d.kind || t('unknown');
 }
 pathEl.addEventListener('input', () => {
   selectedDrive = normDrive(pathEl.value);
