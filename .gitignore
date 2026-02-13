@@ -1,0 +1,19 @@
+﻿# Binaries
+/icicle
+/icicle.exe
+/icicle.new.exe
+
+# Go
+/bin/
+/dist/
+*.test
+*.out
+coverage.txt
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
