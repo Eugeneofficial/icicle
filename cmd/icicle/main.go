@@ -6,18 +6,25 @@ import (
 	"fmt"
 	"icicle/internal/commands"
 	"icicle/internal/gui"
+	"icicle/internal/singleinstance"
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		if err := gui.Run(os.Args[0]); err == nil {
-			return
-		} else {
-			fmt.Fprintf(os.Stderr, "GUI start failed: %v\n", err)
+	guiMode := len(os.Args) < 2 || (len(os.Args) >= 2 && os.Args[1] == "gui")
+	if os.Getenv("ICICLE_ALLOW_MULTI") != "1" {
+		ok, err := singleinstance.Acquire("icicle_single_instance_v1")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "instance guard failed: %v\n", err)
 			os.Exit(1)
 		}
+		if !ok {
+			fmt.Fprintln(os.Stderr, "icicle is already running")
+			os.Exit(1)
+		}
+		defer singleinstance.Release()
 	}
-	if len(os.Args) >= 2 && os.Args[1] == "gui" {
+
+	if guiMode {
 		if err := gui.Run(os.Args[0]); err == nil {
 			return
 		} else {

@@ -514,6 +514,7 @@ func (s *guiState) startWatch(appPath, path string, dry bool) error {
 	args = append(args, path)
 	cmd := exec.Command(appPath, args...)
 	cmd.Dir = filepath.Dir(appPath)
+	cmd.Env = append(os.Environ(), "ICICLE_ALLOW_MULTI=1")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		s.mu.Unlock()
@@ -637,6 +638,7 @@ func Run(appPath string) error {
 		}
 		cmd := exec.Command(appPath, args...)
 		cmd.Dir = filepath.Dir(appPath)
+		cmd.Env = append(os.Environ(), "ICICLE_ALLOW_MULTI=1")
 		var out bytes.Buffer
 		cmd.Stdout = &out
 		cmd.Stderr = &out
@@ -1612,6 +1614,7 @@ let autoRefreshTimer = null;
 let heavySnapshot = [];
 let userDefaults = { home:'', downloads:'', desktop:'', documents:'' };
 let storageCollapsed = localStorage.getItem('icicle_storage_collapsed') === '1';
+let heavyAbort = null;
 const konamiSeq = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
 let konamiPos = 0;
 function t(k){ return (I18N[lang] && I18N[lang][k]) || (I18N.en && I18N.en[k]) || k; }
@@ -1935,9 +1938,19 @@ async function loadHeavyActions(){
   const topN = document.getElementById('topN').value.trim();
   const fastMode = !!(fastScanEl && fastScanEl.checked);
   const maxFiles = Number(maxFilesEl && maxFilesEl.value ? maxFilesEl.value : 0) || 0;
+  if(heavyAbort){ heavyAbort.abort(); }
+  heavyAbort = new AbortController();
   setHeavyMeta('...');
-  const r = await fetch('/api/heavy',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({path,topN,fastMode,maxFiles})});
-  if(!r.ok){ append('[error] '+await r.text()+'\n'); return; }
+  let r = null;
+  try{
+    r = await fetch('/api/heavy',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({path,topN,fastMode,maxFiles}),signal:heavyAbort.signal});
+  }catch(err){
+    if(err && err.name === 'AbortError'){ return; }
+    append('[error] '+(err && err.message ? err.message : String(err))+'\n');
+    setHeavyMeta(t('heavyIdle'));
+    return;
+  }
+  if(!r.ok){ append('[error] '+await r.text()+'\n'); setHeavyMeta(t('heavyIdle')); return; }
   const d = await r.json();
   lastHeavyItems = d.items || [];
   heavyViewItems = getFilteredHeavyItems();
