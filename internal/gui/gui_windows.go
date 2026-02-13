@@ -1206,74 +1206,169 @@ const pageHTML = `<!doctype html>
 <title>icicle</title>
 <style>
 :root{
-  --bg:#faf7ef;--ink:#1f2328;--muted:#6d707a;--card:#ffffff;--line:#d9d2c4;--surface:#f7f3e9;
-  --cold:#a34d00;--hot:#bf1e2e;--accent:#0063a3;--shadow:0 12px 28px rgba(45,39,25,.12);
+  --bg:#f3f6fb;
+  --bg-grad-1:#dbe7ff;
+  --bg-grad-2:#f7fbff;
+  --ink:#1f2937;
+  --muted:#64748b;
+  --card:#ffffff;
+  --surface:#f8fafc;
+  --line:#d9e2ef;
+  --cold:#2563eb;
+  --hot:#dc2626;
+  --accent:#0ea5e9;
+  --ok:#16a34a;
+  --shadow:0 12px 28px rgba(15,23,42,.10);
 }
 body[data-theme="dark"]{
-  --bg:#12100d;--ink:#f7f2e8;--muted:#b5a896;--card:#1b1814;--line:#383026;--surface:#17140f;
-  --cold:#ff9f4a;--hot:#ff6a7e;--accent:#69b6ff;--shadow:0 14px 34px rgba(0,0,0,.4);
+  --bg:#1e1e1e;
+  --bg-grad-1:#2a2d34;
+  --bg-grad-2:#1f1f1f;
+  --ink:#e5e7eb;
+  --muted:#9ca3af;
+  --card:#252526;
+  --surface:#2d2d30;
+  --line:#3f3f46;
+  --cold:#3b82f6;
+  --hot:#f87171;
+  --accent:#22d3ee;
+  --ok:#34d399;
+  --shadow:0 16px 34px rgba(0,0,0,.45);
 }
 *{box-sizing:border-box}
+html,body{height:100%}
 body{
-  margin:0;color:var(--ink);font-family:"Segoe UI",Arial,sans-serif;
+  margin:0;
+  color:var(--ink);
+  font-family:"Segoe UI Variable","Segoe UI",Tahoma,sans-serif;
   background:
-  repeating-linear-gradient(-32deg,rgba(0,0,0,.015) 0 16px,transparent 16px 34px),
-  radial-gradient(1200px 700px at 75% -30%,rgba(163,77,0,.18),transparent 60%),
-  radial-gradient(900px 500px at -10% 110%,rgba(0,99,163,.14),transparent 60%),
-  var(--bg);
+    radial-gradient(1200px 650px at 120% -20%,rgba(59,130,246,.18),transparent 65%),
+    radial-gradient(900px 500px at -20% 120%,rgba(14,165,233,.16),transparent 65%),
+    linear-gradient(180deg,var(--bg-grad-1),var(--bg-grad-2) 35%,var(--bg));
 }
-.wrap{max-width:1240px;margin:0 auto;padding:14px}
-.shell{display:grid;grid-template-columns:280px 1fr;gap:12px;min-height:calc(100vh - 28px)}
+.wrap{max-width:1380px;margin:0 auto;padding:12px}
+.shell{display:grid;grid-template-columns:300px 1fr;gap:12px;min-height:calc(100vh - 24px)}
 .side{
-  background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow);
-  display:flex;flex-direction:column;gap:10px;position:sticky;top:14px;height:fit-content
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:14px;
+  box-shadow:var(--shadow);
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  position:sticky;
+  top:12px;
+  height:fit-content;
 }
-.brand{font-size:54px;line-height:1;font-weight:900;letter-spacing:-1px}
-.sub{color:var(--muted);font-size:13px}
-.controlsTop{display:flex;flex-wrap:wrap;gap:8px}
-.pill{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:11px;font-weight:800}
+.brand{font-size:44px;line-height:1;font-weight:800;letter-spacing:-.8px}
+.sub{color:var(--muted);font-size:12px;letter-spacing:.2px}
+.controlsTop{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pill{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  font-size:11px;
+  font-weight:700;
+}
 .main{display:flex;flex-direction:column;gap:12px}
 .panel{
-  background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:var(--shadow)
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:12px;
+  box-shadow:var(--shadow);
 }
 .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center}
 .grid{display:grid;grid-template-columns:2fr 1fr;gap:12px}
-input,button,select{border-radius:8px;border:1px solid var(--line);padding:10px 12px;font-size:14px;background:var(--surface);color:var(--ink)}
-input{flex:1;min-width:200px}
-button{cursor:pointer;white-space:nowrap;transition:all .14s ease}
+input,button,select{
+  border-radius:6px;
+  border:1px solid var(--line);
+  padding:8px 10px;
+  font-size:13px;
+  background:var(--surface);
+  color:var(--ink);
+}
+input{flex:1;min-width:220px}
+button{
+  cursor:pointer;
+  white-space:nowrap;
+  transition:background .12s ease,border-color .12s ease,transform .08s ease;
+}
 button:hover{transform:translateY(-1px)}
-button.primary{background:var(--cold);color:#fff;border-color:transparent}
-button.warn{background:var(--hot);color:#fff;border-color:transparent}
+button:active{transform:translateY(0)}
+button.primary{background:var(--cold);border-color:transparent;color:#fff}
+button.warn{background:var(--hot);border-color:transparent;color:#fff}
 button.ghost{background:transparent}
-label{font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);font-weight:700}
-.folderTag{display:inline-block;padding:4px 10px;border:1px dashed var(--line);border-radius:999px;font-size:11px;font-weight:800}
-.storageGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
-.storageCard{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px}
-.bar{height:7px;border-radius:999px;background:rgba(0,0,0,.12);overflow:hidden;margin-top:6px}
+label{font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.folderTag{
+  display:inline-block;
+  padding:4px 10px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  font-size:11px;
+  font-weight:700;
+  background:linear-gradient(180deg,rgba(59,130,246,.18),rgba(59,130,246,.08));
+}
+.storageSummary{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.storageSummary .pill{width:100%;text-align:center}
+.storageGrid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:8px;
+  max-height:340px;
+  overflow:auto;
+  padding-right:4px;
+}
+.storageCard{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:8px;
+}
+.storageHead{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:2px}
+.storageNums{font-size:12px;color:var(--muted);margin-bottom:4px}
+.storageActions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:6px}
+.storageActions button{padding:6px 6px;font-size:11px}
+.bar{height:7px;border-radius:999px;background:rgba(100,116,139,.25);overflow:hidden;margin-top:6px}
 .barFill{height:100%;background:linear-gradient(90deg,var(--accent),var(--cold))}
-.heavy{width:100%;border-collapse:collapse;font-size:13px}
+.heavy{width:100%;border-collapse:collapse;font-size:12px}
 .heavy td,.heavy th{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
-.heavy th{text-align:left;color:var(--muted)}
+.heavy th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
 .pathCell{max-width:560px;word-break:break-all}
-.mono{font-family:Consolas,monospace}
-pre{margin:0;background:#050404;color:#f9ecd2;padding:14px;border-radius:10px;min-height:260px;max-height:46vh;overflow:auto;font-family:Consolas,monospace}
-
+.mono{font-family:"Cascadia Mono",Consolas,monospace}
+pre{
+  margin:0;
+  background:#111827;
+  color:#dbeafe;
+  border:1px solid #253048;
+  padding:12px;
+  border-radius:8px;
+  min-height:260px;
+  max-height:46vh;
+  overflow:auto;
+  font-family:"Cascadia Mono",Consolas,monospace;
+  font-size:12px;
+  line-height:1.4;
+}
 .konami{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:9999;
-background:radial-gradient(circle at center,rgba(255,159,74,.32),rgba(9,7,4,.93));backdrop-filter:blur(5px)}
+background:radial-gradient(circle at center,rgba(56,189,248,.28),rgba(15,23,42,.92));backdrop-filter:blur(5px)}
 .konami.show{display:flex;animation:fadeIn .2s ease}
-.konamiCard{position:relative;overflow:hidden;min-width:360px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px 30px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.4)}
+.konamiCard{position:relative;overflow:hidden;min-width:360px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px 26px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.4)}
 .konamiBurst{position:absolute;inset:0;pointer-events:none}
 .konamiParticle{position:absolute;width:10px;height:10px;border-radius:50%;background:linear-gradient(180deg,var(--accent),var(--cold));animation:burst 1.4s ease-out forwards}
-.konamiTitle{font-size:34px;font-weight:900;margin-bottom:8px;animation:pulse 1s ease-in-out infinite}
-.konamiSub{color:var(--muted);font-size:15px}
-.konamiGlow{position:absolute;left:50%;top:50%;width:520px;height:520px;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(255,159,74,.34),transparent 60%);filter:blur(10px);animation:spin 2.4s linear infinite}
+.konamiTitle{font-size:32px;font-weight:800;margin-bottom:8px;animation:pulse 1s ease-in-out infinite}
+.konamiSub{color:var(--muted);font-size:14px}
+.konamiGlow{position:absolute;left:50%;top:50%;width:520px;height:520px;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(34,211,238,.26),transparent 60%);filter:blur(10px);animation:spin 2.4s linear infinite}
 .shake{animation:shake .35s linear 3}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
 @keyframes burst{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0}}
 @keyframes spin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
-@media (max-width:980px){.shell{grid-template-columns:1fr}.side{position:static}.grid{grid-template-columns:1fr}}
+@media (max-width:1080px){.shell{grid-template-columns:1fr}.side{position:static}.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body data-theme="light">
@@ -1290,9 +1385,13 @@ background:radial-gradient(circle at center,rgba(255,159,74,.32),rgba(9,7,4,.93)
       <div class="panel" style="margin:0">
         <div class="row" style="justify-content:space-between">
           <label data-i18n="systemStorage">System Storage</label>
-          <button onclick="loadStorage()" data-i18n="refreshStorage">Refresh Storage</button>
+          <div class="row" style="margin:0">
+            <button onclick="toggleStorageCompact()" id="storageToggleBtn" data-i18n="storageCollapse">Collapse</button>
+            <button onclick="loadStorage()" data-i18n="refreshStorage">Refresh Storage</button>
+          </div>
         </div>
         <div class="row"><span class="pill" id="driveSelected">-</span></div>
+        <div id="storageSummary" class="storageSummary"></div>
         <div id="storageGrid" class="storageGrid"></div>
       </div>
     </aside>
@@ -1413,7 +1512,7 @@ const I18N = {
     undoMove: 'Undo Move',
     startWatch: 'Start Watch', stopWatch: 'Stop Watch', dryRun: 'dry-run', clearLog: 'Clear Log', exitApp: 'Exit App',
     quickMove: 'Quick Move Destination', size: 'Size', file: 'File', actions: 'Actions',
-    systemStorage: 'System Storage', refreshStorage: 'Refresh Storage',
+    systemStorage: 'System Storage', refreshStorage: 'Refresh Storage', storageCollapse: 'Collapse', storageExpand: 'Expand', storageUsed: 'used', storageOverall: 'overall',
     diskUsePath: 'Use Path', diskTree: 'Tree', diskHeavy: 'Heavy', diskOpen: 'Open',
     diskSelected: 'Selected Disk',
     qHome: 'Home', qDownloads: 'Downloads', qDesktop: 'Desktop', qDocuments: 'Documents', openPath: 'Open Path', analyzePath: 'Analyze',
@@ -1463,6 +1562,10 @@ const I18N = {
   }
 };
 Object.assign(I18N.ru || {}, {
+  storageCollapse: 'Свернуть',
+  storageExpand: 'Развернуть',
+  storageUsed: 'занято',
+  storageOverall: 'всего',
   fastScan: 'Быстрое сканирование',
   safeDelete: 'Безопасное удаление (Корзина)',
   heavyIdle: 'ожидание',
@@ -1487,6 +1590,8 @@ const safeDeleteEl = document.getElementById('safeDelete');
 const selectionInfoEl = document.getElementById('selectionInfo');
 const heavyMetaEl = document.getElementById('heavyMeta');
 const storageGrid = document.getElementById('storageGrid');
+const storageSummaryEl = document.getElementById('storageSummary');
+const storageToggleBtn = document.getElementById('storageToggleBtn');
 const konamiEl = document.getElementById('konami');
 const konamiBurst = document.getElementById('konamiBurst');
 const konamiBtn = document.getElementById('konamiBtn');
@@ -1494,7 +1599,7 @@ const driveSelectedEl = document.getElementById('driveSelected');
 const themeBtn = document.getElementById('themeBtn');
 const langBtn = document.getElementById('langBtn');
 let lang = localStorage.getItem('icicle_lang') || 'en';
-let theme = localStorage.getItem('icicle_theme') || 'light';
+let theme = localStorage.getItem('icicle_theme') || 'dark';
 let lastLogLen = logEl.textContent.length;
 let hintTimer = null;
 let lastHeavyItems = [];
@@ -1506,6 +1611,7 @@ let autoRefreshHeavy = false;
 let autoRefreshTimer = null;
 let heavySnapshot = [];
 let userDefaults = { home:'', downloads:'', desktop:'', documents:'' };
+let storageCollapsed = localStorage.getItem('icicle_storage_collapsed') === '1';
 const konamiSeq = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
 let konamiPos = 0;
 function t(k){ return (I18N[lang] && I18N[lang][k]) || (I18N.en && I18N.en[k]) || k; }
@@ -1531,7 +1637,18 @@ function applyLang(){
   updateAutoRefreshLabel();
   updateSelectionInfo();
   updateDriveSelectedPill();
+  updateStorageToggle();
   langBtn.textContent = lang === 'ru' ? 'EN' : 'RU';
+}
+function updateStorageToggle(){
+  if(!storageToggleBtn){ return; }
+  storageToggleBtn.textContent = storageCollapsed ? t('storageExpand') : t('storageCollapse');
+}
+function toggleStorageCompact(){
+  storageCollapsed = !storageCollapsed;
+  localStorage.setItem('icicle_storage_collapsed', storageCollapsed ? '1' : '0');
+  updateStorageToggle();
+  if(storageGrid){ storageGrid.style.display = storageCollapsed ? 'none' : 'grid'; }
 }
 async function toggleLang(){
   lang = lang === 'ru' ? 'en' : 'ru';
@@ -1706,25 +1823,42 @@ async function runDrive(mode, drive){
   else if(mode === 'heavy'){ await runCmd('heavy'); }
 }
 function renderStorage(items){
-  if(!items || items.length===0){ storageGrid.innerHTML = '<div class="storageCard">No disk data</div>'; return; }
+  if(!items || items.length===0){
+    storageGrid.innerHTML = '<div class="storageCard">No disk data</div>';
+    if(storageSummaryEl){ storageSummaryEl.innerHTML = ''; }
+    return;
+  }
+  let total = 0;
+  let used = 0;
+  for(const d of items){
+    total += Number(d.total || 0);
+    used += Number(d.used || 0);
+  }
+  const pctAll = total > 0 ? Math.round((used / total) * 100) : 0;
+  if(storageSummaryEl){
+    storageSummaryEl.innerHTML = ''
+      + '<span class="pill">'+escapeHtml((used/1024/1024/1024).toFixed(1))+' GB '+t('storageUsed')+'</span>'
+      + '<span class="pill">'+pctAll+'% '+t('storageOverall')+'</span>';
+  }
   let html = '';
   for(const d of items){
     const pct = Math.max(0, Math.min(100, Math.round((d.usedRatio || 0) * 100)));
     const drv = normDrive(d.drive || '');
     html += '<div class="storageCard">'
-      + '<div><b>'+escapeHtml(drv)+'</b></div>'
-      + '<div>'+escapeHtml(d.usedHuman)+' / '+escapeHtml(d.totalHuman)+'</div>'
+      + '<div class="storageHead"><b>'+escapeHtml(drv)+'</b><span>'+pct+'%</span></div>'
+      + '<div class="storageNums">'+escapeHtml(d.usedHuman)+' / '+escapeHtml(d.totalHuman)+'</div>'
       + '<div class="bar"><div class="barFill" style="width:'+pct+'%"></div></div>'
-      + '<div style="color:var(--muted);font-size:12px;margin-top:4px">'+pct+'%</div>'
-      + '<div class="row" style="margin-top:8px">'
-      + '<button onclick="selectDrive(\''+drv+'\')">'+t('diskUsePath')+'</button>'
-      + '<button onclick="runDrive(\'tree\',\''+drv+'\')">'+t('diskTree')+'</button>'
-      + '<button onclick="runDrive(\'heavy\',\''+drv+'\')">'+t('diskHeavy')+'</button>'
-      + '<button onclick="openDrive(\''+drv+'\')">'+t('diskOpen')+'</button>'
+      + '<div class="storageActions">'
+      + '<button data-dact="use" data-drive="'+drv+'">'+t('diskUsePath')+'</button>'
+      + '<button data-dact="tree" data-drive="'+drv+'">'+t('diskTree')+'</button>'
+      + '<button data-dact="heavy" data-drive="'+drv+'">'+t('diskHeavy')+'</button>'
+      + '<button data-dact="open" data-drive="'+drv+'">'+t('diskOpen')+'</button>'
       + '</div>'
       + '</div>';
   }
   storageGrid.innerHTML = html;
+  storageGrid.style.display = storageCollapsed ? 'none' : 'grid';
+  updateStorageToggle();
 }
 async function loadStorage(){
   const r = await fetch('/api/system/storage');
@@ -2032,6 +2166,20 @@ heavyBody.addEventListener('click', async (e) => {
     else if(action === 'move-custom'){ await moveCustom(path); }
     else if(action === 'reveal'){ await revealPath(path); }
     else if(action === 'delete'){ await deleteFile(path); }
+  }catch(err){
+    append('[js error] '+(err && err.message ? err.message : String(err))+'\n');
+  }
+});
+storageGrid.addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-dact]');
+  if(!btn){ return; }
+  const act = btn.getAttribute('data-dact');
+  const drive = btn.getAttribute('data-drive') || '';
+  try{
+    if(act === 'use'){ selectDrive(drive); }
+    else if(act === 'open'){ await openDrive(drive); }
+    else if(act === 'tree'){ await runDrive('tree', drive); }
+    else if(act === 'heavy'){ await runDrive('heavy', drive); }
   }catch(err){
     append('[js error] '+(err && err.message ? err.message : String(err))+'\n');
   }
