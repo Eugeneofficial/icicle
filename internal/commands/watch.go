@@ -25,22 +25,23 @@ func runWatch(args []string) int {
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
-	if fs.NArg() != 1 {
-		fmt.Fprintln(os.Stderr, "usage: icicle watch [--dry-run] [--no-color] [--no-emoji] <path>")
+	if fs.NArg() > 1 {
+		fmt.Fprintln(os.Stderr, "usage: icicle watch [--dry-run] [--no-color] [--no-emoji] [path]")
 		return 2
 	}
 	applyCommonFlags(common)
 
-	watchRoot, err := expandPath(fs.Arg(0))
+	folders := detectUserFolders()
+	watchPath := fs.Arg(0)
+	if strings.TrimSpace(watchPath) == "" {
+		watchPath = folders.Downloads
+	}
+	watchRoot, err := expandPath(watchPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "path error: %v\n", err)
 		return 1
 	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "home error: %v\n", err)
-		return 1
-	}
+	home := folders.Home
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {

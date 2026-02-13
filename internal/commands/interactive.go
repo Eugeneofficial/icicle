@@ -8,21 +8,13 @@ import (
 )
 
 func runInteractive() int {
+	folders := detectUserFolders()
+	home := folders.Home
+	downloads := folders.Downloads
+
 	if !isInteractiveTerminal() {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			printRootUsage()
-			return 2
-		}
 		return runTree([]string{"--top", "5", home})
 	}
-
-	home, err := os.UserHomeDir()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "home error: %v\n", err)
-		return 1
-	}
-	downloads := home + `\Downloads`
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Println("icicle - quick start")

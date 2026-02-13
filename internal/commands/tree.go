@@ -21,13 +21,18 @@ func runTree(args []string) int {
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
-	if fs.NArg() != 1 {
-		fmt.Fprintln(os.Stderr, "usage: icicle tree [--n 20] [--w 24] [--top 5] [--no-color] [--no-emoji] <path>")
+	if fs.NArg() > 1 {
+		fmt.Fprintln(os.Stderr, "usage: icicle tree [--n 20] [--w 24] [--top 5] [--no-color] [--no-emoji] [path]")
 		return 2
 	}
 	applyCommonFlags(common)
 
-	root, err := expandPath(fs.Arg(0))
+	folders := detectUserFolders()
+	pathArg := fs.Arg(0)
+	if pathArg == "" {
+		pathArg = folders.Home
+	}
+	root, err := expandPath(pathArg)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "path error: %v\n", err)
 		return 1

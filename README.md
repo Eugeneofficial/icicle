@@ -34,10 +34,14 @@ If run without arguments, `icicle` opens a local GUI in your default browser.
 ## Usage
 
 ```text
-icicle watch [--dry-run] [--no-color] [--no-emoji] <path>
-icicle heavy [--n 20] [--no-color] [--no-emoji] <path>
-icicle tree [--n 20] [--w 24] [--top 5] [--no-color] [--no-emoji] <path>
+icicle watch [--dry-run] [--no-color] [--no-emoji] [path]
+icicle heavy [--n 20] [--no-color] [--no-emoji] [path]
+icicle tree [--n 20] [--w 24] [--top 5] [--no-color] [--no-emoji] [path]
 ```
+
+Defaults when `path` is omitted:
+- `watch`: Windows Downloads folder (from User Shell Folders)
+- `heavy`/`tree`: Windows Home folder
 
 ## Auto-sort map
 
