@@ -1,21 +1,31 @@
-﻿# icicle
+# icicle
 
-`icicle` is a fast Windows-first CLI for disk hygiene.
+![icicle banner](docs/banner.svg)
 
-Core commands:
-- `icicle watch [path]`: watches a folder and auto-sorts new files by extension.
-- `icicle heavy [path]`: shows top-N largest files.
-- `icicle tree [path]`: prints a size tree with colored bars.
+**icicle** is a Windows-first disk cleanup toolkit with **CLI + GUI**.  
+Fast scans, heavy file analysis, folder watch auto-sort, and practical file actions in one app.
 
-## Install
+[![CI](https://github.com/Eugeneofficial/icicle/actions/workflows/ci.yml/badge.svg)](https://github.com/Eugeneofficial/icicle/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Go Version](https://img.shields.io/badge/go-1.22+-00ADD8.svg)](go.mod)
+[![Stars](https://img.shields.io/github/stars/Eugeneofficial/icicle?style=social)](https://github.com/Eugeneofficial/icicle/stargazers)
+[![Forks](https://img.shields.io/github/forks/Eugeneofficial/icicle?style=social)](https://github.com/Eugeneofficial/icicle/network/members)
 
-Requirements:
-- Go 1.22+
-- Windows 10/11
+## Features
 
-Build:
+- `tree`: size tree + top files
+- `heavy`: top-N largest files
+- `watch`: auto-sort new files by extension
+- GUI with quick actions: move, delete, reveal
+- Bulk actions + filters + export (CSV/JSON/Markdown)
+- Drive usage dashboard
+- RU/EN language + Light/Dark theme
+
+## Quick Start
 
 ```powershell
+git clone https://github.com/Eugeneofficial/icicle.git
+cd icicle
 go build -o icicle.exe ./cmd/icicle
 ```
 
@@ -23,13 +33,7 @@ Run:
 
 ```powershell
 .\icicle.exe
-.\icicle.exe gui
-.\icicle.exe tree ~\Downloads
-.\icicle.exe heavy --n 20 ~\
-.\icicle.exe watch --dry-run ~\Downloads
 ```
-
-If run without arguments, `icicle` opens a local GUI in your default browser.
 
 ## Usage
 
@@ -41,27 +45,35 @@ icicle tree [--n 20] [--w 24] [--top 5] [--no-color] [--no-emoji] [path]
 
 Defaults when `path` is omitted:
 - `watch`: Windows Downloads folder (from User Shell Folders)
-- `heavy`/`tree`: Windows Home folder
+- `heavy` / `tree`: Windows Home folder
 
-## Auto-sort map
-
-`watch` moves new files into `~/Category` folders:
-- Video: `.mp4`, `.mov`, `.mkv`, `.avi`, `.webm` -> `~/Videos`
-- Archive: `.zip`, `.rar`, `.7z`, `.tar`, `.gz`, `.bz2`, `.xz` -> `~/Archives`
-- Picture: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.bmp`, `.heic` -> `~/Pictures`
-- Document: `.pdf`, `.doc`, `.docx`, `.txt`, `.md`, `.xls`, `.xlsx`, `.ppt`, `.pptx` -> `~/Documents`
-- App: `.exe`, `.msi`, `.apk` -> `~/Apps`
-
-Unknown extensions are skipped.
-
-## Dev
+## Examples
 
 ```powershell
-gofmt -w .
-go test ./...
-go vet ./...
-go build ./cmd/icicle
+.\icicle.exe tree C:\
+.\icicle.exe heavy --n 30 D:\
+.\icicle.exe watch --dry-run
+.\icicle.exe gui
 ```
+
+## Screenshots
+
+- GUI (premium layout, disk cards, heavy actions)
+- CLI (`tree`, `heavy`, `watch`)
+
+Add screenshots in `docs/` and link them here after each release.
+
+## Update
+
+Use the update script from repo root:
+
+```powershell
+.\update.bat
+```
+
+It runs:
+- `git pull --ff-only`
+- rebuild `icicle.exe` (if Go is installed)
 
 ## Release
 
@@ -69,43 +81,19 @@ go build ./cmd/icicle
 powershell -ExecutionPolicy Bypass -File .\scripts\release.ps1
 ```
 
-## Update (Batch Script)
+Release artifacts are generated in `dist/`.
 
-Use `update.bat` from repo root:
+## Roadmap
 
-```powershell
-.\update.bat
-```
+See: [ROADMAP.md](ROADMAP.md)
 
-It does:
-- `git pull --ff-only`
-- rebuild `icicle.exe` (if Go is installed)
+## Contributing
 
-## Auto Update (Git Pull Launcher)
+Issues and PRs are welcome:
+- bug reports with reproduction steps
+- UX improvements for GUI
+- performance/scanning optimizations
 
-If you want update flow exactly via Git:
+## License
 
-1. Keep app in a central Git repo (can include binaries like `icicle.exe`).
-2. Users run `icicle.bat` (not `icicle.exe` directly).
-3. On every start `icicle.bat` does:
-   - `git pull --ff-only`
-   - optional hook: `scripts/post_update.bat`
-   - starts updated `icicle.exe`
-
-Launcher setting is saved to `%APPDATA%\icicle\launcher.env`.
-
-Notes:
-- Disable pull check for one launch:
-
-```powershell
-$env:ICICLE_NO_GIT_UPDATE = "1"
-.\icicle.bat
-```
-
-- If `icicle.exe` is missing, launcher auto-builds it from source (`go build`).
-
-## Notes
-
-- The watcher uses native file system notifications through `fsnotify`.
-- Symlink directories are skipped to avoid loops.
-- Name collisions are resolved with `name (N).ext`.
+MIT — see [LICENSE](LICENSE).
