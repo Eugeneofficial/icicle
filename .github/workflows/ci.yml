@@ -1,4 +1,4 @@
-﻿name: CI
+name: CI
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   test:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -14,9 +14,22 @@ jobs:
           go-version: '1.22.x'
       - name: Format check
         run: |
-          gofmt -w .
-          git diff --exit-code
+          files=$(git ls-files '*.go')
+          out=$(gofmt -l $files)
+          if [ -n "$out" ]; then
+            echo "$out"
+            echo "Run: gofmt -w <file>"
+            exit 1
+          fi
       - name: Test
         run: go test ./...
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.x'
       - name: Build
         run: go build ./cmd/icicle
