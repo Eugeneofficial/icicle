@@ -28,13 +28,15 @@
     .heavyTools{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap}
     .heavyTools .row{margin:0}
     .pill{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:var(--muted)}
-    .wizWrap{display:grid;grid-template-columns:1fr 340px;gap:10px;padding:12px}
-    .wizMap{min-height:240px;border:1px solid var(--line);border-radius:10px;position:relative;overflow:hidden;background:#0b1220}
+    .wizWrap{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:10px;padding:12px}
+    .wizMap{height:360px;min-height:300px;border:1px solid var(--line);border-radius:10px;position:relative;overflow:hidden;background:#0b1220}
     .wizRect{position:absolute;overflow:hidden;border:1px solid rgba(255,255,255,.15);font-size:11px;padding:4px;cursor:pointer;white-space:nowrap;text-overflow:ellipsis}
     .wizRect.dir{background:linear-gradient(180deg,#1d3d66,#122944)} .wizRect.file{background:linear-gradient(180deg,#4b2b5a,#2f173b)}
     .wizExt{border:1px solid var(--line);border-radius:10px;overflow:auto;max-height:260px}
     .wizExt table{font-size:12px}
     .wizLegend{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}.wizTag{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+    .wizTop{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:6px}
+    .wizPath{font-family:Consolas,monospace;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     #loader{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9999}#loader.show{display:flex}.spin{width:62px;height:62px;border:4px solid rgba(255,255,255,.2);border-top-color:#7ab5ff;border-radius:50%;animation:rot 1s linear infinite}.loadText{margin-top:10px;text-align:center;color:#d9e7ff}@keyframes rot{to{transform:rotate(360deg)}}
   </style>
 </head>
@@ -69,13 +71,14 @@
         <div class="toolbar"><div class="tiny" id="drivesTitle">System storage</div><button id="drivesRefresh">Refresh</button><button id="extBtn">Extensions</button><select id="dupMode"><option value="quick-name">dup: quick</option><option value="hash">dup: hash</option></select><button id="dupBtn">Duplicates</button><button id="wizBtn">WizMap</button></div>
         <div class="drives" id="drives"></div>
       </section>
-      <section class="panel wizWrap">
+      <section class="panel wizWrap" id="wizWrap">
         <div>
-          <div class="row" style="justify-content:space-between;margin-bottom:6px"><div class="tiny" id="wizTitle">Space Map</div><label class="tiny"><input id="wizTurbo" type="checkbox"> turbo</label></div>
+          <div class="wizTop"><div class="tiny" id="wizTitle">Space Map</div><div class="row"><button id="wizBackBtn">Back</button><button id="wizHomeBtn">Home</button><button id="wizFitBtn">Fit</button><button id="wizToggleSideBtn">Hide Ext</button><label class="tiny"><input id="wizTurbo" type="checkbox"> turbo</label></div></div>
+          <div class="wizPath" id="wizPath">-</div>
           <div class="wizLegend" id="wizLegend"></div>
           <div class="wizMap" id="wizMap"></div>
         </div>
-        <div>
+        <div id="wizSide">
           <div class="tiny" id="wizExtTitle" style="margin-bottom:6px">Extensions</div>
           <div class="row" style="margin-bottom:6px"><input id="wizExtFilter" placeholder="filter ext"><select id="wizExtSort"><option value="size">size</option><option value="count">count</option><option value="name">name</option></select></div>
           <div class="wizExt"><table><thead><tr><th id="wizThExt">Ext</th><th id="wizThPct">%</th><th id="wizThSize">Size</th><th id="wizThCount">Files</th></tr></thead><tbody id="wizExtBody"></tbody></table></div>
@@ -117,10 +120,10 @@
 
 <script>
 const el=(id)=>document.getElementById(id);
-const s={lang:'en',theme:'dark',heavy:[],queue:[],selected:new Set(),fullPoll:null,emptyDirs:[],emptySelected:new Set(),presetCandidates:[],dupGroups:[],wiz:null,busy:false};
+const s={lang:'en',theme:'dark',heavy:[],queue:[],selected:new Set(),fullPoll:null,emptyDirs:[],emptySelected:new Set(),presetCandidates:[],dupGroups:[],wiz:null,wizPath:'',wizRoot:'',wizStack:[],wizSide:true,busy:false};
 const i18n={
-  en:{subtitle:'Desktop App',save:'Save',use:'Use',remove:'Remove',tree:'Tree',heavy:'Heavy',start:'Start Watch',stop:'Stop',dry:'dry-run',fast:'fast mode',full:'Full scan (bg)',cancel:'Stop scan',undo:'Undo Move',clean:'Empty folders',clear:'Clear Log',csv:'Export CSV',updCheck:'Check update',updApply:'Apply update',drives:'System storage',refresh:'Refresh',types:'Extensions',dups:'Duplicates',size:'Size',file:'File',act:'Actions',hint:'Folder type',ready:'ready',running:'watch running',open:'Open',reveal:'Reveal',autoMove:'Auto Move',moveTo:'Move To',del:'Delete',loading:'Scanning...',qMove:'Queue: move',qDel:'Queue: delete',qRun:'Run queue',qClear:'Clear queue',findEmpty:'Find empty folders',delEmpty:'Delete selected empty',emptyTitle:'Empty folders',selectAll:'select all',pathPlaceholder:'Move destination (optional)',schedStart:'Start schedule',schedStop:'Stop schedule',schedNow:'Run schedule now',snapshots:'Snapshots',history:'Drive history',presetScan:'Scan preset',presetApply:'Apply preset',diag:'Watch diagnostics',presetPreview:'Preset preview',risk:'risk',dupNewest:'Keep newest',dupOldest:'Keep oldest',wiz:'WizMap',spaceMap:'Space Map',extTable:'Extensions',ext:'Ext',files:'Files'},
-  ru:{subtitle:'\u0420\u0430\u0431\u043e\u0447\u0435\u0435 \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435',save:'\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c',use:'\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c',remove:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c',tree:'\u0414\u0435\u0440\u0435\u0432\u043e',heavy:'\u0422\u044f\u0436\u0451\u043b\u044b\u0435',start:'\u0421\u0442\u0430\u0440\u0442 \u0441\u043b\u0435\u0436\u0435\u043d\u0438\u044f',stop:'\u0421\u0442\u043e\u043f',dry:'\u0442\u0435\u0441\u0442\u043e\u0432\u044b\u0439 \u0440\u0435\u0436\u0438\u043c',fast:'\u0431\u044b\u0441\u0442\u0440\u044b\u0439 \u0440\u0435\u0436\u0438\u043c',full:'\u041f\u043e\u043b\u043d\u044b\u0439 \u0441\u043a\u0430\u043d (\u0444\u043e\u043d)',cancel:'\u0421\u0442\u043e\u043f \u0441\u043a\u0430\u043d',undo:'\u041e\u0442\u043c\u0435\u043d\u0438\u0442\u044c \u043f\u0435\u0440\u0435\u043d\u043e\u0441',clean:'\u041f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',clear:'\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u043b\u043e\u0433',csv:'\u042d\u043a\u0441\u043f\u043e\u0440\u0442 CSV',updCheck:'\u041f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c update',updApply:'\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c',drives:'\u041c\u0435\u0441\u0442\u043e \u043d\u0430 \u0434\u0438\u0441\u043a\u0430\u0445',refresh:'\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c',types:'\u0422\u0438\u043f\u044b',dups:'\u0414\u0443\u0431\u043b\u0438\u043a\u0430\u0442\u044b',size:'\u0420\u0430\u0437\u043c\u0435\u0440',file:'\u0424\u0430\u0439\u043b',act:'\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u044f',hint:'\u0422\u0438\u043f \u043f\u0430\u043f\u043a\u0438',ready:'\u0433\u043e\u0442\u043e\u0432\u043e',running:'\u0441\u043b\u0435\u0436\u0435\u043d\u0438\u0435 \u0430\u043a\u0442\u0438\u0432\u043d\u043e',open:'\u041e\u0442\u043a\u0440\u044b\u0442\u044c',reveal:'\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c',autoMove:'\u0410\u0432\u0442\u043e \u043f\u0435\u0440\u0435\u043d\u043e\u0441',moveTo:'\u041f\u0435\u0440\u0435\u043d\u0435\u0441\u0442\u0438',del:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c',loading:'\u0421\u043a\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435...',qMove:'\u0412 \u043e\u0447\u0435\u0440\u0435\u0434\u044c: \u043f\u0435\u0440\u0435\u043d\u043e\u0441',qDel:'\u0412 \u043e\u0447\u0435\u0440\u0435\u0434\u044c: \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u0435',qRun:'\u0412\u044b\u043f\u043e\u043b\u043d\u0438\u0442\u044c \u043e\u0447\u0435\u0440\u0435\u0434\u044c',qClear:'\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u043e\u0447\u0435\u0440\u0435\u0434\u044c',findEmpty:'\u041d\u0430\u0439\u0442\u0438 \u043f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',delEmpty:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u044b\u0435 \u043f\u0443\u0441\u0442\u044b\u0435',emptyTitle:'\u041f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',selectAll:'\u0432\u044b\u0431\u0440\u0430\u0442\u044c \u0432\u0441\u0435',pathPlaceholder:'\u041f\u0430\u043f\u043a\u0430 \u0434\u043b\u044f \u043f\u0435\u0440\u0435\u043d\u043e\u0441\u0430 (\u043e\u043f\u0446\u0438\u043e\u043d\u0430\u043b\u044c\u043d\u043e)',schedStart:'\u0421\u0442\u0430\u0440\u0442 \u0440\u0430\u0441\u043f\u0438\u0441\u0430\u043d\u0438\u044f',schedStop:'\u0421\u0442\u043e\u043f \u0440\u0430\u0441\u043f\u0438\u0441\u0430\u043d\u0438\u044f',schedNow:'\u0417\u0430\u043f\u0443\u0441\u0442\u0438\u0442\u044c \u0441\u0435\u0439\u0447\u0430\u0441',snapshots:'\u0421\u043d\u0438\u043c\u043a\u0438',history:'\u0418\u0441\u0442\u043e\u0440\u0438\u044f \u0434\u0438\u0441\u043a\u043e\u0432',presetScan:'\u0421\u043a\u0430\u043d \u043f\u0440\u0435\u0441\u0435\u0442\u0430',presetApply:'\u041f\u0440\u0438\u043c\u0435\u043d\u0438\u0442\u044c \u043f\u0440\u0435\u0441\u0435\u0442',diag:'\u0414\u0438\u0430\u0433\u043d\u043e\u0441\u0442\u0438\u043a\u0430 watch',presetPreview:'\u041f\u0440\u0435\u0432\u044c\u044e \u043f\u0440\u0435\u0441\u0435\u0442\u0430',risk:'\u0440\u0438\u0441\u043a',dupNewest:'\u041e\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u043d\u043e\u0432\u044b\u0439',dupOldest:'\u041e\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u0441\u0442\u0430\u0440\u044b\u0439',wiz:'\u041a\u0430\u0440\u0442\u0430',spaceMap:'\u041a\u0430\u0440\u0442\u0430 \u043c\u0435\u0441\u0442\u0430',extTable:'\u0420\u0430\u0441\u0448\u0438\u0440\u0435\u043d\u0438\u044f',ext:'\u0420\u0430\u0441\u0448\u0438\u0440.',files:'\u0424\u0430\u0439\u043b\u043e\u0432'}
+  en:{subtitle:'Desktop App',save:'Save',use:'Use',remove:'Remove',tree:'Tree',heavy:'Heavy',start:'Start Watch',stop:'Stop',dry:'dry-run',fast:'fast mode',full:'Full scan (bg)',cancel:'Stop scan',undo:'Undo Move',clean:'Empty folders',clear:'Clear Log',csv:'Export CSV',updCheck:'Check update',updApply:'Apply update',drives:'System storage',refresh:'Refresh',types:'Extensions',dups:'Duplicates',size:'Size',file:'File',act:'Actions',hint:'Folder type',ready:'ready',running:'watch running',open:'Open',reveal:'Reveal',autoMove:'Auto Move',moveTo:'Move To',del:'Delete',loading:'Scanning...',qMove:'Queue: move',qDel:'Queue: delete',qRun:'Run queue',qClear:'Clear queue',findEmpty:'Find empty folders',delEmpty:'Delete selected empty',emptyTitle:'Empty folders',selectAll:'select all',pathPlaceholder:'Move destination (optional)',schedStart:'Start schedule',schedStop:'Stop schedule',schedNow:'Run schedule now',snapshots:'Snapshots',history:'Drive history',presetScan:'Scan preset',presetApply:'Apply preset',diag:'Watch diagnostics',presetPreview:'Preset preview',risk:'risk',dupNewest:'Keep newest',dupOldest:'Keep oldest',wiz:'WizMap',spaceMap:'Space Map',extTable:'Extensions',ext:'Ext',files:'Files',back:'Back',home:'Home',fit:'Fit',hideExt:'Hide Ext',showExt:'Show Ext'},
+  ru:{subtitle:'\u0420\u0430\u0431\u043e\u0447\u0435\u0435 \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435',save:'\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c',use:'\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c',remove:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c',tree:'\u0414\u0435\u0440\u0435\u0432\u043e',heavy:'\u0422\u044f\u0436\u0451\u043b\u044b\u0435',start:'\u0421\u0442\u0430\u0440\u0442 \u0441\u043b\u0435\u0436\u0435\u043d\u0438\u044f',stop:'\u0421\u0442\u043e\u043f',dry:'\u0442\u0435\u0441\u0442\u043e\u0432\u044b\u0439 \u0440\u0435\u0436\u0438\u043c',fast:'\u0431\u044b\u0441\u0442\u0440\u044b\u0439 \u0440\u0435\u0436\u0438\u043c',full:'\u041f\u043e\u043b\u043d\u044b\u0439 \u0441\u043a\u0430\u043d (\u0444\u043e\u043d)',cancel:'\u0421\u0442\u043e\u043f \u0441\u043a\u0430\u043d',undo:'\u041e\u0442\u043c\u0435\u043d\u0438\u0442\u044c \u043f\u0435\u0440\u0435\u043d\u043e\u0441',clean:'\u041f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',clear:'\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u043b\u043e\u0433',csv:'\u042d\u043a\u0441\u043f\u043e\u0440\u0442 CSV',updCheck:'\u041f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c update',updApply:'\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c',drives:'\u041c\u0435\u0441\u0442\u043e \u043d\u0430 \u0434\u0438\u0441\u043a\u0430\u0445',refresh:'\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c',types:'\u0422\u0438\u043f\u044b',dups:'\u0414\u0443\u0431\u043b\u0438\u043a\u0430\u0442\u044b',size:'\u0420\u0430\u0437\u043c\u0435\u0440',file:'\u0424\u0430\u0439\u043b',act:'\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u044f',hint:'\u0422\u0438\u043f \u043f\u0430\u043f\u043a\u0438',ready:'\u0433\u043e\u0442\u043e\u0432\u043e',running:'\u0441\u043b\u0435\u0436\u0435\u043d\u0438\u0435 \u0430\u043a\u0442\u0438\u0432\u043d\u043e',open:'\u041e\u0442\u043a\u0440\u044b\u0442\u044c',reveal:'\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c',autoMove:'\u0410\u0432\u0442\u043e \u043f\u0435\u0440\u0435\u043d\u043e\u0441',moveTo:'\u041f\u0435\u0440\u0435\u043d\u0435\u0441\u0442\u0438',del:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c',loading:'\u0421\u043a\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435...',qMove:'\u0412 \u043e\u0447\u0435\u0440\u0435\u0434\u044c: \u043f\u0435\u0440\u0435\u043d\u043e\u0441',qDel:'\u0412 \u043e\u0447\u0435\u0440\u0435\u0434\u044c: \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u0435',qRun:'\u0412\u044b\u043f\u043e\u043b\u043d\u0438\u0442\u044c \u043e\u0447\u0435\u0440\u0435\u0434\u044c',qClear:'\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u043e\u0447\u0435\u0440\u0435\u0434\u044c',findEmpty:'\u041d\u0430\u0439\u0442\u0438 \u043f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',delEmpty:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u044b\u0435 \u043f\u0443\u0441\u0442\u044b\u0435',emptyTitle:'\u041f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',selectAll:'\u0432\u044b\u0431\u0440\u0430\u0442\u044c \u0432\u0441\u0435',pathPlaceholder:'\u041f\u0430\u043f\u043a\u0430 \u0434\u043b\u044f \u043f\u0435\u0440\u0435\u043d\u043e\u0441\u0430 (\u043e\u043f\u0446\u0438\u043e\u043d\u0430\u043b\u044c\u043d\u043e)',schedStart:'\u0421\u0442\u0430\u0440\u0442 \u0440\u0430\u0441\u043f\u0438\u0441\u0430\u043d\u0438\u044f',schedStop:'\u0421\u0442\u043e\u043f \u0440\u0430\u0441\u043f\u0438\u0441\u0430\u043d\u0438\u044f',schedNow:'\u0417\u0430\u043f\u0443\u0441\u0442\u0438\u0442\u044c \u0441\u0435\u0439\u0447\u0430\u0441',snapshots:'\u0421\u043d\u0438\u043c\u043a\u0438',history:'\u0418\u0441\u0442\u043e\u0440\u0438\u044f \u0434\u0438\u0441\u043a\u043e\u0432',presetScan:'\u0421\u043a\u0430\u043d \u043f\u0440\u0435\u0441\u0435\u0442\u0430',presetApply:'\u041f\u0440\u0438\u043c\u0435\u043d\u0438\u0442\u044c \u043f\u0440\u0435\u0441\u0435\u0442',diag:'\u0414\u0438\u0430\u0433\u043d\u043e\u0441\u0442\u0438\u043a\u0430 watch',presetPreview:'\u041f\u0440\u0435\u0432\u044c\u044e \u043f\u0440\u0435\u0441\u0435\u0442\u0430',risk:'\u0440\u0438\u0441\u043a',dupNewest:'\u041e\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u043d\u043e\u0432\u044b\u0439',dupOldest:'\u041e\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u0441\u0442\u0430\u0440\u044b\u0439',wiz:'\u041a\u0430\u0440\u0442\u0430',spaceMap:'\u041a\u0430\u0440\u0442\u0430 \u043c\u0435\u0441\u0442\u0430',extTable:'\u0420\u0430\u0441\u0448\u0438\u0440\u0435\u043d\u0438\u044f',ext:'\u0420\u0430\u0441\u0448\u0438\u0440.',files:'\u0424\u0430\u0439\u043b\u043e\u0432',back:'\u041d\u0430\u0437\u0430\u0434',home:'\u0414\u043e\u043c\u043e\u0439',fit:'\u041f\u043e\u0434\u0433\u043e\u043d\u043a\u0430',hideExt:'\u0421\u043a\u0440\u044b\u0442\u044c ext',showExt:'\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c ext'}
 };
 function lockGlossary(){
   const base=i18n.en||{};
@@ -162,6 +165,8 @@ function applyLang(){
   el('diagBtn').textContent=tr('diag'); el('historyTitle').textContent=tr('history'); el('diagTitle').textContent=tr('diag'); el('presetTitle').textContent=tr('presetPreview');
   el('dupKeepNewestBtn').textContent=tr('dupNewest'); el('dupKeepOldestBtn').textContent=tr('dupOldest');
   el('wizBtn').textContent=tr('wiz'); el('wizTitle').textContent=tr('spaceMap'); el('wizExtTitle').textContent=tr('extTable');
+  el('wizBackBtn').textContent=tr('back'); el('wizHomeBtn').textContent=tr('home'); el('wizFitBtn').textContent=tr('fit');
+  el('wizToggleSideBtn').textContent=s.wizSide?tr('hideExt'):tr('showExt');
   el('wizThExt').textContent=tr('ext'); el('wizThPct').textContent='%'; el('wizThSize').textContent=tr('size'); el('wizThCount').textContent=tr('files');
   el('wizExtFilter').placeholder=s.lang==='ru'?'\u0444\u0438\u043b\u044c\u0442\u0440 ext':'filter ext';
   el('quickDest').placeholder=tr('pathPlaceholder');
@@ -207,10 +212,107 @@ function fallbackRectsFromHeavy(){
   return s.heavy.slice(0,80).map((it)=>({name:(it.path||'').split(/[\\\\/]/).pop()||it.path,path:it.path,kind:'file',size:it.size||0,human:it.human||''}));
 }
 function colorByName(name){ let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))>>>0; const hue=h%360; return `hsl(${hue} 55% 32%)`; }
-function renderWizLegend(rects){ const wrap=el('wizLegend'); wrap.innerHTML=''; const kinds=['dir','file']; for(const k of kinds){ const span=document.createElement('span'); span.className='wizTag'; span.textContent=k; span.style.background=(k==='dir')?'#163457':'#3a1f49'; wrap.appendChild(span);} const byExt={}; for(const r of rects||[]){ if(r.kind!=='file') continue; const m=(r.name||'').toLowerCase().match(/\.[a-z0-9]+$/); const ext=m?m[0]:'(no_ext)'; byExt[ext]=(byExt[ext]||0)+(r.size||0);} const top=Object.entries(byExt).sort((a,b)=>b[1]-a[1]).slice(0,6); for(const [ext] of top){ const span=document.createElement('span'); span.className='wizTag'; span.textContent=ext; span.style.background=colorByName(ext); wrap.appendChild(span);} }
-function renderWiz(res){ s.wiz=res; const map=el('wizMap'); const extBody=el('wizExtBody'); map.innerHTML=''; extBody.innerHTML=''; const w=map.clientWidth||640,h=Math.max(240,map.clientHeight||240); const sourceRects=(res.rects&&res.rects.length>0)?res.rects:fallbackRectsFromHeavy(); const rects=buildTreemap(sourceRects,w,h); if(rects.length===0){ map.innerHTML='<div class=\"tiny\" style=\"padding:10px\">No data yet. Press WizMap.</div>'; return; } for(const r of rects){ if(r.w<12||r.h<12) continue; const d=document.createElement('div'); d.className='wizRect '+(r.item.kind||'file'); d.style.left=r.x+'px'; d.style.top=r.y+'px'; d.style.width=r.w+'px'; d.style.height=r.h+'px'; d.style.background=colorByName((r.item.kind||'')+':'+(r.item.name||r.item.path||'x')); d.title=`${r.item.name} | ${r.item.human}`; d.textContent=`${r.item.name} (${r.item.human})`; d.onclick=async()=>{try{ if(r.item.kind==='dir') await window.go.main.App.OpenPath(r.item.path); else await window.go.main.App.RevealPath(r.item.path);}catch(e){showErr(e)}}; map.appendChild(d); } renderWizLegend(sourceRects);
- const total=res.total||1; const filter=(el('wizExtFilter').value||'').toLowerCase().trim(); const sortBy=el('wizExtSort').value||'size'; const rows=(res.ext||[]).slice().filter(e=>!filter||String(e.ext||'').toLowerCase().includes(filter)); rows.sort((a,b)=> sortBy==='count' ? (b.count-a.count) : (sortBy==='name' ? String(a.ext).localeCompare(String(b.ext)) : (b.size-a.size))); for(const e of rows){ const trEl=document.createElement('tr'); const pct=((e.size||0)*100/total).toFixed(1); trEl.innerHTML=`<td>${e.ext}</td><td>${pct}%</td><td>${e.human}</td><td>${e.count}</td>`; extBody.appendChild(trEl);} }
-async function runWiz(){ return withLoader(async()=>{ const fast=!!el('fastMode').checked; const maxFiles=fast?parseInt(el('maxFiles').value||'220000',10):0; const workers=fast?parseInt(el('workers').value||'24',10):0; const turbo=!!el('wizTurbo').checked; const res=turbo ? await window.go.main.App.WizMapTurbo(el('path').value,maxFiles,32,120,40) : await window.go.main.App.WizMap(el('path').value,maxFiles,workers,24,80,25); renderWiz(res); setStatus((s.lang==='ru'?'\u041a\u0430\u0440\u0442\u0430: ':'WizMap: ')+res.seen+(res.limited?(s.lang==='ru'?' (\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043e)':' (limited)'):'')+' | '+res.durationMs+' ms'); },tr('loading')); }
+function renderWizLegend(rects){
+  const wrap=el('wizLegend');
+  wrap.innerHTML='';
+  const kinds=['dir','file'];
+  for(const k of kinds){
+    const span=document.createElement('span');
+    span.className='wizTag';
+    span.textContent=k;
+    span.style.background=(k==='dir')?'#163457':'#3a1f49';
+    wrap.appendChild(span);
+  }
+  const byExt={};
+  for(const r of rects||[]){
+    if(r.kind!=='file') continue;
+    const m=(r.name||'').toLowerCase().match(/\.[a-z0-9]+$/);
+    const ext=m?m[0]:'(no_ext)';
+    byExt[ext]=(byExt[ext]||0)+(r.size||0);
+  }
+  const top=Object.entries(byExt).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  for(const [ext] of top){
+    const span=document.createElement('span');
+    span.className='wizTag';
+    span.textContent=ext;
+    span.style.background=colorByName(ext);
+    wrap.appendChild(span);
+  }
+}
+function setWizPathLabel(){
+  el('wizPath').textContent=s.wizPath||el('path').value||'-';
+}
+function renderWiz(res){
+  s.wiz=res;
+  const map=el('wizMap');
+  const extBody=el('wizExtBody');
+  map.innerHTML='';
+  extBody.innerHTML='';
+  const w=map.clientWidth||640;
+  const h=Math.max(300,map.clientHeight||300);
+  const sourceRects=(res.rects&&res.rects.length>0)?res.rects:fallbackRectsFromHeavy();
+  const rects=buildTreemap(sourceRects,w,h);
+  if(rects.length===0){
+    map.innerHTML='<div class="tiny" style="padding:10px">No data yet. Press WizMap.</div>';
+    return;
+  }
+  for(const r of rects){
+    if(r.w<8||r.h<8) continue;
+    const d=document.createElement('div');
+    d.className='wizRect '+(r.item.kind||'file');
+    d.style.left=r.x+'px';
+    d.style.top=r.y+'px';
+    d.style.width=r.w+'px';
+    d.style.height=r.h+'px';
+    d.style.background=colorByName((r.item.kind||'')+':'+(r.item.name||r.item.path||'x'));
+    d.title=`${r.item.name} | ${r.item.human}`;
+    if(r.w>65&&r.h>20){
+      d.textContent=`${r.item.name} (${r.item.human})`;
+    }
+    d.onclick=()=>setStatus(`${r.item.name} | ${r.item.human}`);
+    d.ondblclick=async()=>{
+      try{
+        if(r.item.kind==='dir'){
+          if(!s.wizRoot){s.wizRoot=el('path').value;}
+          s.wizStack.push(s.wizPath||el('path').value);
+          await runWiz(r.item.path,false);
+        }else{
+          await window.go.main.App.RevealPath(r.item.path);
+        }
+      }catch(e){showErr(e)}
+    };
+    map.appendChild(d);
+  }
+  renderWizLegend(sourceRects);
+  const total=res.total||1;
+  const filter=(el('wizExtFilter').value||'').toLowerCase().trim();
+  const sortBy=el('wizExtSort').value||'size';
+  const rows=(res.ext||[]).slice().filter(e=>!filter||String(e.ext||'').toLowerCase().includes(filter));
+  rows.sort((a,b)=> sortBy==='count' ? (b.count-a.count) : (sortBy==='name' ? String(a.ext).localeCompare(String(b.ext)) : (b.size-a.size)));
+  for(const e of rows){
+    const trEl=document.createElement('tr');
+    const pct=((e.size||0)*100/total).toFixed(1);
+    trEl.innerHTML=`<td>${e.ext}</td><td>${pct}%</td><td>${e.human}</td><td>${e.count}</td>`;
+    extBody.appendChild(trEl);
+  }
+  setWizPathLabel();
+}
+async function runWiz(pathOverride,pushHistory=true){
+  return withLoader(async()=>{
+    const fast=!!el('fastMode').checked;
+    const maxFiles=fast?parseInt(el('maxFiles').value||'220000',10):0;
+    const workers=fast?parseInt(el('workers').value||'24',10):0;
+    const turbo=!!el('wizTurbo').checked;
+    const path=pathOverride||el('path').value;
+    if(pushHistory && s.wizPath && path!==s.wizPath){
+      s.wizStack.push(s.wizPath);
+    }
+    s.wizPath=path;
+    const res=turbo ? await window.go.main.App.WizMapTurbo(path,maxFiles,32,120,40) : await window.go.main.App.WizMap(path,maxFiles,workers,24,80,25);
+    renderWiz(res);
+    setStatus((s.lang==='ru'?'\u041a\u0430\u0440\u0442\u0430: ':'WizMap: ')+res.seen+(res.limited?(s.lang==='ru'?' (\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043e)':' (limited)'):'')+' | '+res.durationMs+' ms');
+  },tr('loading'));
+}
 function drawSpark(points){ if(!points||points.length===0) return ''; const w=240,h=70,pad=6; const vals=points.map(x=>x.total>0?x.used/x.total:0); let min=1,max=0; for(const v of vals){ if(v<min)min=v; if(v>max)max=v; } if(max===min){max=min+0.01;} const step=(w-pad*2)/Math.max(1,vals.length-1); const pts=vals.map((v,i)=>{const x=pad+i*step; const y=pad+(1-(v-min)/(max-min))*(h-pad*2); return `${x.toFixed(1)},${y.toFixed(1)}`;}).join(' '); return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="#6cb6ff" stroke-width="2"/></svg>`; }
 function renderDriveHistory(rows){ const wrap=el('driveHistoryGrid'); wrap.innerHTML=''; for(const r of rows||[]){ const card=document.createElement('div'); card.style.border='1px solid var(--line)'; card.style.borderRadius='10px'; card.style.padding='6px'; const pts=(r.points||[]).slice(-24); card.innerHTML=`<div class="row" style="justify-content:space-between"><b>${r.drive}</b><span class="tiny">${pts.length}</span></div>${drawSpark(pts)}`; wrap.appendChild(card);} }
 async function showDriveHistory(){try{const rows=await window.go.main.App.DriveHistory(); if(!rows||rows.length===0){setStatus(s.lang==='ru'?'\u0418\u0441\u0442\u043e\u0440\u0438\u044f \u043f\u0443\u0441\u0442\u0430':'History is empty'); return;} renderDriveHistory(rows); el('driveHistoryPanel').style.display='block';}catch(e){showErr(e)}}
@@ -263,6 +365,10 @@ el('clearLogBtn').onclick=async()=>{try{await window.go.main.App.ClearLog(); awa
 el('drivesRefresh').onclick=loadDrives; el('extBtn').onclick=async()=>{try{const s1=await window.go.main.App.ExtensionStatsFast(el('path').value,20,parseInt(el('maxFiles').value||'220000',10),parseInt(el('workers').value||'24',10)); el('log').textContent+='\n[extensions]\n'+JSON.stringify(s1,null,2)+'\n';}catch(e){showErr(e)}};
 el('dupBtn').onclick=async()=>{try{const mode=el('dupMode').value||'quick-name'; const s1=await window.go.main.App.DuplicateFinderV2(el('path').value,mode,70000,30); s.dupGroups=s1||[]; renderDupGroups(); el('log').textContent+='\n[duplicates:'+mode+']\n'+JSON.stringify(s1,null,2)+'\n';}catch(e){showErr(e)}};
 el('wizBtn').onclick=runWiz;
+el('wizBackBtn').onclick=async()=>{ if(s.wizStack.length===0) return; const p=s.wizStack.pop(); await runWiz(p,false); };
+el('wizHomeBtn').onclick=async()=>{ const p=s.wizRoot||el('path').value; s.wizStack=[]; await runWiz(p,false); };
+el('wizFitBtn').onclick=()=>{ if(s.wiz) renderWiz(s.wiz); };
+el('wizToggleSideBtn').onclick=()=>{ s.wizSide=!s.wizSide; el('wizSide').style.display=s.wizSide?'block':'none'; el('wizWrap').style.gridTemplateColumns=s.wizSide?'minmax(0,1fr) 340px':'1fr'; el('wizToggleSideBtn').textContent=s.wizSide?tr('hideExt'):tr('showExt'); if(s.wiz) setTimeout(()=>renderWiz(s.wiz),40); };
 el('queueMoveBtn').onclick=()=>{const paths=selectedPaths(); if(paths.length===0)return; s.queue.push({type:'move',paths,dest:el('quickDest').value||'',auto:!(el('quickDest').value||'')});};
 el('queueDeleteBtn').onclick=()=>{const paths=selectedPaths(); if(paths.length===0)return; const safe=confirm(s.lang==='ru'?'\u0423\u0434\u0430\u043b\u044f\u0442\u044c \u0432 \u043a\u043e\u0440\u0437\u0438\u043d\u0443?':'Use recycle bin for batch delete?'); s.queue.push({type:'delete',paths,safe});};
 el('queueRunBtn').onclick=runQueue; el('queueClearBtn').onclick=()=>{s.queue=[]; setStatus(s.lang==='ru'?'\u041e\u0447\u0435\u0440\u0435\u0434\u044c \u043e\u0447\u0438\u0449\u0435\u043d\u0430':'Queue cleared');};
