@@ -1,0 +1,34 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="700" viewBox="0 0 1100 700">
+  <rect width="1100" height="700" fill="#111827"/>
+  <rect x="20" y="20" width="1060" height="660" rx="14" fill="#161f2f" stroke="#314a6b"/>
+  <text x="42" y="56" fill="#dff1ff" font-family="Segoe UI" font-size="24" font-weight="700">Heavy Files Panel</text>
+  <text x="42" y="80" fill="#95b9d8" font-family="Segoe UI" font-size="14">Compact rows + action grid + reveal/open/move/delete</text>
+
+  <rect x="40" y="100" width="1020" height="44" rx="10" fill="#0f1b2d" stroke="#35587f"/>
+  <text x="58" y="128" fill="#9ec7e8" font-family="Consolas" font-size="15">&gt; heavy --n 20 C:\ [seen=220000 limited=true ms=696]</text>
+
+  <rect x="40" y="160" width="1020" height="500" rx="12" fill="#0d1626" stroke="#2f4a6d"/>
+  <rect x="40" y="160" width="1020" height="38" rx="12" fill="#152338"/>
+  <text x="56" y="184" fill="#a4c7e3" font-family="Segoe UI" font-size="14">Size</text>
+  <text x="170" y="184" fill="#a4c7e3" font-family="Segoe UI" font-size="14">Path</text>
+  <text x="848" y="184" fill="#a4c7e3" font-family="Segoe UI" font-size="14">Actions</text>
+
+  <g font-family="Segoe UI" font-size="13" fill="#d8edff">
+    <text x="56" y="226">15.0 GB</text>
+    <text x="170" y="226">C:\pagefile.sys</text>
+    <text x="56" y="276">9.1 GB</text>
+    <text x="170" y="276">C:\pinokio\...\t5xxl_fp16.safetensors</text>
+    <text x="56" y="326">6.3 GB</text>
+    <text x="170" y="326">C:\pinokio\...\seedvr2_ema_3b_fp16.safetensors</text>
+  </g>
+
+  <g>
+    <rect x="840" y="205" width="88" height="28" rx="8" fill="#35587f"/><text x="865" y="224" fill="#e3f2ff" font-family="Segoe UI" font-size="12">Open</text>
+    <rect x="936" y="205" width="88" height="28" rx="8" fill="#35587f"/><text x="957" y="224" fill="#e3f2ff" font-family="Segoe UI" font-size="12">Reveal</text>
+    <rect x="840" y="236" width="88" height="28" rx="8" fill="#2d6fcb"/><text x="853" y="255" fill="#e3f2ff" font-family="Segoe UI" font-size="12">Auto Move</text>
+    <rect x="936" y="236" width="88" height="28" rx="8" fill="#2d6fcb"/><text x="958" y="255" fill="#e3f2ff" font-family="Segoe UI" font-size="12">Move To</text>
+    <rect x="840" y="267" width="184" height="28" rx="8" fill="#cc3a4d"/><text x="920" y="286" fill="#fff" font-family="Segoe UI" font-size="12">Delete</text>
+  </g>
+
+  <text x="56" y="640" fill="#86a9c9" font-family="Segoe UI" font-size="13">Designed for fast repeated cleanup loops.</text>
+</svg>

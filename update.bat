@@ -50,6 +50,16 @@ if errorlevel 1 (
   set "EXITCODE=1"
   goto :end
 )
+if exist "cmd\icicle-wails\main_windows.go" (
+  if exist "icicle-desktop.exe" del /f /q "icicle-desktop.exe" >nul 2>nul
+  echo [icicle-update] building icicle-desktop.exe...
+  go build -tags "wails,production" -o icicle-desktop.exe ./cmd/icicle-wails
+  if errorlevel 1 (
+    echo [icicle-update] desktop build failed.
+    set "EXITCODE=1"
+    goto :end
+  )
+)
 echo [icicle-update] done.
 
 :end

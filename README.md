@@ -1,97 +1,88 @@
-# icicle
+﻿# icicle
 
-![icicle banner](docs/banner.svg)
+<p align="center">
+  <img src="docs/hero-v2.svg" alt="icicle v2 hero" width="100%" />
+</p>
 
-**icicle** is a Windows-first disk cleanup toolkit with **CLI + GUI**.  
-Fast scans, heavy file analysis, folder watch auto-sort, and practical file actions in one app.
+<p align="center">
+  <b>Windows storage cleaner with fast CLI + native desktop app (Wails).</b>
+</p>
 
-[![CI](https://github.com/Eugeneofficial/icicle/actions/workflows/ci.yml/badge.svg)](https://github.com/Eugeneofficial/icicle/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Go Version](https://img.shields.io/badge/go-1.22+-00ADD8.svg)](go.mod)
-[![Stars](https://img.shields.io/github/stars/Eugeneofficial/icicle?style=social)](https://github.com/Eugeneofficial/icicle/stargazers)
-[![Forks](https://img.shields.io/github/forks/Eugeneofficial/icicle?style=social)](https://github.com/Eugeneofficial/icicle/network/members)
+<p align="center">
+  <a href="https://github.com/Eugeneofficial/icicle/actions/workflows/ci.yml"><img src="https://github.com/Eugeneofficial/icicle/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License"></a>
+  <a href="go.mod"><img src="https://img.shields.io/badge/go-1.22+-00ADD8.svg" alt="Go"></a>
+  <a href="https://github.com/Eugeneofficial/icicle/stargazers"><img src="https://img.shields.io/github/stars/Eugeneofficial/icicle?style=social" alt="Stars"></a>
+</p>
+
+## What Is New In 2.0
+
+- Native desktop app (`icicle-desktop.exe`) without browser.
+- Reworked heavy-files panel (compact actions, faster workflow).
+- Fast mode tuning: file cap + worker count.
+- Built-in export: CSV / JSON / Markdown.
+- Tray menu with reopen.
+- In-app updater for GitHub Releases.
 
 ## Features
 
-- `tree`: size tree + top files
+- `tree`: size map + top files
 - `heavy`: top-N largest files
-- `watch`: auto-sort new files by extension
-- GUI with quick actions: move, delete, reveal
-- Optional safe delete to Recycle Bin
-- Fast scan mode for very large folders (with max files limit)
-- Bulk actions + filters + export (CSV/JSON/Markdown)
-- Drive usage dashboard
-- RU/EN language + Light/Dark theme
+- `watch`: auto-sort incoming files by extension
+- file actions: open, reveal, auto-move, move-to, delete, undo
+- recycle-bin safe delete option
+- drive usage cards with quick actions
+- RU/EN + Dark/Light themes
+- fast scan mode for huge folders
 
-## Quick Start
+## Quick Start (CLI)
 
 ```powershell
 git clone https://github.com/Eugeneofficial/icicle.git
 cd icicle
 go build -o icicle.exe ./cmd/icicle
-```
-
-Run:
-
-```powershell
 .\icicle.exe
 ```
 
-## Usage
+## Quick Start (Desktop)
+
+```powershell
+.\scripts\build_wails.bat
+.\icicle-desktop.exe
+```
+
+Manual build:
+
+```powershell
+go build -tags "wails,production" -o icicle-desktop.exe ./cmd/icicle-wails
+```
+
+## Commands
 
 ```text
-icicle watch [--dry-run] [--no-color] [--no-emoji] [path]
-icicle heavy [--n 20] [--no-color] [--no-emoji] [path]
-icicle tree [--n 20] [--w 24] [--top 5] [--no-color] [--no-emoji] [path]
+icicle watch [--dry-run] [path]
+icicle heavy [--n 20] [path]
+icicle tree [--n 20] [--w 24] [--top 5] [path]
 ```
 
 Defaults when `path` is omitted:
-- `watch`: Windows Downloads folder (from User Shell Folders)
-- `heavy` / `tree`: Windows Home folder
+- `watch`: Windows Downloads
+- `heavy` / `tree`: Windows Home
 
-## Examples
+## Screens
 
-```powershell
-.\icicle.exe tree C:\
-.\icicle.exe heavy --n 30 D:\
-.\icicle.exe watch --dry-run
-.\icicle.exe gui
-```
-
-## Screenshots
-
-- GUI (premium layout, disk cards, heavy actions)
-- CLI (`tree`, `heavy`, `watch`)
-
-Add screenshots in `docs/` and link them here after each release.
+<p align="center">
+  <img src="docs/screen-dashboard-v2.svg" alt="dashboard" width="49%" />
+  <img src="docs/screen-heavy-v2.svg" alt="heavy" width="49%" />
+</p>
 
 ## Update
-
-Use the update script from repo root:
 
 ```powershell
 .\update.bat
 ```
 
-It runs:
-- `git pull --ff-only`
-- rebuild `icicle.exe` (if Go is installed)
-
-## Portable Build
-
-Create portable package:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\portable.ps1
-```
-
-Run portable mode:
-
-```powershell
-.\icicle-portable.bat
-```
-
-Portable mode stores runtime data in `portable-data/` near the app.
+`update.bat` runs `git pull --ff-only` and rebuilds binaries.
 
 ## Release
 
@@ -99,23 +90,21 @@ Portable mode stores runtime data in `portable-data/` near the app.
 powershell -ExecutionPolicy Bypass -File .\scripts\release.ps1
 ```
 
-Release artifacts are generated in `dist/`.
+Artifacts are created in `dist/`.
 
 ## Roadmap
 
-See: [ROADMAP.md](ROADMAP.md)
+See [ROADMAP.md](ROADMAP.md).
 
 ## Testing
 
-See: [TESTING.md](TESTING.md)
+See [TESTING.md](TESTING.md).
 
-## Contributing
+## RU (Коротко)
 
-Issues and PRs are welcome:
-- bug reports with reproduction steps
-- UX improvements for GUI
-- performance/scanning optimizations
+`icicle` — это быстрый инструмент для очистки диска на Windows.
+Есть CLI + desktop GUI, тяжёлые файлы, дерево размеров, watch-сортировка, действия по файлам и автообновление.
 
 ## License
 
-MIT - see [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE).

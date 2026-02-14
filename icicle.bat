@@ -3,6 +3,7 @@ setlocal
 
 set "ROOT=%~dp0"
 set "BIN=%ROOT%icicle.exe"
+set "DESKTOP_BIN=%ROOT%icicle-desktop.exe"
 set "POST_UPDATE=%ROOT%scripts\post_update.bat"
 set "LAUNCHER_CFG=%APPDATA%\icicle\launcher.env"
 set "EXITCODE=0"
@@ -11,6 +12,11 @@ set "UPDATED=0"
 set "GIT_AUTO_UPDATE=1"
 
 if "%~1"=="" (
+  if exist "%DESKTOP_BIN%" (
+    "%DESKTOP_BIN%"
+    set "EXITCODE=%errorlevel%"
+    goto :end
+  )
   set "ARGS=gui"
 )
 

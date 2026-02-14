@@ -13,6 +13,7 @@ Set-Location (Join-Path $PSScriptRoot '..')
 go test ./...
 go vet ./...
 go build -o icicle.exe ./cmd/icicle
+go build -tags "wails,production" -o icicle-desktop.exe ./cmd/icicle-wails
 
 $dist = Join-Path (Get-Location) "dist"
 if (!(Test-Path $dist)) { New-Item -ItemType Directory -Path $dist | Out-Null }
@@ -22,6 +23,7 @@ if (Test-Path $pkg) { Remove-Item -Recurse -Force $pkg }
 New-Item -ItemType Directory -Path $pkg | Out-Null
 
 Copy-Item icicle.exe $pkg
+Copy-Item icicle-desktop.exe $pkg
 Copy-Item README.md $pkg
 Copy-Item LICENSE $pkg
 Copy-Item CHANGELOG.md $pkg

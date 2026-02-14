@@ -1,7 +1,9 @@
 ﻿# Binaries
 /icicle
 /icicle.exe
+/icicle-desktop.exe
 /icicle.new.exe
+/portable-data/
 
 # Go
 /bin/

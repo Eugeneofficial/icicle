@@ -1,0 +1,44 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="520" viewBox="0 0 1600 520">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b1220"/>
+      <stop offset="100%" stop-color="#102742"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1b2a41"/>
+      <stop offset="100%" stop-color="#152338"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="520" fill="url(#bg)"/>
+  <circle cx="1360" cy="40" r="260" fill="#7ec8ff" fill-opacity="0.08"/>
+  <circle cx="220" cy="500" r="240" fill="#3f8cff" fill-opacity="0.10"/>
+
+  <text x="96" y="150" fill="#dff1ff" font-family="Segoe UI, Arial" font-size="78" font-weight="700">icicle 2.0</text>
+  <text x="96" y="198" fill="#9ec7e8" font-family="Segoe UI, Arial" font-size="28">small, cold, cuts to facts</text>
+  <text x="96" y="258" fill="#b8d7ef" font-family="Consolas, monospace" font-size="24">tree • heavy • watch • desktop GUI • fast mode</text>
+
+  <rect x="760" y="78" width="760" height="360" rx="18" fill="url(#card)" stroke="#33557a"/>
+  <rect x="788" y="112" width="706" height="42" rx="10" fill="#0f1d31" stroke="#2d4d71"/>
+  <text x="810" y="139" fill="#b9d8f1" font-family="Segoe UI" font-size="18">System storage</text>
+
+  <rect x="788" y="174" width="218" height="98" rx="12" fill="#11243b" stroke="#2a4a6c"/>
+  <rect x="1022" y="174" width="218" height="98" rx="12" fill="#11243b" stroke="#2a4a6c"/>
+  <rect x="1256" y="174" width="238" height="98" rx="12" fill="#11243b" stroke="#2a4a6c"/>
+
+  <text x="806" y="206" fill="#d6ebff" font-family="Segoe UI" font-size="24" font-weight="700">C:</text>
+  <text x="1040" y="206" fill="#d6ebff" font-family="Segoe UI" font-size="24" font-weight="700">D:</text>
+  <text x="1274" y="206" fill="#d6ebff" font-family="Segoe UI" font-size="24" font-weight="700">E:</text>
+
+  <rect x="806" y="222" width="184" height="8" rx="4" fill="#2a3f5c"/>
+  <rect x="806" y="222" width="126" height="8" rx="4" fill="#62aef4"/>
+  <rect x="1040" y="222" width="184" height="8" rx="4" fill="#2a3f5c"/>
+  <rect x="1040" y="222" width="88" height="8" rx="4" fill="#62aef4"/>
+  <rect x="1274" y="222" width="198" height="8" rx="4" fill="#2a3f5c"/>
+  <rect x="1274" y="222" width="102" height="8" rx="4" fill="#62aef4"/>
+
+  <rect x="788" y="296" width="706" height="122" rx="12" fill="#0f1d31" stroke="#2d4d71"/>
+  <text x="810" y="324" fill="#b9d8f1" font-family="Consolas" font-size="18">&gt; heavy --n 20 C:\ [seen=220000 limited=true ms=698]</text>
+  <text x="810" y="350" fill="#d8edff" font-family="Consolas" font-size="17">15.0 GB  pagefile.sys</text>
+  <text x="810" y="374" fill="#d8edff" font-family="Consolas" font-size="17"> 9.1 GB  ...\t5xxl_fp16.safetensors</text>
+  <text x="810" y="398" fill="#d8edff" font-family="Consolas" font-size="17"> 6.3 GB  ...\seedvr2_ema_3b_fp16.safetensors</text>
+</svg>

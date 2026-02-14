@@ -1,5 +1,15 @@
 ﻿# Changelog
 
+## 2.0.0 - 2026-02-14
+- Added native desktop app mode with Wails (`icicle-desktop.exe`).
+- Reworked heavy-files UI block for denser, faster actions.
+- Added fast heavy scan tuning (file cap + worker count).
+- Added loading overlay animation for long scans.
+- Added heavy export (CSV/JSON/Markdown) in desktop mode.
+- Added tray integration for desktop mode with reopen.
+- Added in-app updater support for desktop mode.
+- Updated README, ROADMAP, and visual docs assets for v2.
+
 ## 1.0.1 - 2026-02-13
 - Added `update.bat` for pull + rebuild update flow.
 - Removed update buttons from GUI header.

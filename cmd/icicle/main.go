@@ -2,6 +2,8 @@ package main
 
 import (
 	"os"
+	"os/exec"
+	"path/filepath"
 
 	"fmt"
 	"icicle/internal/commands"
@@ -25,6 +27,18 @@ func main() {
 	}
 
 	if guiMode {
+		// If desktop build exists, use it instead of browser GUI.
+		if exePath, err := os.Executable(); err == nil {
+			desktopExe := filepath.Join(filepath.Dir(exePath), "icicle-desktop.exe")
+			if _, err := os.Stat(desktopExe); err == nil {
+				cmd := exec.Command(desktopExe)
+				cmd.Dir = filepath.Dir(desktopExe)
+				cmd.Env = append(os.Environ(), "ICICLE_ALLOW_MULTI=1")
+				if err := cmd.Start(); err == nil {
+					return
+				}
+			}
+		}
 		if err := gui.Run(os.Args[0]); err == nil {
 			return
 		} else {
