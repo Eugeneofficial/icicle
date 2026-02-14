@@ -10,11 +10,11 @@
 
 ## v2.2
 
-- [ ] Storage history timeline per drive
-- [ ] Scheduled scans + report snapshots
-- [ ] Smart cleanup presets (Games, Media, Dev cache)
-- [ ] Faster extension analytics for huge trees
-- [ ] Better i18n consistency and glossary lock
+- [x] Storage history timeline per drive
+- [x] Scheduled scans + report snapshots
+- [x] Smart cleanup presets (Games, Media, Dev cache)
+- [x] Faster extension analytics for huge trees
+- [x] Better i18n consistency and glossary lock
 
 ## v3.0 Vision
 
