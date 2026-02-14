@@ -1,41 +1,59 @@
 ﻿# icicle
 
 <p align="center">
-  <img src="docs/hero-v2.svg" alt="icicle v2 hero" width="100%" />
+  <img src="docs/hero-v2.svg" alt="icicle hero" width="100%" />
 </p>
 
 <p align="center">
-  <b>Windows storage cleaner with fast CLI + native desktop app (Wails).</b>
+  <strong>Premium Windows disk intelligence toolkit.</strong><br/>
+  Fast CLI + native desktop app for heavy-file analysis, folder automation, and safe cleanup.
+</p>
+
+<p align="center">
+  <strong>RU:</strong> <code>icicle</code> — быстрый инструмент для анализа и очистки диска в Windows.<br/>
+  CLI + нативный Desktop GUI для тяжёлых файлов, автосортировки и безопасной очистки.
 </p>
 
 <p align="center">
   <a href="https://github.com/Eugeneofficial/icicle/actions/workflows/ci.yml"><img src="https://github.com/Eugeneofficial/icicle/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-16a34a.svg" alt="MIT"></a>
   <a href="go.mod"><img src="https://img.shields.io/badge/go-1.22+-00ADD8.svg" alt="Go"></a>
+  <a href="https://github.com/Eugeneofficial/icicle/releases"><img src="https://img.shields.io/github/v/release/Eugeneofficial/icicle" alt="Release"></a>
   <a href="https://github.com/Eugeneofficial/icicle/stargazers"><img src="https://img.shields.io/github/stars/Eugeneofficial/icicle?style=social" alt="Stars"></a>
 </p>
 
-## What Is New In 2.0
+## Why icicle
 
-- Native desktop app (`icicle-desktop.exe`) without browser.
-- Reworked heavy-files panel (compact actions, faster workflow).
-- Fast mode tuning: file cap + worker count.
-- Built-in export: CSV / JSON / Markdown.
-- Tray menu with reopen.
-- In-app updater for GitHub Releases.
+`icicle` is designed for people who need immediate control over disk usage without sacrificing speed or safety.
 
-## Features
+- Native Windows desktop app (`Wails`) and fast CLI in one project
+- Large-folder performance mode with worker/file-cap tuning
+- Heavy-file actions directly in UI: open, reveal, move, delete, undo
+- Live watch mode for auto-sorting incoming files
+- Safe-delete workflow (Recycle Bin option)
+- RU/EN localization and dark/light themes
 
-- `tree`: size map + top files
-- `heavy`: top-N largest files
-- `watch`: auto-sort incoming files by extension
-- file actions: open, reveal, auto-move, move-to, delete, undo
-- recycle-bin safe delete option
-- drive usage cards with quick actions
-- RU/EN + Dark/Light themes
-- fast scan mode for huge folders
+## Product Highlights
 
-## Quick Start (CLI)
+- `tree`: directory size map + top files
+- `heavy`: top-N largest files with export (CSV / JSON / Markdown)
+- `watch`: real-time folder monitoring with auto-routing by extension
+- Drive dashboard with instant path actions
+- Built-in updater flow for desktop releases
+- Tray integration with quick reopen
+
+## Architecture
+
+- `cmd/icicle` — CLI + browser GUI entrypoint
+- `cmd/icicle-wails` — native desktop app entrypoint
+- `internal/scan` — high-performance traversal and stats
+- `internal/organize` — file routing and move rules
+- `internal/commands` — CLI command handlers
+- `internal/gui` — legacy browser GUI backend (still supported)
+
+## Quick Start
+
+### 1) CLI build
 
 ```powershell
 git clone https://github.com/Eugeneofficial/icicle.git
@@ -44,20 +62,20 @@ go build -o icicle.exe ./cmd/icicle
 .\icicle.exe
 ```
 
-## Quick Start (Desktop)
+### 2) Desktop build (native, no browser)
 
 ```powershell
 .\scripts\build_wails.bat
 .\icicle-desktop.exe
 ```
 
-Manual build:
+Manual desktop build:
 
 ```powershell
 go build -tags "wails,production" -o icicle-desktop.exe ./cmd/icicle-wails
 ```
 
-## Commands
+## CLI Usage
 
 ```text
 icicle watch [--dry-run] [path]
@@ -65,46 +83,101 @@ icicle heavy [--n 20] [path]
 icicle tree [--n 20] [--w 24] [--top 5] [path]
 ```
 
-Defaults when `path` is omitted:
-- `watch`: Windows Downloads
-- `heavy` / `tree`: Windows Home
+Default paths:
 
-## Screens
+- `watch` -> Windows `Downloads`
+- `heavy/tree` -> Windows home folder
+
+Examples:
+
+```powershell
+.\icicle.exe tree C:\
+.\icicle.exe heavy --n 30 D:\
+.\icicle.exe watch --dry-run C:\Users\you\Downloads
+```
+
+## Desktop UX
 
 <p align="center">
-  <img src="docs/screen-dashboard-v2.svg" alt="dashboard" width="49%" />
-  <img src="docs/screen-heavy-v2.svg" alt="heavy" width="49%" />
+  <img src="docs/screen-dashboard-v2.svg" alt="icicle dashboard" width="49%" />
+  <img src="docs/screen-heavy-v2.svg" alt="icicle heavy panel" width="49%" />
 </p>
 
-## Update
+Desktop app includes:
+
+- Compact heavy-file action panel
+- Loader animation during scans
+- Fast mode controls (`max files`, `workers`)
+- Update check/apply workflow
+
+## Performance Notes
+
+- Fast mode intentionally returns partial heavy results for speed
+- Full precision mode: disable fast mode or set file cap to `0`
+- Worker tuning is available directly in desktop UI
+
+## Update & Release
+
+Update local repo and rebuild:
 
 ```powershell
 .\update.bat
 ```
 
-`update.bat` runs `git pull --ff-only` and rebuilds binaries.
-
-## Release
+Create release artifacts:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\release.ps1
 ```
 
-Artifacts are created in `dist/`.
+Artifacts are generated in `dist/`.
 
-## Roadmap
+## Documentation
 
-See [ROADMAP.md](ROADMAP.md).
+- Product roadmap: [ROADMAP.md](ROADMAP.md)
+- Test notes: [TESTING.md](TESTING.md)
+- Changelog: [CHANGELOG.md](CHANGELOG.md)
+- Contributing guide: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Security policy: [SECURITY.md](SECURITY.md)
 
-## Testing
+## RU: Полная Версия
 
-See [TESTING.md](TESTING.md).
+`icicle` — профессиональный инструмент для контроля, анализа и очистки дискового пространства в Windows.  
+Проект объединяет быстрый CLI и нативный Desktop GUI: можно быстро найти тяжёлые файлы, навести порядок в папках и автоматизировать рутинные операции.
 
-## RU (Коротко)
+### Основные возможности
 
-`icicle` — это быстрый инструмент для очистки диска на Windows.
-Есть CLI + desktop GUI, тяжёлые файлы, дерево размеров, watch-сортировка, действия по файлам и автообновление.
+- `tree`: визуализация дерева размеров + топ файлов
+- `heavy`: список самых тяжёлых файлов с экспортом (`CSV/JSON/Markdown`)
+- `watch`: авто-сортировка новых файлов по расширениям в реальном времени
+- действия с файлами из GUI: открыть, показать в проводнике, перенести, авто-перенести, удалить, отменить перенос
+- безопасное удаление через корзину (опционально)
+- карточки дисков с быстрыми действиями
+- быстрый режим сканирования для очень больших папок (`max files`, `workers`)
+- локализация RU/EN, темы Dark/Light, трей и автообновление desktop-версии
+
+### Быстрый старт (Windows)
+
+CLI:
+
+```powershell
+go build -o icicle.exe ./cmd/icicle
+.\icicle.exe
+```
+
+Desktop:
+
+```powershell
+.\scripts\build_wails.bat
+.\icicle-desktop.exe
+```
+
+### Подсказка по производительности
+
+- Для максимальной скорости включайте fast mode и задавайте лимит файлов.
+- Для максимальной точности отключайте fast mode или ставьте лимит `0`.
+- Для крупных дисков повышайте `workers` (обычно 16–32).
 
 ## License
 
-MIT, see [LICENSE](LICENSE).
+MIT License. See [LICENSE](LICENSE).
