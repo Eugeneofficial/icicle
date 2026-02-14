@@ -15,6 +15,12 @@ go vet ./...
 go build -o icicle.exe ./cmd/icicle
 go build -tags "wails,production" -o icicle-desktop.exe ./cmd/icicle-wails
 
+if ($env:ICICLE_SIGN_CERT_SHA1 -and (Get-Command signtool.exe -ErrorAction SilentlyContinue)) {
+  Write-Host "Signing binaries with signtool..."
+  signtool.exe sign /sha1 $env:ICICLE_SIGN_CERT_SHA1 /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 icicle.exe
+  signtool.exe sign /sha1 $env:ICICLE_SIGN_CERT_SHA1 /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 icicle-desktop.exe
+}
+
 $dist = Join-Path (Get-Location) "dist"
 if (!(Test-Path $dist)) { New-Item -ItemType Directory -Path $dist | Out-Null }
 

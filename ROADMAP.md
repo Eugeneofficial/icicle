@@ -2,11 +2,11 @@
 
 ## v2.1 (Next)
 
-- [ ] Background full-scan with progressive partial results in GUI
-- [ ] Batch file actions (multi-select, queue, undo stack)
-- [ ] Duplicate finder v2 (hash mode + quick name mode)
-- [ ] Better watch reliability on protected/system folders
-- [ ] Signed binaries + release checksums
+- [x] Background full-scan with progressive partial results in GUI
+- [x] Batch file actions (multi-select, queue, undo stack)
+- [x] Duplicate finder v2 (hash mode + quick name mode)
+- [x] Better watch reliability on protected/system folders
+- [x] Signed binaries + release checksums
 
 ## v2.2
 

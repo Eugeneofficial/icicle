@@ -26,8 +26,8 @@ func main() {
 			os.Exit(1)
 		}
 		if !ok {
-			fmt.Fprintln(os.Stderr, "icicle desktop is already running")
-			os.Exit(1)
+			// Friendly UX for double-click: quietly exit if app is already open.
+			return
 		}
 		defer singleinstance.Release()
 	}

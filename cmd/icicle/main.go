@@ -20,6 +20,10 @@ func main() {
 			os.Exit(1)
 		}
 		if !ok {
+			if guiMode {
+				// Friendly UX for double-click: quietly exit if app is already open.
+				return
+			}
 			fmt.Fprintln(os.Stderr, "icicle is already running")
 			os.Exit(1)
 		}

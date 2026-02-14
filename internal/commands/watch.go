@@ -95,6 +95,7 @@ func runWatch(args []string) int {
 }
 
 func addRecursiveWatches(w *fsnotify.Watcher, root string) error {
+	warnCount := 0
 	return filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			if isWatchAccessDenied(err) {
@@ -117,9 +118,17 @@ func addRecursiveWatches(w *fsnotify.Watcher, root string) error {
 		if d.IsDir() {
 			if err := w.Add(path); err != nil {
 				if isWatchAccessDenied(err) {
+					if warnCount < 6 {
+						fmt.Fprintf(os.Stderr, "watch skip (access denied): %s\n", path)
+					}
+					warnCount++
 					return filepath.SkipDir
 				}
-				return err
+				if warnCount < 6 {
+					fmt.Fprintf(os.Stderr, "watch skip (%v): %s\n", err, path)
+				}
+				warnCount++
+				return filepath.SkipDir
 			}
 		}
 		return nil
@@ -131,7 +140,11 @@ func shouldSkipWatchDir(d os.DirEntry) bool {
 		return false
 	}
 	name := strings.ToLower(d.Name())
-	return name == "$recycle.bin" || name == "system volume information"
+	return name == "$recycle.bin" ||
+		name == "system volume information" ||
+		name == "$extend" ||
+		name == "windowsapps" ||
+		name == "msocache"
 }
 
 func isWatchAccessDenied(err error) bool {
@@ -203,7 +216,7 @@ func maybeMoveFile(home, srcPath string, dryRun bool) (bool, string) {
 		return true, fmt.Sprintf("[dry-run] %s -> %s", srcAbs, dstUnique)
 	}
 
-	if err := organize.MoveFile(srcAbs, dstUnique); err != nil {
+	if err := moveFileWithRetry(srcAbs, dstUnique); err != nil {
 		return true, fmt.Sprintf("move failed %s (%v)", srcAbs, err)
 	}
 
@@ -212,4 +225,24 @@ func maybeMoveFile(home, srcPath string, dryRun bool) (bool, string) {
 		return true, fmt.Sprintf("moved %s -> %s  [black-ice payload]", srcAbs, dstUnique)
 	}
 	return true, fmt.Sprintf("moved %s -> %s", srcAbs, dstUnique)
+}
+
+func moveFileWithRetry(src, dst string) error {
+	var last error
+	for i := 0; i < 5; i++ {
+		err := organize.MoveFile(src, dst)
+		if err == nil {
+			return nil
+		}
+		last = err
+		msg := strings.ToLower(err.Error())
+		if strings.Contains(msg, "being used by another process") ||
+			strings.Contains(msg, "access is denied") ||
+			strings.Contains(msg, "permission denied") {
+			time.Sleep(180 * time.Millisecond)
+			continue
+		}
+		return err
+	}
+	return last
 }

@@ -661,6 +661,8 @@ func Run(appPath string) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("Pragma", "no-cache")
+		w.Header().Set("Expires", "0")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		_, _ = io.WriteString(w, pageHTML)
 	})
@@ -1658,46 +1660,46 @@ const I18N = {
     konamiBtn: 'Konami Test', konamiTitle: 'Konami Unlocked', konamiSub: 'Congrats, you are old school.'
   },
   ru: {
-    pathLabel: 'Путь', topNLabel: 'Топ N',
-    refreshFolders: 'Обновить папки', saveCurrent: 'Сохранить текущую', useSelected: 'Использовать', removeSelected: 'Удалить из списка',
-    runTree: 'Построить дерево', runHeavy: 'Тяжёлые файлы', heavyActions: 'Действия по файлам', help: 'Справка',
-    showHeavyActions: 'Показать действия', hideHeavyActions: 'Скрыть действия',
-    undoMove: 'Отменить перенос',
-    startWatch: 'Старт слежения', stopWatch: 'Стоп слежения', dryRun: 'тестовый режим', clearLog: 'Очистить лог', exitApp: 'Выйти',
-    quickMove: 'Быстрый перенос в', size: 'Размер', file: 'Файл', actions: 'Действия',
-    systemStorage: 'Место на дисках', refreshStorage: 'Обновить диски',
-    diskUsePath: 'В путь', diskTree: 'Дерево', diskHeavy: 'Тяжёлые', diskOpen: 'Открыть',
-    diskSelected: 'Выбранный диск',
-    qHome: 'Домой', qDownloads: 'Загрузки', qDesktop: 'Рабочий стол', qDocuments: 'Документы', openPath: 'Открыть путь', analyzePath: 'Анализ',
-    applyFilter: 'Применить фильтр', clearFilter: 'Сбросить фильтр', refreshHeavy: 'Обновить тяжёлые',
-    selectAll: 'Выбрать все', clearSelection: 'Сброс выбора',
-    bulkAutoMove: 'Массовый авто перенос', bulkMoveTo: 'Массовый перенос в', bulkDelete: 'Массовое удаление',
-    exportCSV: 'Экспорт CSV', exportJSON: 'Экспорт JSON', copyPaths: 'Копировать пути',
-    autoRefreshOff: 'Автообновление: Выкл', autoRefreshOn: 'Автообновление: Вкл',
-    saveSnapshot: 'Сохранить снимок', compareSnapshot: 'Сравнить снимок',
-    cleanEmpty: 'Очистить пустые папки', extBreakdown: 'Разбор расширений', findDupes: 'Найти дубли', exportReport: 'Экспорт отчёта',
-    reveal: 'Показать',
-    autoMove: 'Авто перенос', moveTo: 'Перенести в', delete: 'Удалить',
-    noHeavy: 'Список ещё не загружен.', noSaved: '(нет сохранённых папок)',
-    unknown: 'Неизвестно',
-    errPathEmpty: '[ошибка] путь пустой\n', errMoveEmpty: '[ошибка] путь назначения пустой\n',
-    confirmDelete: 'Удалить файл навсегда?\n',
-    konamiBtn: 'Тест Konami', konamiTitle: 'Konami активирован', konamiSub: 'Поздравляем, ты олд.'
+    pathLabel: '\u041f\u0443\u0442\u044c', topNLabel: '\u0422\u043e\u043f N',
+    refreshFolders: '\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u043f\u0430\u043f\u043a\u0438', saveCurrent: '\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u0442\u0435\u043a\u0443\u0449\u0443\u044e', useSelected: '\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c', removeSelected: '\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0438\u0437 \u0441\u043f\u0438\u0441\u043a\u0430',
+    runTree: '\u041f\u043e\u0441\u0442\u0440\u043e\u0438\u0442\u044c \u0434\u0435\u0440\u0435\u0432\u043e', runHeavy: '\u0422\u044f\u0436\u0451\u043b\u044b\u0435 \u0444\u0430\u0439\u043b\u044b', heavyActions: '\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u044f \u043f\u043e \u0444\u0430\u0439\u043b\u0430\u043c', help: '\u0421\u043f\u0440\u0430\u0432\u043a\u0430',
+    showHeavyActions: '\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f', hideHeavyActions: '\u0421\u043a\u0440\u044b\u0442\u044c \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f',
+    undoMove: '\u041e\u0442\u043c\u0435\u043d\u0438\u0442\u044c \u043f\u0435\u0440\u0435\u043d\u043e\u0441',
+    startWatch: '\u0421\u0442\u0430\u0440\u0442 \u0441\u043b\u0435\u0436\u0435\u043d\u0438\u044f', stopWatch: '\u0421\u0442\u043e\u043f \u0441\u043b\u0435\u0436\u0435\u043d\u0438\u044f', dryRun: '\u0442\u0435\u0441\u0442\u043e\u0432\u044b\u0439 \u0440\u0435\u0436\u0438\u043c', clearLog: '\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u043b\u043e\u0433', exitApp: '\u0412\u044b\u0439\u0442\u0438',
+    quickMove: '\u0411\u044b\u0441\u0442\u0440\u044b\u0439 \u043f\u0435\u0440\u0435\u043d\u043e\u0441 \u0432', size: '\u0420\u0430\u0437\u043c\u0435\u0440', file: '\u0424\u0430\u0439\u043b', actions: '\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u044f',
+    systemStorage: '\u041c\u0435\u0441\u0442\u043e \u043d\u0430 \u0434\u0438\u0441\u043a\u0430\u0445', refreshStorage: '\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0434\u0438\u0441\u043a\u0438',
+    diskUsePath: '\u0412 \u043f\u0443\u0442\u044c', diskTree: '\u0414\u0435\u0440\u0435\u0432\u043e', diskHeavy: '\u0422\u044f\u0436\u0451\u043b\u044b\u0435', diskOpen: '\u041e\u0442\u043a\u0440\u044b\u0442\u044c',
+    diskSelected: '\u0412\u044b\u0431\u0440\u0430\u043d\u043d\u044b\u0439 \u0434\u0438\u0441\u043a',
+    qHome: '\u0414\u043e\u043c\u043e\u0439', qDownloads: '\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0438', qDesktop: '\u0420\u0430\u0431\u043e\u0447\u0438\u0439 \u0441\u0442\u043e\u043b', qDocuments: '\u0414\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u044b', openPath: '\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u043f\u0443\u0442\u044c', analyzePath: '\u0410\u043d\u0430\u043b\u0438\u0437',
+    applyFilter: '\u041f\u0440\u0438\u043c\u0435\u043d\u0438\u0442\u044c \u0444\u0438\u043b\u044c\u0442\u0440', clearFilter: '\u0421\u0431\u0440\u043e\u0441\u0438\u0442\u044c \u0444\u0438\u043b\u044c\u0442\u0440', refreshHeavy: '\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0442\u044f\u0436\u0451\u043b\u044b\u0435',
+    selectAll: '\u0412\u044b\u0431\u0440\u0430\u0442\u044c \u0432\u0441\u0435', clearSelection: '\u0421\u0431\u0440\u043e\u0441 \u0432\u044b\u0431\u043e\u0440\u0430',
+    bulkAutoMove: '\u041c\u0430\u0441\u0441\u043e\u0432\u044b\u0439 \u0430\u0432\u0442\u043e \u043f\u0435\u0440\u0435\u043d\u043e\u0441', bulkMoveTo: '\u041c\u0430\u0441\u0441\u043e\u0432\u044b\u0439 \u043f\u0435\u0440\u0435\u043d\u043e\u0441 \u0432', bulkDelete: '\u041c\u0430\u0441\u0441\u043e\u0432\u043e\u0435 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u0435',
+    exportCSV: '\u042d\u043a\u0441\u043f\u043e\u0440\u0442 CSV', exportJSON: '\u042d\u043a\u0441\u043f\u043e\u0440\u0442 JSON', copyPaths: '\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043f\u0443\u0442\u0438',
+    autoRefreshOff: '\u0410\u0432\u0442\u043e\u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435: \u0412\u044b\u043a\u043b', autoRefreshOn: '\u0410\u0432\u0442\u043e\u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435: \u0412\u043a\u043b',
+    saveSnapshot: '\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u0441\u043d\u0438\u043c\u043e\u043a', compareSnapshot: '\u0421\u0440\u0430\u0432\u043d\u0438\u0442\u044c \u0441\u043d\u0438\u043c\u043e\u043a',
+    cleanEmpty: '\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u043f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438', extBreakdown: '\u0420\u0430\u0437\u0431\u043e\u0440 \u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043d\u0438\u0439', findDupes: '\u041d\u0430\u0439\u0442\u0438 \u0434\u0443\u0431\u043b\u0438', exportReport: '\u042d\u043a\u0441\u043f\u043e\u0440\u0442 \u043e\u0442\u0447\u0451\u0442\u0430',
+    reveal: '\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c',
+    autoMove: '\u0410\u0432\u0442\u043e \u043f\u0435\u0440\u0435\u043d\u043e\u0441', moveTo: '\u041f\u0435\u0440\u0435\u043d\u0435\u0441\u0442\u0438 \u0432', delete: '\u0423\u0434\u0430\u043b\u0438\u0442\u044c',
+    noHeavy: '\u0421\u043f\u0438\u0441\u043e\u043a \u0435\u0449\u0451 \u043d\u0435 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043d.', noSaved: '(\u043d\u0435\u0442 \u0441\u043e\u0445\u0440\u0430\u043d\u0451\u043d\u043d\u044b\u0445 \u043f\u0430\u043f\u043e\u043a)',
+    unknown: '\u041d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u043e',
+    errPathEmpty: '[\u043e\u0448\u0438\u0431\u043a\u0430] \u043f\u0443\u0442\u044c \u043f\u0443\u0441\u0442\u043e\u0439\n', errMoveEmpty: '[\u043e\u0448\u0438\u0431\u043a\u0430] \u043f\u0443\u0442\u044c \u043d\u0430\u0437\u043d\u0430\u0447\u0435\u043d\u0438\u044f \u043f\u0443\u0441\u0442\u043e\u0439\n',
+    confirmDelete: '\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0444\u0430\u0439\u043b \u043d\u0430\u0432\u0441\u0435\u0433\u0434\u0430?\n',
+    konamiBtn: '\u0422\u0435\u0441\u0442 Konami', konamiTitle: 'Konami \u0430\u043a\u0442\u0438\u0432\u0438\u0440\u043e\u0432\u0430\u043d', konamiSub: '\u041f\u043e\u0437\u0434\u0440\u0430\u0432\u043b\u044f\u0435\u043c, \u0442\u044b \u043e\u043b\u0434.'
   }
 };
 Object.assign(I18N.ru || {}, {
-  browse: 'Выбрать',
-  storageCollapse: 'Свернуть',
-  storageExpand: 'Развернуть',
-  storageUsed: 'занято',
-  storageOverall: 'всего',
-  totalLabel: 'всего',
-  fastScan: 'Быстрое сканирование',
-  safeDelete: 'Безопасное удаление (Корзина)',
-  heavyIdle: 'ожидание',
-  heavyCached: 'из кэша',
-  heavyScanned: 'просканировано',
-  selectedLabel: 'выбрано',
+  browse: '\u0412\u044b\u0431\u0440\u0430\u0442\u044c',
+  storageCollapse: '\u0421\u0432\u0435\u0440\u043d\u0443\u0442\u044c',
+  storageExpand: '\u0420\u0430\u0437\u0432\u0435\u0440\u043d\u0443\u0442\u044c',
+  storageUsed: '\u0437\u0430\u043d\u044f\u0442\u043e',
+  storageOverall: '\u0432\u0441\u0435\u0433\u043e',
+  totalLabel: '\u0432\u0441\u0435\u0433\u043e',
+  fastScan: '\u0411\u044b\u0441\u0442\u0440\u043e\u0435 \u0441\u043a\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435',
+  safeDelete: '\u0411\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0435 \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u0435 (\u041a\u043e\u0440\u0437\u0438\u043d\u0430)',
+  heavyIdle: '\u043e\u0436\u0438\u0434\u0430\u043d\u0438\u0435',
+  heavyCached: '\u0438\u0437 \u043a\u044d\u0448\u0430',
+  heavyScanned: '\u043f\u0440\u043e\u0441\u043a\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u043e',
+  selectedLabel: '\u0432\u044b\u0431\u0440\u0430\u043d\u043e',
 });
 const logEl = document.getElementById('log');
 const pathEl = document.getElementById('path');
@@ -1748,14 +1750,14 @@ function applyLang(){
   document.documentElement.lang = lang === 'ru' ? 'ru' : 'en';
   const nodes = document.querySelectorAll('[data-i18n]');
   for(const n of nodes){ n.textContent = t(n.getAttribute('data-i18n')); }
-  if(heavySearchEl){ heavySearchEl.placeholder = lang === 'ru' ? 'фильтр по имени/пути' : 'filter by name/path'; }
-  if(minSizeMBEl){ minSizeMBEl.title = lang === 'ru' ? 'Мин. размер (MB)' : 'Min size MB'; }
-  if(maxFilesEl){ maxFilesEl.title = lang === 'ru' ? 'Макс. файлов для fast scan' : 'Max files for fast scan'; }
+  if(heavySearchEl){ heavySearchEl.placeholder = lang === 'ru' ? '\u0444\u0438\u043b\u044c\u0442\u0440 \u043f\u043e \u0438\u043c\u0435\u043d\u0438/\u043f\u0443\u0442\u0438' : 'filter by name/path'; }
+  if(minSizeMBEl){ minSizeMBEl.title = lang === 'ru' ? '\u041c\u0438\u043d. \u0440\u0430\u0437\u043c\u0435\u0440 (MB)' : 'Min size MB'; }
+  if(maxFilesEl){ maxFilesEl.title = lang === 'ru' ? '\u041c\u0430\u043a\u0441. \u0444\u0430\u0439\u043b\u043e\u0432 \u0434\u043b\u044f fast scan' : 'Max files for fast scan'; }
   const moveDestEl = document.getElementById('moveDest');
-  if(moveDestEl){ moveDestEl.placeholder = lang === 'ru' ? 'C:\\\\Users\\\\you\\\\Desktop\\\\temp (необязательно)' : 'C:\\\\Users\\\\you\\\\Desktop\\\\temp (optional)'; }
+  if(moveDestEl){ moveDestEl.placeholder = lang === 'ru' ? 'C:\\\\Users\\\\you\\\\Desktop\\\\temp (\u043d\u0435\u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u043e)' : 'C:\\\\Users\\\\you\\\\Desktop\\\\temp (optional)'; }
   if(sortModeEl){
     const labels = lang === 'ru'
-      ? ['размер ↓','размер ↑','имя A-Z','имя Z-A']
+      ? ['\u0440\u0430\u0437\u043c\u0435\u0440 \u2193','\u0440\u0430\u0437\u043c\u0435\u0440 \u2191','\u0438\u043c\u044f A-Z','\u0438\u043c\u044f Z-A']
       : ['size desc','size asc','name a-z','name z-a'];
     for(let i=0;i<sortModeEl.options.length && i<labels.length;i++){ sortModeEl.options[i].text = labels[i]; }
   }

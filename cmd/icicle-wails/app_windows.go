@@ -5,9 +5,12 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/sha1"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -51,6 +54,14 @@ type ExtStat struct {
 type DupStat struct {
 	Name  string   `json:"name"`
 	Count int      `json:"count"`
+	Paths []string `json:"paths"`
+}
+
+type DupV2Group struct {
+	Key   string   `json:"key"`
+	Count int      `json:"count"`
+	Total int64    `json:"total"`
+	Human string   `json:"human"`
 	Paths []string `json:"paths"`
 }
 
@@ -98,6 +109,34 @@ type App struct {
 	saved   []string
 	moves   []moveRecord
 	tray    *trayBridge
+
+	fullScan struct {
+		Running    bool
+		Done       bool
+		Path       string
+		Seen       int
+		DurationMS int64
+		Items      []HeavyItem
+		Err        string
+	}
+	fullCancel context.CancelFunc
+}
+
+type HeavyFullProgress struct {
+	Running    bool        `json:"running"`
+	Done       bool        `json:"done"`
+	Path       string      `json:"path"`
+	Seen       int         `json:"seen"`
+	DurationMS int64       `json:"durationMs"`
+	Items      []HeavyItem `json:"items"`
+	Error      string      `json:"error"`
+}
+
+type BatchResult struct {
+	Processed int      `json:"processed"`
+	Succeeded int      `json:"succeeded"`
+	Failed    int      `json:"failed"`
+	Errors    []string `json:"errors"`
 }
 
 func NewApp(appPath string) *App {
@@ -287,6 +326,142 @@ func (a *App) RunHeavyFast(path string, n int, maxFiles int, workers int) (Heavy
 	}
 	a.appendLog(fmt.Sprintf("> heavy --n %d %s [seen=%d limited=%v ms=%d]", n, path, out.Seen, out.Limited, out.DurationMS))
 	return out, nil
+}
+
+func (a *App) StartHeavyFullScan(path string, n int) error {
+	path = a.normalizePath(path, a.folders.Home)
+	if n <= 0 {
+		n = 20
+	}
+
+	a.mu.Lock()
+	if a.fullScan.Running {
+		a.mu.Unlock()
+		return fmt.Errorf("full scan is already running")
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	a.fullCancel = cancel
+	a.fullScan = struct {
+		Running    bool
+		Done       bool
+		Path       string
+		Seen       int
+		DurationMS int64
+		Items      []HeavyItem
+		Err        string
+	}{
+		Running: true,
+		Done:    false,
+		Path:    path,
+	}
+	a.mu.Unlock()
+
+	started := time.Now()
+	go func() {
+		top := scan.NewTopFiles(n)
+		seen := 0
+		lastPush := time.Now()
+		push := func(done bool, errText string) {
+			list := top.ListDesc()
+			items := make([]HeavyItem, 0, len(list))
+			for _, f := range list {
+				items = append(items, HeavyItem{Path: f.Path, Size: f.Size, Human: ui.HumanBytes(f.Size)})
+			}
+			a.mu.Lock()
+			a.fullScan.Running = !done
+			a.fullScan.Done = done
+			a.fullScan.Path = path
+			a.fullScan.Seen = seen
+			a.fullScan.DurationMS = time.Since(started).Milliseconds()
+			a.fullScan.Items = items
+			a.fullScan.Err = errText
+			a.mu.Unlock()
+		}
+
+		stopErr := fmt.Errorf("full scan cancelled")
+		err := filepath.WalkDir(path, func(p string, d fs.DirEntry, err error) error {
+			select {
+			case <-ctx.Done():
+				return stopErr
+			default:
+			}
+			if err != nil {
+				if isDeniedError(err) {
+					if d != nil && d.IsDir() {
+						return filepath.SkipDir
+					}
+					return nil
+				}
+				return nil
+			}
+			if d != nil {
+				if d.IsDir() && shouldSkipDirName(strings.ToLower(d.Name())) {
+					return filepath.SkipDir
+				}
+				if d.Type()&os.ModeSymlink != 0 {
+					if d.IsDir() {
+						return filepath.SkipDir
+					}
+					return nil
+				}
+				if d.IsDir() {
+					return nil
+				}
+				info, ierr := d.Info()
+				if ierr != nil {
+					return nil
+				}
+				top.Push(scan.FileInfo{Path: p, Size: info.Size()})
+				seen++
+				if seen%400 == 0 || time.Since(lastPush) > 300*time.Millisecond {
+					push(false, "")
+					lastPush = time.Now()
+				}
+			}
+			return nil
+		})
+		if err != nil && err != stopErr {
+			push(true, err.Error())
+			a.appendLog("[full-heavy] failed: " + err.Error())
+			return
+		}
+		if err == stopErr {
+			push(true, "cancelled")
+			a.appendLog("[full-heavy] cancelled")
+			return
+		}
+		push(true, "")
+		a.appendLog(fmt.Sprintf("[full-heavy] done: seen=%d ms=%d", seen, time.Since(started).Milliseconds()))
+	}()
+	return nil
+}
+
+func (a *App) CancelHeavyFullScan() {
+	a.mu.Lock()
+	cancel := a.fullCancel
+	a.fullCancel = nil
+	a.mu.Unlock()
+	if cancel != nil {
+		cancel()
+	}
+}
+
+func (a *App) GetHeavyFullProgress() HeavyFullProgress {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	out := HeavyFullProgress{
+		Running:    a.fullScan.Running,
+		Done:       a.fullScan.Done,
+		Path:       a.fullScan.Path,
+		Seen:       a.fullScan.Seen,
+		DurationMS: a.fullScan.DurationMS,
+		Error:      a.fullScan.Err,
+	}
+	if len(a.fullScan.Items) > 0 {
+		out.Items = make([]HeavyItem, len(a.fullScan.Items))
+		copy(out.Items, a.fullScan.Items)
+	}
+	return out
 }
 
 func (a *App) ExportHeavy(path string, n int, format string) (string, error) {
@@ -594,6 +769,48 @@ func (a *App) DeleteFile(path string, safe bool) error {
 	return nil
 }
 
+func (a *App) BatchMove(paths []string, dstDir string, auto bool) BatchResult {
+	res := BatchResult{Processed: len(paths)}
+	for _, p := range paths {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		dest := dstDir
+		if auto {
+			dest = ""
+		}
+		if _, err := a.MoveFile(p, dest); err != nil {
+			res.Failed++
+			if len(res.Errors) < 20 {
+				res.Errors = append(res.Errors, fmt.Sprintf("%s: %v", p, err))
+			}
+			continue
+		}
+		res.Succeeded++
+	}
+	return res
+}
+
+func (a *App) BatchDelete(paths []string, safe bool) BatchResult {
+	res := BatchResult{Processed: len(paths)}
+	for _, p := range paths {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		if err := a.DeleteFile(p, safe); err != nil {
+			res.Failed++
+			if len(res.Errors) < 20 {
+				res.Errors = append(res.Errors, fmt.Sprintf("%s: %v", p, err))
+			}
+			continue
+		}
+		res.Succeeded++
+	}
+	return res
+}
+
 func (a *App) UndoMove() (string, error) {
 	rec, ok := a.peekMove()
 	if !ok {
@@ -654,6 +871,100 @@ func (a *App) CleanEmpty(path string) (int, error) {
 	return removed, nil
 }
 
+func (a *App) FindEmptyDirs(path string, limit int) ([]string, error) {
+	path = a.normalizePath(path, a.folders.Home)
+	if limit <= 0 {
+		limit = 5000
+	}
+	dirs := make([]string, 0, 128)
+	err := filepath.WalkDir(path, func(p string, d os.DirEntry, err error) error {
+		if err != nil {
+			if isDeniedError(err) {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !d.IsDir() {
+			return nil
+		}
+		if strings.EqualFold(filepath.Clean(p), filepath.Clean(path)) {
+			return nil
+		}
+		if shouldSkipDirName(d.Name()) {
+			return filepath.SkipDir
+		}
+		entries, rerr := os.ReadDir(p)
+		if rerr != nil {
+			if isDeniedError(rerr) {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if len(entries) == 0 {
+			dirs = append(dirs, p)
+			if len(dirs) >= limit {
+				return fmt.Errorf("limit reached")
+			}
+		}
+		return nil
+	})
+	if err != nil && err.Error() != "limit reached" {
+		return nil, err
+	}
+	sort.Slice(dirs, func(i, j int) bool { return len(dirs[i]) > len(dirs[j]) })
+	return dirs, nil
+}
+
+func (a *App) DeleteEmptyDirsToRecycle(paths []string) BatchResult {
+	res := BatchResult{Processed: len(paths)}
+	for _, p := range paths {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		info, err := os.Stat(p)
+		if err != nil {
+			res.Failed++
+			if len(res.Errors) < 20 {
+				res.Errors = append(res.Errors, fmt.Sprintf("%s: %v", p, err))
+			}
+			continue
+		}
+		if !info.IsDir() {
+			res.Failed++
+			if len(res.Errors) < 20 {
+				res.Errors = append(res.Errors, fmt.Sprintf("%s: not a directory", p))
+			}
+			continue
+		}
+		entries, err := os.ReadDir(p)
+		if err != nil {
+			res.Failed++
+			if len(res.Errors) < 20 {
+				res.Errors = append(res.Errors, fmt.Sprintf("%s: %v", p, err))
+			}
+			continue
+		}
+		if len(entries) != 0 {
+			res.Failed++
+			if len(res.Errors) < 20 {
+				res.Errors = append(res.Errors, fmt.Sprintf("%s: no longer empty", p))
+			}
+			continue
+		}
+		if err := deleteDirToRecycleBin(p); err != nil {
+			res.Failed++
+			if len(res.Errors) < 20 {
+				res.Errors = append(res.Errors, fmt.Sprintf("%s: %v", p, err))
+			}
+			continue
+		}
+		res.Succeeded++
+	}
+	a.appendLog(fmt.Sprintf("[empty-dirs] moved to recycle: %d/%d", res.Succeeded, res.Processed))
+	return res
+}
+
 func (a *App) ExtensionStats(path string, limit int) ([]ExtStat, error) {
 	path = a.normalizePath(path, a.folders.Home)
 	byExt := map[string]ExtStat{}
@@ -707,6 +1018,99 @@ func (a *App) DuplicateNames(path string, maxFiles int, top int) ([]DupStat, err
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Count > out[j].Count })
 	if top > 0 && len(out) > top {
+		out = out[:top]
+	}
+	return out, nil
+}
+
+func (a *App) DuplicateFinderV2(path string, mode string, maxFiles int, top int) ([]DupV2Group, error) {
+	path = a.normalizePath(path, a.folders.Home)
+	mode = strings.ToLower(strings.TrimSpace(mode))
+	if mode == "" {
+		mode = "quick-name"
+	}
+	if maxFiles <= 0 {
+		maxFiles = 70000
+	}
+	if top <= 0 {
+		top = 20
+	}
+
+	type entry struct {
+		Path string
+		Size int64
+		Name string
+	}
+	files := make([]entry, 0, 4096)
+	count := 0
+	err := scan.WalkAll(path, func(p string, size int64) {
+		count++
+		if count > maxFiles {
+			return
+		}
+		files = append(files, entry{
+			Path: p,
+			Size: size,
+			Name: strings.ToLower(filepath.Base(p)),
+		})
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	groups := map[string][]entry{}
+	switch mode {
+	case "hash":
+		bySize := map[int64][]entry{}
+		for _, f := range files {
+			bySize[f.Size] = append(bySize[f.Size], f)
+		}
+		for size, bucket := range bySize {
+			if len(bucket) < 2 {
+				continue
+			}
+			for _, f := range bucket {
+				h, herr := hashFileQuick(f.Path)
+				if herr != nil {
+					continue
+				}
+				key := fmt.Sprintf("hash:%d:%s", size, h)
+				groups[key] = append(groups[key], f)
+			}
+		}
+	default:
+		for _, f := range files {
+			key := "name:" + f.Name
+			groups[key] = append(groups[key], f)
+		}
+	}
+
+	out := make([]DupV2Group, 0, len(groups))
+	for key, bucket := range groups {
+		if len(bucket) < 2 {
+			continue
+		}
+		total := int64(0)
+		paths := make([]string, 0, len(bucket))
+		for _, e := range bucket {
+			total += e.Size
+			paths = append(paths, e.Path)
+		}
+		out = append(out, DupV2Group{
+			Key:   key,
+			Count: len(bucket),
+			Total: total,
+			Human: ui.HumanBytes(total),
+			Paths: paths,
+		})
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Count == out[j].Count {
+			return out[i].Total > out[j].Total
+		}
+		return out[i].Count > out[j].Count
+	})
+	if len(out) > top {
 		out = out[:top]
 	}
 	return out, nil
@@ -904,6 +1308,15 @@ func deleteToRecycleBin(path string) error {
 	return nil
 }
 
+func deleteDirToRecycleBin(path string) error {
+	script := `Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory($args[0], [Microsoft.VisualBasic.FileIO.UIOption]::OnlyErrorDialogs, [Microsoft.VisualBasic.FileIO.RecycleOption]::SendToRecycleBin)`
+	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", script, path)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("%v: %s", err, string(out))
+	}
+	return nil
+}
+
 func pickFolderDialog() (string, error) {
 	script := `
 Add-Type -AssemblyName System.Windows.Forms
@@ -987,4 +1400,38 @@ func detectFolderKind(path string) string {
 		return "Workspace Folder"
 	}
 	return maxKind
+}
+
+func isDeniedError(err error) bool {
+	if os.IsPermission(err) || errors.Is(err, fs.ErrPermission) {
+		return true
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "access is denied") || strings.Contains(msg, "permission denied")
+}
+
+func shouldSkipDirName(name string) bool {
+	name = strings.ToLower(strings.TrimSpace(name))
+	switch name {
+	case "$recycle.bin", "system volume information", "windowsapps", "$winreagent", "$extend":
+		return true
+	default:
+		return false
+	}
+}
+
+func hashFileQuick(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	h := sha1.New()
+	buf := make([]byte, 1024*1024)
+	n, err := io.ReadFull(f, buf)
+	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+		return "", err
+	}
+	_, _ = h.Write(buf[:n])
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
