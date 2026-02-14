@@ -206,6 +206,16 @@ type ExtStatsItem struct {
 	Size  int64
 }
 
+type OverviewStats struct {
+	Root     string
+	Total    int64
+	Seen     int
+	Limited  bool
+	ByChild  map[string]int64
+	TopFiles []FileInfo
+	ExtStats []ExtStatsItem
+}
+
 func walkFilesConcurrent(root string, maxFiles int, onFile func(path string, size int64)) (int, bool, error) {
 	root = filepath.Clean(root)
 	workers := scanWorkers()
@@ -485,4 +495,66 @@ func ScanExtStatsLimited(root string, maxFiles int) ([]ExtStatsItem, int, bool, 
 		return out[i].Size > out[j].Size
 	})
 	return out, seen, limited, nil
+}
+
+func ScanOverviewLimited(root string, maxFiles int, topFilesN int, topExtN int) (*OverviewStats, error) {
+	root = filepath.Clean(root)
+	stats := &OverviewStats{
+		Root:    root,
+		ByChild: map[string]int64{},
+	}
+	top := NewTopFiles(topFilesN)
+	extMap := map[string]ExtStatsItem{}
+	rootPrefix := root
+	if !strings.HasSuffix(rootPrefix, string(filepath.Separator)) {
+		rootPrefix += string(filepath.Separator)
+	}
+
+	var mu sync.Mutex
+	seen, limited, err := walkFilesConcurrent(root, maxFiles, func(path string, size int64) {
+		ext := strings.ToLower(filepath.Ext(path))
+		if ext == "" {
+			ext = "(no_ext)"
+		}
+		rel := path
+		if strings.HasPrefix(path, rootPrefix) {
+			rel = path[len(rootPrefix):]
+		}
+		child := "(root)"
+		if idx := strings.IndexAny(rel, `\/`); idx > 0 {
+			child = rel[:idx]
+		}
+
+		mu.Lock()
+		stats.Total += size
+		stats.ByChild[child] += size
+		top.Push(FileInfo{Path: path, Size: size})
+		cur := extMap[ext]
+		cur.Ext = ext
+		cur.Count++
+		cur.Size += size
+		extMap[ext] = cur
+		mu.Unlock()
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	stats.Seen = seen
+	stats.Limited = limited
+	stats.TopFiles = top.ListDesc()
+	stats.ExtStats = make([]ExtStatsItem, 0, len(extMap))
+	for _, v := range extMap {
+		stats.ExtStats = append(stats.ExtStats, v)
+	}
+	sort.Slice(stats.ExtStats, func(i, j int) bool {
+		if stats.ExtStats[i].Size == stats.ExtStats[j].Size {
+			return stats.ExtStats[i].Count > stats.ExtStats[j].Count
+		}
+		return stats.ExtStats[i].Size > stats.ExtStats[j].Size
+	})
+	if topExtN > 0 && len(stats.ExtStats) > topExtN {
+		stats.ExtStats = stats.ExtStats[:topExtN]
+	}
+	return stats, nil
 }

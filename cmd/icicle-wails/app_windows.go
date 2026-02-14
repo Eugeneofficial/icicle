@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	goruntime "runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -148,6 +149,25 @@ type ExtStatsResult struct {
 	Seen       int       `json:"seen"`
 	Limited    bool      `json:"limited"`
 	DurationMS int64     `json:"durationMs"`
+}
+
+type VizRect struct {
+	Name  string `json:"name"`
+	Path  string `json:"path"`
+	Kind  string `json:"kind"`
+	Size  int64  `json:"size"`
+	Human string `json:"human"`
+}
+
+type WizMapResult struct {
+	Path       string    `json:"path"`
+	Total      int64     `json:"total"`
+	TotalHuman string    `json:"totalHuman"`
+	Seen       int       `json:"seen"`
+	Limited    bool      `json:"limited"`
+	DurationMS int64     `json:"durationMs"`
+	Rects      []VizRect `json:"rects"`
+	Ext        []ExtStat `json:"ext"`
 }
 
 type SnapshotInfo struct {
@@ -1444,6 +1464,123 @@ func (a *App) ExtensionStatsFast(path string, limit int, maxFiles int, workers i
 	}
 	a.appendLog(fmt.Sprintf("[extensions-fast] %s seen=%d limited=%v ms=%d", path, res.Seen, res.Limited, res.DurationMS))
 	return res, nil
+}
+
+func (a *App) WizMap(path string, maxFiles int, workers int, topDirs int, topFiles int, topExt int) (WizMapResult, error) {
+	path = a.normalizePath(path, a.folders.Home)
+	if maxFiles < 0 {
+		maxFiles = 0
+	}
+	if topDirs <= 0 {
+		topDirs = 24
+	}
+	if topFiles <= 0 {
+		topFiles = 80
+	}
+	if topExt <= 0 {
+		topExt = 30
+	}
+	started := time.Now()
+	a.scanMu.Lock()
+	prevWorkers, hadWorkers := os.LookupEnv("ICICLE_SCAN_WORKERS")
+	if workers > 0 {
+		_ = os.Setenv("ICICLE_SCAN_WORKERS", strconv.Itoa(workers))
+	}
+	stats, err := scan.ScanOverviewLimited(path, maxFiles, topFiles, topExt)
+	if workers > 0 {
+		if hadWorkers {
+			_ = os.Setenv("ICICLE_SCAN_WORKERS", prevWorkers)
+		} else {
+			_ = os.Unsetenv("ICICLE_SCAN_WORKERS")
+		}
+	}
+	a.scanMu.Unlock()
+	if err != nil {
+		return WizMapResult{}, err
+	}
+
+	type kv struct {
+		Name string
+		Size int64
+	}
+	children := make([]kv, 0, len(stats.ByChild))
+	for name, size := range stats.ByChild {
+		children = append(children, kv{Name: name, Size: size})
+	}
+	sort.Slice(children, func(i, j int) bool { return children[i].Size > children[j].Size })
+	if len(children) > topDirs {
+		children = children[:topDirs]
+	}
+
+	rects := make([]VizRect, 0, len(children)+len(stats.TopFiles))
+	for _, c := range children {
+		full := filepath.Join(path, c.Name)
+		if c.Name == "(root)" {
+			full = path
+		}
+		rects = append(rects, VizRect{
+			Name:  c.Name,
+			Path:  full,
+			Kind:  "dir",
+			Size:  c.Size,
+			Human: ui.HumanBytes(c.Size),
+		})
+	}
+	for _, f := range stats.TopFiles {
+		rects = append(rects, VizRect{
+			Name:  filepath.Base(f.Path),
+			Path:  f.Path,
+			Kind:  "file",
+			Size:  f.Size,
+			Human: ui.HumanBytes(f.Size),
+		})
+	}
+
+	ext := make([]ExtStat, 0, len(stats.ExtStats))
+	for _, e := range stats.ExtStats {
+		ext = append(ext, ExtStat{
+			Ext:   e.Ext,
+			Count: e.Count,
+			Size:  e.Size,
+			Human: ui.HumanBytes(e.Size),
+		})
+	}
+	res := WizMapResult{
+		Path:       path,
+		Total:      stats.Total,
+		TotalHuman: ui.HumanBytes(stats.Total),
+		Seen:       stats.Seen,
+		Limited:    stats.Limited,
+		DurationMS: time.Since(started).Milliseconds(),
+		Rects:      rects,
+		Ext:        ext,
+	}
+	a.appendLog(fmt.Sprintf("[wizmap] %s seen=%d limited=%v ms=%d", path, res.Seen, res.Limited, res.DurationMS))
+	return res, nil
+}
+
+func (a *App) WizMapTurbo(path string, maxFiles int, topDirs int, topFiles int, topExt int) (WizMapResult, error) {
+	if topDirs <= 0 {
+		topDirs = 32
+	}
+	if topFiles <= 0 {
+		topFiles = 120
+	}
+	if topExt <= 0 {
+		topExt = 40
+	}
+	workers := goruntime.NumCPU() * 4
+	if workers < 24 {
+		workers = 24
+	}
+	if workers > 128 {
+		workers = 128
+	}
+	res, err := a.WizMap(path, maxFiles, workers, topDirs, topFiles, topExt)
+	if err == nil {
+		a.appendLog(fmt.Sprintf("[wizmap-turbo] workers=%d seen=%d limited=%v", workers, res.Seen, res.Limited))
+	}
+	return res, err
 }
 
 func (a *App) DuplicateNames(path string, maxFiles int, top int) ([]DupStat, error) {

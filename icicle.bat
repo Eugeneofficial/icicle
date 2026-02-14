@@ -17,7 +17,23 @@ if "%~1"=="" (
     set "EXITCODE=%errorlevel%"
     goto :end
   )
-  set "ARGS=gui"
+  where go >nul 2>nul
+  if not errorlevel 1 (
+    pushd "%ROOT%" >nul
+    echo [icicle] desktop binary not found, building icicle-desktop.exe...
+    go build -tags "wails,production" -o icicle-desktop.exe ./cmd/icicle-wails
+    set "CODE=%errorlevel%"
+    popd >nul
+    if "%CODE%"=="0" (
+      "%DESKTOP_BIN%"
+      set "EXITCODE=%errorlevel%"
+      goto :end
+    )
+  )
+  echo [icicle] desktop GUI build failed. Run:
+  echo go build -tags "wails,production" -o icicle-desktop.exe ./cmd/icicle-wails
+  set "EXITCODE=1"
+  goto :end
 )
 
 if exist "%LAUNCHER_CFG%" (

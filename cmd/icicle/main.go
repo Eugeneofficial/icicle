@@ -7,7 +7,6 @@ import (
 
 	"fmt"
 	"icicle/internal/commands"
-	"icicle/internal/gui"
 	"icicle/internal/singleinstance"
 )
 
@@ -31,24 +30,40 @@ func main() {
 	}
 
 	if guiMode {
-		// If desktop build exists, use it instead of browser GUI.
 		if exePath, err := os.Executable(); err == nil {
 			desktopExe := filepath.Join(filepath.Dir(exePath), "icicle-desktop.exe")
-			if _, err := os.Stat(desktopExe); err == nil {
-				cmd := exec.Command(desktopExe)
-				cmd.Dir = filepath.Dir(desktopExe)
-				cmd.Env = append(os.Environ(), "ICICLE_ALLOW_MULTI=1")
-				if err := cmd.Start(); err == nil {
-					return
-				}
+			if launchDesktop(desktopExe) == nil {
+				return
+			}
+			if tryBuildDesktop(filepath.Dir(exePath), desktopExe) == nil && launchDesktop(desktopExe) == nil {
+				return
 			}
 		}
-		if err := gui.Run(os.Args[0]); err == nil {
-			return
-		} else {
-			fmt.Fprintf(os.Stderr, "GUI start failed: %v\n", err)
-			os.Exit(1)
-		}
+		fmt.Fprintln(os.Stderr, "desktop GUI not found. Build with: go build -tags \"wails,production\" -o icicle-desktop.exe ./cmd/icicle-wails")
+		os.Exit(1)
 	}
 	os.Exit(commands.Run(os.Args))
+}
+
+func launchDesktop(desktopExe string) error {
+	if _, err := os.Stat(desktopExe); err != nil {
+		return err
+	}
+	cmd := exec.Command(desktopExe)
+	cmd.Dir = filepath.Dir(desktopExe)
+	cmd.Env = append(os.Environ(), "ICICLE_ALLOW_MULTI=1")
+	return cmd.Start()
+}
+
+func tryBuildDesktop(rootDir, desktopExe string) error {
+	if _, err := os.Stat(filepath.Join(rootDir, "cmd", "icicle-wails", "main_windows.go")); err != nil {
+		return err
+	}
+	if _, err := exec.LookPath("go"); err != nil {
+		return err
+	}
+	cmd := exec.Command("go", "build", "-tags", "wails,production", "-o", desktopExe, "./cmd/icicle-wails")
+	cmd.Dir = rootDir
+	cmd.Env = append(os.Environ(), "GOFLAGS=-trimpath -buildvcs=false")
+	return cmd.Run()
 }

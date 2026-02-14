@@ -15,12 +15,26 @@
     select, select option, select optgroup{background:var(--surface);color:var(--text)}
     input,select{width:100%} button{cursor:pointer}.primary{background:linear-gradient(180deg,var(--accent),var(--accent-2));border-color:transparent;color:#fff}.danger{background:var(--danger);border-color:transparent;color:#fff}
     .tiny{font-size:12px;color:var(--muted)} .right{display:grid;grid-template-rows:auto 1fr;gap:14px}
-    .toolbar{padding:12px;display:grid;grid-template-columns:1fr auto auto auto auto;gap:8px}
+    .toolbar{padding:12px;display:grid;grid-template-columns:1fr auto auto auto auto auto;gap:8px}
     .drives{display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:10px;padding:12px}
     .drive{border:1px solid var(--line);border-radius:12px;padding:10px}.bar{height:8px;background:#293247;border-radius:99px;overflow:hidden;margin-top:8px}.fill{height:100%;background:linear-gradient(90deg,var(--accent),#6cb6ff)}
-    .content{display:grid;grid-template-columns:1fr 520px;gap:10px}.logWrap,.heavyWrap{padding:12px}.log{height:100%;min-height:430px;border:1px solid var(--line);background:#080c13;color:#d6deeb;border-radius:12px;padding:12px;overflow:auto;white-space:pre-wrap;font:13px/1.42 Consolas,monospace}
+    .content{display:grid;grid-template-columns:1fr 520px;gap:10px}.logWrap,.heavyWrap{padding:12px}.heavyWrap{max-height:560px;overflow:auto}.log{height:220px;min-height:180px;max-height:320px;resize:vertical;border:1px solid var(--line);background:#080c13;color:#d6deeb;border-radius:12px;padding:10px;overflow:auto;white-space:pre-wrap;font:12px/1.35 Consolas,monospace}
     .heavyWrap{overflow:auto} table{width:100%;border-collapse:collapse;table-layout:fixed} th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-    th{position:sticky;top:0;background:var(--surface-2);color:var(--muted)} td.pathCell{word-break:break-all}.actions{display:grid;grid-template-columns:1fr 1fr;gap:4px}.actions button{padding:6px 8px;font-size:12px}
+    th{position:sticky;top:0;background:var(--surface-2);color:var(--muted)}
+    td.pathCell{font-family:Consolas,monospace;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .actions{display:flex;flex-wrap:nowrap;gap:4px;align-items:center}
+    .actions button{padding:4px 7px;font-size:12px;min-width:58px}
+    .actions select{width:auto;min-width:126px;padding:4px 6px;font-size:12px}
+    .heavyTools{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap}
+    .heavyTools .row{margin:0}
+    .pill{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:var(--muted)}
+    .wizWrap{display:grid;grid-template-columns:1fr 340px;gap:10px;padding:12px}
+    .wizMap{min-height:240px;border:1px solid var(--line);border-radius:10px;position:relative;overflow:hidden;background:#0b1220}
+    .wizRect{position:absolute;overflow:hidden;border:1px solid rgba(255,255,255,.15);font-size:11px;padding:4px;cursor:pointer;white-space:nowrap;text-overflow:ellipsis}
+    .wizRect.dir{background:linear-gradient(180deg,#1d3d66,#122944)} .wizRect.file{background:linear-gradient(180deg,#4b2b5a,#2f173b)}
+    .wizExt{border:1px solid var(--line);border-radius:10px;overflow:auto;max-height:260px}
+    .wizExt table{font-size:12px}
+    .wizLegend{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}.wizTag{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:2px 8px}
     #loader{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9999}#loader.show{display:flex}.spin{width:62px;height:62px;border:4px solid rgba(255,255,255,.2);border-top-color:#7ab5ff;border-radius:50%;animation:rot 1s linear infinite}.loadText{margin-top:10px;text-align:center;color:#d9e7ff}@keyframes rot{to{transform:rotate(360deg)}}
   </style>
 </head>
@@ -52,8 +66,20 @@
     </aside>
     <main class="right">
       <section class="panel">
-        <div class="toolbar"><div class="tiny" id="drivesTitle">System storage</div><button id="drivesRefresh">Refresh</button><button id="extBtn">Extensions</button><select id="dupMode"><option value="quick-name">dup: quick</option><option value="hash">dup: hash</option></select><button id="dupBtn">Duplicates</button></div>
+        <div class="toolbar"><div class="tiny" id="drivesTitle">System storage</div><button id="drivesRefresh">Refresh</button><button id="extBtn">Extensions</button><select id="dupMode"><option value="quick-name">dup: quick</option><option value="hash">dup: hash</option></select><button id="dupBtn">Duplicates</button><button id="wizBtn">WizMap</button></div>
         <div class="drives" id="drives"></div>
+      </section>
+      <section class="panel wizWrap">
+        <div>
+          <div class="row" style="justify-content:space-between;margin-bottom:6px"><div class="tiny" id="wizTitle">Space Map</div><label class="tiny"><input id="wizTurbo" type="checkbox"> turbo</label></div>
+          <div class="wizLegend" id="wizLegend"></div>
+          <div class="wizMap" id="wizMap"></div>
+        </div>
+        <div>
+          <div class="tiny" id="wizExtTitle" style="margin-bottom:6px">Extensions</div>
+          <div class="row" style="margin-bottom:6px"><input id="wizExtFilter" placeholder="filter ext"><select id="wizExtSort"><option value="size">size</option><option value="count">count</option><option value="name">name</option></select></div>
+          <div class="wizExt"><table><thead><tr><th id="wizThExt">Ext</th><th id="wizThPct">%</th><th id="wizThSize">Size</th><th id="wizThCount">Files</th></tr></thead><tbody id="wizExtBody"></tbody></table></div>
+        </div>
       </section>
       <section class="content">
         <div class="panel logWrap"><pre class="log" id="log"></pre></div>
@@ -78,10 +104,12 @@
             <div id="presetSummary" class="tiny" style="margin-top:4px"></div>
             <div id="presetList" style="max-height:140px;overflow:auto;margin-top:6px"></div>
           </div>
-          <div class="row" style="margin-bottom:8px"><button id="queueMoveBtn">Queue: move</button><button id="queueDeleteBtn">Queue: delete</button><button id="queueRunBtn">Run queue</button><button id="queueClearBtn">Clear queue</button></div>
-          <div class="row" style="margin-bottom:8px"><button id="findEmptyBtn">Find empty folders</button><button id="deleteEmptyBtn">Delete selected empty</button></div>
+          <div class="heavyTools">
+            <div class="row"><button id="queueMoveBtn">Queue: move</button><button id="queueDeleteBtn">Queue: delete</button><button id="queueRunBtn">Run queue</button><button id="queueClearBtn">Clear queue</button></div>
+            <div class="row"><button id="findEmptyBtn">Find empty folders</button><button id="deleteEmptyBtn">Delete selected empty</button><span class="pill" id="selCount">selected: 0</span></div>
+          </div>
           <div id="emptyPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)"><div class="row" style="justify-content:space-between"><b id="emptyTitle">Empty folders</b><label><input id="emptyAll" type="checkbox"> <span id="emptyAllTxt">select all</span></label></div><div id="emptyList" style="max-height:150px;overflow:auto;margin-top:6px"></div></div>
-          <table><colgroup><col style="width:36px"><col style="width:92px"><col><col style="width:190px"></colgroup><thead><tr><th><input id="chkAll" type="checkbox"></th><th id="thSize">Size</th><th id="thFile">File</th><th id="thAct">Actions</th></tr></thead><tbody id="heavyBody"></tbody></table>
+          <table><colgroup><col style="width:30px"><col style="width:90px"><col><col style="width:230px"></colgroup><thead><tr><th><input id="chkAll" type="checkbox"></th><th id="thSize">Size</th><th id="thFile">File</th><th id="thAct">Actions</th></tr></thead><tbody id="heavyBody"></tbody></table>
         </div>
       </section>
     </main>
@@ -89,10 +117,10 @@
 
 <script>
 const el=(id)=>document.getElementById(id);
-const s={lang:'en',theme:'dark',heavy:[],queue:[],selected:new Set(),fullPoll:null,emptyDirs:[],emptySelected:new Set(),presetCandidates:[],dupGroups:[],busy:false};
+const s={lang:'en',theme:'dark',heavy:[],queue:[],selected:new Set(),fullPoll:null,emptyDirs:[],emptySelected:new Set(),presetCandidates:[],dupGroups:[],wiz:null,busy:false};
 const i18n={
-  en:{subtitle:'Desktop App',save:'Save',use:'Use',remove:'Remove',tree:'Tree',heavy:'Heavy',start:'Start Watch',stop:'Stop',dry:'dry-run',fast:'fast mode',full:'Full scan (bg)',cancel:'Stop scan',undo:'Undo Move',clean:'Empty folders',clear:'Clear Log',csv:'Export CSV',updCheck:'Check update',updApply:'Apply update',drives:'System storage',refresh:'Refresh',types:'Extensions',dups:'Duplicates',size:'Size',file:'File',act:'Actions',hint:'Folder type',ready:'ready',running:'watch running',open:'Open',reveal:'Reveal',autoMove:'Auto Move',moveTo:'Move To',del:'Delete',loading:'Scanning...',qMove:'Queue: move',qDel:'Queue: delete',qRun:'Run queue',qClear:'Clear queue',findEmpty:'Find empty folders',delEmpty:'Delete selected empty',emptyTitle:'Empty folders',selectAll:'select all',pathPlaceholder:'Move destination (optional)',schedStart:'Start schedule',schedStop:'Stop schedule',schedNow:'Run schedule now',snapshots:'Snapshots',history:'Drive history',presetScan:'Scan preset',presetApply:'Apply preset',diag:'Watch diagnostics',presetPreview:'Preset preview',risk:'risk',dupNewest:'Keep newest',dupOldest:'Keep oldest'},
-  ru:{subtitle:'\u0420\u0430\u0431\u043e\u0447\u0435\u0435 \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435',save:'\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c',use:'\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c',remove:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c',tree:'\u0414\u0435\u0440\u0435\u0432\u043e',heavy:'\u0422\u044f\u0436\u0451\u043b\u044b\u0435',start:'\u0421\u0442\u0430\u0440\u0442 \u0441\u043b\u0435\u0436\u0435\u043d\u0438\u044f',stop:'\u0421\u0442\u043e\u043f',dry:'\u0442\u0435\u0441\u0442\u043e\u0432\u044b\u0439 \u0440\u0435\u0436\u0438\u043c',fast:'\u0431\u044b\u0441\u0442\u0440\u044b\u0439 \u0440\u0435\u0436\u0438\u043c',full:'\u041f\u043e\u043b\u043d\u044b\u0439 \u0441\u043a\u0430\u043d (\u0444\u043e\u043d)',cancel:'\u0421\u0442\u043e\u043f \u0441\u043a\u0430\u043d',undo:'\u041e\u0442\u043c\u0435\u043d\u0438\u0442\u044c \u043f\u0435\u0440\u0435\u043d\u043e\u0441',clean:'\u041f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',clear:'\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u043b\u043e\u0433',csv:'\u042d\u043a\u0441\u043f\u043e\u0440\u0442 CSV',updCheck:'\u041f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c update',updApply:'\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c',drives:'\u041c\u0435\u0441\u0442\u043e \u043d\u0430 \u0434\u0438\u0441\u043a\u0430\u0445',refresh:'\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c',types:'\u0422\u0438\u043f\u044b',dups:'\u0414\u0443\u0431\u043b\u0438\u043a\u0430\u0442\u044b',size:'\u0420\u0430\u0437\u043c\u0435\u0440',file:'\u0424\u0430\u0439\u043b',act:'\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u044f',hint:'\u0422\u0438\u043f \u043f\u0430\u043f\u043a\u0438',ready:'\u0433\u043e\u0442\u043e\u0432\u043e',running:'\u0441\u043b\u0435\u0436\u0435\u043d\u0438\u0435 \u0430\u043a\u0442\u0438\u0432\u043d\u043e',open:'\u041e\u0442\u043a\u0440\u044b\u0442\u044c',reveal:'\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c',autoMove:'\u0410\u0432\u0442\u043e \u043f\u0435\u0440\u0435\u043d\u043e\u0441',moveTo:'\u041f\u0435\u0440\u0435\u043d\u0435\u0441\u0442\u0438',del:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c',loading:'\u0421\u043a\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435...',qMove:'\u0412 \u043e\u0447\u0435\u0440\u0435\u0434\u044c: \u043f\u0435\u0440\u0435\u043d\u043e\u0441',qDel:'\u0412 \u043e\u0447\u0435\u0440\u0435\u0434\u044c: \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u0435',qRun:'\u0412\u044b\u043f\u043e\u043b\u043d\u0438\u0442\u044c \u043e\u0447\u0435\u0440\u0435\u0434\u044c',qClear:'\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u043e\u0447\u0435\u0440\u0435\u0434\u044c',findEmpty:'\u041d\u0430\u0439\u0442\u0438 \u043f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',delEmpty:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u044b\u0435 \u043f\u0443\u0441\u0442\u044b\u0435',emptyTitle:'\u041f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',selectAll:'\u0432\u044b\u0431\u0440\u0430\u0442\u044c \u0432\u0441\u0435',pathPlaceholder:'\u041f\u0430\u043f\u043a\u0430 \u0434\u043b\u044f \u043f\u0435\u0440\u0435\u043d\u043e\u0441\u0430 (\u043e\u043f\u0446\u0438\u043e\u043d\u0430\u043b\u044c\u043d\u043e)',schedStart:'\u0421\u0442\u0430\u0440\u0442 \u0440\u0430\u0441\u043f\u0438\u0441\u0430\u043d\u0438\u044f',schedStop:'\u0421\u0442\u043e\u043f \u0440\u0430\u0441\u043f\u0438\u0441\u0430\u043d\u0438\u044f',schedNow:'\u0417\u0430\u043f\u0443\u0441\u0442\u0438\u0442\u044c \u0441\u0435\u0439\u0447\u0430\u0441',snapshots:'\u0421\u043d\u0438\u043c\u043a\u0438',history:'\u0418\u0441\u0442\u043e\u0440\u0438\u044f \u0434\u0438\u0441\u043a\u043e\u0432',presetScan:'\u0421\u043a\u0430\u043d \u043f\u0440\u0435\u0441\u0435\u0442\u0430',presetApply:'\u041f\u0440\u0438\u043c\u0435\u043d\u0438\u0442\u044c \u043f\u0440\u0435\u0441\u0435\u0442',diag:'\u0414\u0438\u0430\u0433\u043d\u043e\u0441\u0442\u0438\u043a\u0430 watch',presetPreview:'\u041f\u0440\u0435\u0432\u044c\u044e \u043f\u0440\u0435\u0441\u0435\u0442\u0430',risk:'\u0440\u0438\u0441\u043a',dupNewest:'\u041e\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u043d\u043e\u0432\u044b\u0439',dupOldest:'\u041e\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u0441\u0442\u0430\u0440\u044b\u0439'}
+  en:{subtitle:'Desktop App',save:'Save',use:'Use',remove:'Remove',tree:'Tree',heavy:'Heavy',start:'Start Watch',stop:'Stop',dry:'dry-run',fast:'fast mode',full:'Full scan (bg)',cancel:'Stop scan',undo:'Undo Move',clean:'Empty folders',clear:'Clear Log',csv:'Export CSV',updCheck:'Check update',updApply:'Apply update',drives:'System storage',refresh:'Refresh',types:'Extensions',dups:'Duplicates',size:'Size',file:'File',act:'Actions',hint:'Folder type',ready:'ready',running:'watch running',open:'Open',reveal:'Reveal',autoMove:'Auto Move',moveTo:'Move To',del:'Delete',loading:'Scanning...',qMove:'Queue: move',qDel:'Queue: delete',qRun:'Run queue',qClear:'Clear queue',findEmpty:'Find empty folders',delEmpty:'Delete selected empty',emptyTitle:'Empty folders',selectAll:'select all',pathPlaceholder:'Move destination (optional)',schedStart:'Start schedule',schedStop:'Stop schedule',schedNow:'Run schedule now',snapshots:'Snapshots',history:'Drive history',presetScan:'Scan preset',presetApply:'Apply preset',diag:'Watch diagnostics',presetPreview:'Preset preview',risk:'risk',dupNewest:'Keep newest',dupOldest:'Keep oldest',wiz:'WizMap',spaceMap:'Space Map',extTable:'Extensions',ext:'Ext',files:'Files'},
+  ru:{subtitle:'\u0420\u0430\u0431\u043e\u0447\u0435\u0435 \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435',save:'\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c',use:'\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c',remove:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c',tree:'\u0414\u0435\u0440\u0435\u0432\u043e',heavy:'\u0422\u044f\u0436\u0451\u043b\u044b\u0435',start:'\u0421\u0442\u0430\u0440\u0442 \u0441\u043b\u0435\u0436\u0435\u043d\u0438\u044f',stop:'\u0421\u0442\u043e\u043f',dry:'\u0442\u0435\u0441\u0442\u043e\u0432\u044b\u0439 \u0440\u0435\u0436\u0438\u043c',fast:'\u0431\u044b\u0441\u0442\u0440\u044b\u0439 \u0440\u0435\u0436\u0438\u043c',full:'\u041f\u043e\u043b\u043d\u044b\u0439 \u0441\u043a\u0430\u043d (\u0444\u043e\u043d)',cancel:'\u0421\u0442\u043e\u043f \u0441\u043a\u0430\u043d',undo:'\u041e\u0442\u043c\u0435\u043d\u0438\u0442\u044c \u043f\u0435\u0440\u0435\u043d\u043e\u0441',clean:'\u041f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',clear:'\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u043b\u043e\u0433',csv:'\u042d\u043a\u0441\u043f\u043e\u0440\u0442 CSV',updCheck:'\u041f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c update',updApply:'\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c',drives:'\u041c\u0435\u0441\u0442\u043e \u043d\u0430 \u0434\u0438\u0441\u043a\u0430\u0445',refresh:'\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c',types:'\u0422\u0438\u043f\u044b',dups:'\u0414\u0443\u0431\u043b\u0438\u043a\u0430\u0442\u044b',size:'\u0420\u0430\u0437\u043c\u0435\u0440',file:'\u0424\u0430\u0439\u043b',act:'\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u044f',hint:'\u0422\u0438\u043f \u043f\u0430\u043f\u043a\u0438',ready:'\u0433\u043e\u0442\u043e\u0432\u043e',running:'\u0441\u043b\u0435\u0436\u0435\u043d\u0438\u0435 \u0430\u043a\u0442\u0438\u0432\u043d\u043e',open:'\u041e\u0442\u043a\u0440\u044b\u0442\u044c',reveal:'\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c',autoMove:'\u0410\u0432\u0442\u043e \u043f\u0435\u0440\u0435\u043d\u043e\u0441',moveTo:'\u041f\u0435\u0440\u0435\u043d\u0435\u0441\u0442\u0438',del:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c',loading:'\u0421\u043a\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435...',qMove:'\u0412 \u043e\u0447\u0435\u0440\u0435\u0434\u044c: \u043f\u0435\u0440\u0435\u043d\u043e\u0441',qDel:'\u0412 \u043e\u0447\u0435\u0440\u0435\u0434\u044c: \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u0435',qRun:'\u0412\u044b\u043f\u043e\u043b\u043d\u0438\u0442\u044c \u043e\u0447\u0435\u0440\u0435\u0434\u044c',qClear:'\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u043e\u0447\u0435\u0440\u0435\u0434\u044c',findEmpty:'\u041d\u0430\u0439\u0442\u0438 \u043f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',delEmpty:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u044b\u0435 \u043f\u0443\u0441\u0442\u044b\u0435',emptyTitle:'\u041f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',selectAll:'\u0432\u044b\u0431\u0440\u0430\u0442\u044c \u0432\u0441\u0435',pathPlaceholder:'\u041f\u0430\u043f\u043a\u0430 \u0434\u043b\u044f \u043f\u0435\u0440\u0435\u043d\u043e\u0441\u0430 (\u043e\u043f\u0446\u0438\u043e\u043d\u0430\u043b\u044c\u043d\u043e)',schedStart:'\u0421\u0442\u0430\u0440\u0442 \u0440\u0430\u0441\u043f\u0438\u0441\u0430\u043d\u0438\u044f',schedStop:'\u0421\u0442\u043e\u043f \u0440\u0430\u0441\u043f\u0438\u0441\u0430\u043d\u0438\u044f',schedNow:'\u0417\u0430\u043f\u0443\u0441\u0442\u0438\u0442\u044c \u0441\u0435\u0439\u0447\u0430\u0441',snapshots:'\u0421\u043d\u0438\u043c\u043a\u0438',history:'\u0418\u0441\u0442\u043e\u0440\u0438\u044f \u0434\u0438\u0441\u043a\u043e\u0432',presetScan:'\u0421\u043a\u0430\u043d \u043f\u0440\u0435\u0441\u0435\u0442\u0430',presetApply:'\u041f\u0440\u0438\u043c\u0435\u043d\u0438\u0442\u044c \u043f\u0440\u0435\u0441\u0435\u0442',diag:'\u0414\u0438\u0430\u0433\u043d\u043e\u0441\u0442\u0438\u043a\u0430 watch',presetPreview:'\u041f\u0440\u0435\u0432\u044c\u044e \u043f\u0440\u0435\u0441\u0435\u0442\u0430',risk:'\u0440\u0438\u0441\u043a',dupNewest:'\u041e\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u043d\u043e\u0432\u044b\u0439',dupOldest:'\u041e\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u0441\u0442\u0430\u0440\u044b\u0439',wiz:'\u041a\u0430\u0440\u0442\u0430',spaceMap:'\u041a\u0430\u0440\u0442\u0430 \u043c\u0435\u0441\u0442\u0430',extTable:'\u0420\u0430\u0441\u0448\u0438\u0440\u0435\u043d\u0438\u044f',ext:'\u0420\u0430\u0441\u0448\u0438\u0440.',files:'\u0424\u0430\u0439\u043b\u043e\u0432'}
 };
 function lockGlossary(){
   const base=i18n.en||{};
@@ -107,8 +135,17 @@ function lockGlossary(){
 lockGlossary();
 const tr=(k)=>i18n[s.lang][k]||k;
 const setStatus=(t)=>el('statusLine').textContent=t;
+const updateSelCount=()=>{ const n=s.selected.size; if(el('selCount')) el('selCount').textContent=(s.lang==='ru'?'\u0432\u044b\u0431\u0440\u0430\u043d\u043e: ':'selected: ')+n; };
+const shortPath=(p,max=78)=>{ if(!p) return ''; if(p.length<=max) return p; const part=Math.max(20,Math.floor((max-3)/2)); return p.slice(0,part)+'...'+p.slice(-part); };
 const showLoader=(on,text)=>{el('loader').classList.toggle('show',on); if(text) el('loaderText').textContent=text;};
-const withLoader=async(fn,text)=>{if(s.busy)return; s.busy=true; showLoader(true,text||tr('loading')); try{return await fn();} finally{showLoader(false); s.busy=false;}};
+const withLoader=async(fn,text)=>{
+  while(s.busy){
+    await new Promise((r)=>setTimeout(r,80));
+  }
+  s.busy=true;
+  showLoader(true,text||tr('loading'));
+  try{return await fn();} finally{showLoader(false); s.busy=false;}
+};
 const showErr=(e)=>{const msg=(e&&e.message)?e.message:String(e||'error'); el('log').textContent+='\n[error] '+msg+'\n'; setStatus('[error] '+msg)};
 
 function applyLang(){
@@ -124,8 +161,11 @@ function applyLang(){
   el('snapshotsBtn').textContent=tr('snapshots'); el('historyBtn').textContent=tr('history'); el('presetScanBtn').textContent=tr('presetScan'); el('presetApplyBtn').textContent=tr('presetApply');
   el('diagBtn').textContent=tr('diag'); el('historyTitle').textContent=tr('history'); el('diagTitle').textContent=tr('diag'); el('presetTitle').textContent=tr('presetPreview');
   el('dupKeepNewestBtn').textContent=tr('dupNewest'); el('dupKeepOldestBtn').textContent=tr('dupOldest');
+  el('wizBtn').textContent=tr('wiz'); el('wizTitle').textContent=tr('spaceMap'); el('wizExtTitle').textContent=tr('extTable');
+  el('wizThExt').textContent=tr('ext'); el('wizThPct').textContent='%'; el('wizThSize').textContent=tr('size'); el('wizThCount').textContent=tr('files');
+  el('wizExtFilter').placeholder=s.lang==='ru'?'\u0444\u0438\u043b\u044c\u0442\u0440 ext':'filter ext';
   el('quickDest').placeholder=tr('pathPlaceholder');
-  setStatus(tr('ready')); updateHint(); renderHeavy(); renderEmptyDirs();
+  setStatus(tr('ready')); updateHint(); renderHeavy(); renderEmptyDirs(); updateSelCount();
 }
 
 function toggleTheme(){s.theme=s.theme==='dark'?'light':'dark'; document.body.classList.toggle('light',s.theme==='light'); el('themeBtn').textContent=s.theme==='dark'?'Light':'Dark';}
@@ -135,8 +175,42 @@ async function updateHint(){try{const kind=await window.go.main.App.FolderHint(e
 async function loadDefaults(){const d=await window.go.main.App.Defaults(); el('path').value=d.downloads||d.home||''; el('verPill').textContent=d.version||'-'; await updateHint();}
 async function loadSaved(){const list=await window.go.main.App.ListSavedFolders(); const sel=el('saved'); sel.innerHTML=''; const o0=document.createElement('option'); o0.value=''; o0.textContent=s.lang==='ru'?'\u0421\u043e\u0445\u0440\u0430\u043d\u0451\u043d\u043d\u044b\u0435 \u043f\u0430\u043f\u043a\u0438':'Saved folders'; sel.appendChild(o0); for(const p of list){const o=document.createElement('option'); o.value=p; o.textContent=p; sel.appendChild(o);}}
 async function loadDrives(){return withLoader(async()=>{const items=await window.go.main.App.ListDrives(); const wrap=el('drives'); wrap.innerHTML=''; for(const d of items){const pct=Math.max(0,Math.min(100,Math.round((d.usedRatio||0)*100))); const card=document.createElement('div'); card.className='drive'; card.innerHTML=`<div class="row" style="justify-content:space-between"><b>${d.drive}</b><span class="tiny">${pct}%</span></div><div>${d.usedHuman} / ${d.totalHuman}</div><div class="bar"><div class="fill" style="width:${pct}%"></div></div><div class="actions" style="margin-top:8px"><button data-use="${d.drive}\\">${tr('use')}</button><button data-open="${d.drive}">${tr('open')}</button><button data-tree="${d.drive}\\">${tr('tree')}</button><button data-heavy="${d.drive}\\">${tr('heavy')}</button></div>`; wrap.appendChild(card);}});}
-async function runTree(){return withLoader(async()=>{const fast=!!el('fastMode').checked; const maxFiles=fast?parseInt(el('maxFiles').value||'220000',10):0; const workers=fast?parseInt(el('workers').value||'24',10):0; const res=await window.go.main.App.RunTreeFast(el('path').value,5,22,maxFiles,workers); el('log').textContent+='\n'+res.output+'\n'; el('log').scrollTop=el('log').scrollHeight; setStatus((s.lang==='ru'?'\u0414\u0435\u0440\u0435\u0432\u043e: ':'Tree: ')+res.seen+(res.limited?(s.lang==='ru'?' (\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043e)':' (limited)'):'')+' | '+res.durationMs+' ms');});}
-async function runHeavy(){return withLoader(async()=>{const n=parseInt(el('topN').value||'20',10); const fast=!!el('fastMode').checked; const maxFiles=fast?parseInt(el('maxFiles').value||'220000',10):0; const workers=fast?parseInt(el('workers').value||'24',10):0; const res=await window.go.main.App.RunHeavyFast(el('path').value,n,maxFiles,workers); s.heavy=res.items||[]; renderHeavy(); setStatus((s.lang==='ru'?'\u0424\u0430\u0439\u043b\u043e\u0432 \u043f\u0440\u043e\u0441\u043c\u043e\u0442\u0440\u0435\u043d\u043e: ':'Seen files: ')+res.seen+(res.limited?(s.lang==='ru'?' (\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043e)':' (limited)'):'')+' | '+res.durationMs+' ms');},tr('loading'));}
+async function runTree(){return withLoader(async()=>{const fast=!!el('fastMode').checked; const maxFiles=fast?parseInt(el('maxFiles').value||'220000',10):0; const workers=fast?parseInt(el('workers').value||'24',10):0; const res=await window.go.main.App.RunTreeFast(el('path').value,5,22,maxFiles,workers); el('log').textContent+='\n'+res.output+'\n'; el('log').scrollTop=el('log').scrollHeight; setStatus((s.lang==='ru'?'\u0414\u0435\u0440\u0435\u0432\u043e: ':'Tree: ')+res.seen+(res.limited?(s.lang==='ru'?' (\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043e)':' (limited)'):'')+' | '+res.durationMs+' ms'); runWiz();});}
+async function runHeavy(){return withLoader(async()=>{const n=parseInt(el('topN').value||'20',10); const fast=!!el('fastMode').checked; const maxFiles=fast?parseInt(el('maxFiles').value||'220000',10):0; const workers=fast?parseInt(el('workers').value||'24',10):0; const res=await window.go.main.App.RunHeavyFast(el('path').value,n,maxFiles,workers); s.heavy=res.items||[]; renderHeavy(); renderWiz({rects:fallbackRectsFromHeavy(),ext:[],total:1}); setStatus((s.lang==='ru'?'\u0424\u0430\u0439\u043b\u043e\u0432 \u043f\u0440\u043e\u0441\u043c\u043e\u0442\u0440\u0435\u043d\u043e: ':'Seen files: ')+res.seen+(res.limited?(s.lang==='ru'?' (\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043e)':' (limited)'):'')+' | '+res.durationMs+' ms');},tr('loading'));}
+function buildTreemap(rects,w,h){
+  const list=(rects||[]).filter(x=>x.size>0).slice().sort((a,b)=>b.size-a.size);
+  const out=[];
+  const split=(items,x,y,wid,hei,depth)=>{
+    if(!items.length||wid<6||hei<6) return;
+    if(items.length===1){ out.push({item:items[0],x,y,w:wid,h:hei}); return; }
+    const total=items.reduce((s,i)=>s+i.size,0);
+    let acc=0, idx=0;
+    for(; idx<items.length-1; idx++){ acc+=items[idx].size; if(acc>=total/2) break; }
+    const a=items.slice(0,idx+1), b=items.slice(idx+1);
+    const vertical = (wid>=hei) ? (depth%2===0) : (depth%2!==0);
+    const frac = Math.max(0.1, Math.min(0.9, acc/total));
+    if(vertical){
+      const wa=Math.max(1,Math.floor(wid*frac));
+      split(a,x,y,wa,hei,depth+1);
+      split(b,x+wa,y,wid-wa,hei,depth+1);
+    } else {
+      const ha=Math.max(1,Math.floor(hei*frac));
+      split(a,x,y,wid,ha,depth+1);
+      split(b,x,y+ha,wid,hei-ha,depth+1);
+    }
+  };
+  split(list,0,0,w,h,0);
+  return out;
+}
+function fallbackRectsFromHeavy(){
+  if(!s.heavy||s.heavy.length===0) return [];
+  return s.heavy.slice(0,80).map((it)=>({name:(it.path||'').split(/[\\\\/]/).pop()||it.path,path:it.path,kind:'file',size:it.size||0,human:it.human||''}));
+}
+function colorByName(name){ let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))>>>0; const hue=h%360; return `hsl(${hue} 55% 32%)`; }
+function renderWizLegend(rects){ const wrap=el('wizLegend'); wrap.innerHTML=''; const kinds=['dir','file']; for(const k of kinds){ const span=document.createElement('span'); span.className='wizTag'; span.textContent=k; span.style.background=(k==='dir')?'#163457':'#3a1f49'; wrap.appendChild(span);} const byExt={}; for(const r of rects||[]){ if(r.kind!=='file') continue; const m=(r.name||'').toLowerCase().match(/\.[a-z0-9]+$/); const ext=m?m[0]:'(no_ext)'; byExt[ext]=(byExt[ext]||0)+(r.size||0);} const top=Object.entries(byExt).sort((a,b)=>b[1]-a[1]).slice(0,6); for(const [ext] of top){ const span=document.createElement('span'); span.className='wizTag'; span.textContent=ext; span.style.background=colorByName(ext); wrap.appendChild(span);} }
+function renderWiz(res){ s.wiz=res; const map=el('wizMap'); const extBody=el('wizExtBody'); map.innerHTML=''; extBody.innerHTML=''; const w=map.clientWidth||640,h=Math.max(240,map.clientHeight||240); const sourceRects=(res.rects&&res.rects.length>0)?res.rects:fallbackRectsFromHeavy(); const rects=buildTreemap(sourceRects,w,h); if(rects.length===0){ map.innerHTML='<div class=\"tiny\" style=\"padding:10px\">No data yet. Press WizMap.</div>'; return; } for(const r of rects){ if(r.w<12||r.h<12) continue; const d=document.createElement('div'); d.className='wizRect '+(r.item.kind||'file'); d.style.left=r.x+'px'; d.style.top=r.y+'px'; d.style.width=r.w+'px'; d.style.height=r.h+'px'; d.style.background=colorByName((r.item.kind||'')+':'+(r.item.name||r.item.path||'x')); d.title=`${r.item.name} | ${r.item.human}`; d.textContent=`${r.item.name} (${r.item.human})`; d.onclick=async()=>{try{ if(r.item.kind==='dir') await window.go.main.App.OpenPath(r.item.path); else await window.go.main.App.RevealPath(r.item.path);}catch(e){showErr(e)}}; map.appendChild(d); } renderWizLegend(sourceRects);
+ const total=res.total||1; const filter=(el('wizExtFilter').value||'').toLowerCase().trim(); const sortBy=el('wizExtSort').value||'size'; const rows=(res.ext||[]).slice().filter(e=>!filter||String(e.ext||'').toLowerCase().includes(filter)); rows.sort((a,b)=> sortBy==='count' ? (b.count-a.count) : (sortBy==='name' ? String(a.ext).localeCompare(String(b.ext)) : (b.size-a.size))); for(const e of rows){ const trEl=document.createElement('tr'); const pct=((e.size||0)*100/total).toFixed(1); trEl.innerHTML=`<td>${e.ext}</td><td>${pct}%</td><td>${e.human}</td><td>${e.count}</td>`; extBody.appendChild(trEl);} }
+async function runWiz(){ return withLoader(async()=>{ const fast=!!el('fastMode').checked; const maxFiles=fast?parseInt(el('maxFiles').value||'220000',10):0; const workers=fast?parseInt(el('workers').value||'24',10):0; const turbo=!!el('wizTurbo').checked; const res=turbo ? await window.go.main.App.WizMapTurbo(el('path').value,maxFiles,32,120,40) : await window.go.main.App.WizMap(el('path').value,maxFiles,workers,24,80,25); renderWiz(res); setStatus((s.lang==='ru'?'\u041a\u0430\u0440\u0442\u0430: ':'WizMap: ')+res.seen+(res.limited?(s.lang==='ru'?' (\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043e)':' (limited)'):'')+' | '+res.durationMs+' ms'); },tr('loading')); }
 function drawSpark(points){ if(!points||points.length===0) return ''; const w=240,h=70,pad=6; const vals=points.map(x=>x.total>0?x.used/x.total:0); let min=1,max=0; for(const v of vals){ if(v<min)min=v; if(v>max)max=v; } if(max===min){max=min+0.01;} const step=(w-pad*2)/Math.max(1,vals.length-1); const pts=vals.map((v,i)=>{const x=pad+i*step; const y=pad+(1-(v-min)/(max-min))*(h-pad*2); return `${x.toFixed(1)},${y.toFixed(1)}`;}).join(' '); return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="#6cb6ff" stroke-width="2"/></svg>`; }
 function renderDriveHistory(rows){ const wrap=el('driveHistoryGrid'); wrap.innerHTML=''; for(const r of rows||[]){ const card=document.createElement('div'); card.style.border='1px solid var(--line)'; card.style.borderRadius='10px'; card.style.padding='6px'; const pts=(r.points||[]).slice(-24); card.innerHTML=`<div class="row" style="justify-content:space-between"><b>${r.drive}</b><span class="tiny">${pts.length}</span></div>${drawSpark(pts)}`; wrap.appendChild(card);} }
 async function showDriveHistory(){try{const rows=await window.go.main.App.DriveHistory(); if(!rows||rows.length===0){setStatus(s.lang==='ru'?'\u0418\u0441\u0442\u043e\u0440\u0438\u044f \u043f\u0443\u0441\u0442\u0430':'History is empty'); return;} renderDriveHistory(rows); el('driveHistoryPanel').style.display='block';}catch(e){showErr(e)}}
@@ -151,7 +225,18 @@ async function applyPreset(){try{if(!s.presetCandidates||s.presetCandidates.leng
 function renderDupGroups(){ const sel=el('dupGroupSel'); sel.innerHTML=''; for(const g of s.dupGroups){ const o=document.createElement('option'); o.value=g.key; o.textContent=`${g.key} (${g.count})`; sel.appendChild(o);} el('dupPanel').style.display=s.dupGroups.length?'block':'none'; }
 async function duplicateKeep(rule){ try{const key=el('dupGroupSel').value; const g=s.dupGroups.find(x=>x.key===key); if(!g){setStatus('group not selected');return;} const safe=confirm(s.lang==='ru'?'\u0423\u0434\u0430\u043b\u044f\u0442\u044c \u0432 \u043a\u043e\u0440\u0437\u0438\u043d\u0443?':'Use recycle bin?'); const res=await withLoader(()=>window.go.main.App.DuplicateKeep(g.paths,rule,safe),tr('loading')); el('log').textContent+='\n[dupe-keep]\n'+JSON.stringify(res,null,2)+'\n'; el('log').scrollTop=el('log').scrollHeight; await runHeavy(); }catch(e){showErr(e)} }
 async function watchDiagnostics(){ try{const rows=await window.go.main.App.WatchDiagnostics(el('path').value,32); const list=el('diagList'); list.innerHTML=''; for(const r of rows||[]){ const row=document.createElement('div'); row.className='row'; row.innerHTML=`<span class="tiny">${r.status}</span><span class="tiny">${r.entries||0}</span><span title="${r.path}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.path}</span>`; list.appendChild(row);} el('diagPanel').style.display='block'; }catch(e){showErr(e)} }
-function renderHeavy(){const body=el('heavyBody'); body.innerHTML=''; for(const it of s.heavy){const checked=s.selected.has(it.path)?'checked':''; const trEl=document.createElement('tr'); trEl.innerHTML=`<td><input type="checkbox" data-sel="${it.path}" ${checked}></td><td>${it.human}</td><td class="pathCell" title="${it.path}">${it.path}</td><td><div class="actions"><button data-openf="${it.path}">${tr('open')}</button><button data-reveal="${it.path}">${tr('reveal')}</button><button data-amove="${it.path}">${tr('autoMove')}</button><button data-move="${it.path}">${tr('moveTo')}</button><button data-del="${it.path}" style="grid-column:1 / -1">${tr('del')}</button></div></td>`; body.appendChild(trEl);} el('chkAll').checked=s.heavy.length>0&&s.heavy.every(i=>s.selected.has(i.path));}
+function renderHeavy(){
+  const body=el('heavyBody'); body.innerHTML='';
+  for(const it of s.heavy){
+    const checked=s.selected.has(it.path)?'checked':'';
+    const p=shortPath(it.path,84);
+    const trEl=document.createElement('tr');
+    trEl.innerHTML=`<td><input type="checkbox" data-sel="${it.path}" ${checked}></td><td>${it.human}</td><td class="pathCell" title="${it.path}">${p}</td><td><div class="actions"><button data-openf="${it.path}">${tr('open')}</button><button data-reveal="${it.path}">${tr('reveal')}</button><select data-action-path="${it.path}"><option value="">${tr('act')}</option><option value="amove">${tr('autoMove')}</option><option value="move">${tr('moveTo')}</option><option value="del">${tr('del')}</option></select></div></td>`;
+    body.appendChild(trEl);
+  }
+  el('chkAll').checked=s.heavy.length>0&&s.heavy.every(i=>s.selected.has(i.path));
+  updateSelCount();
+}
 function selectedPaths(){return s.heavy.filter(i=>s.selected.has(i.path)).map(i=>i.path);}
 function renderEmptyDirs(){const panel=el('emptyPanel'),list=el('emptyList'); if(!s.emptyDirs||s.emptyDirs.length===0){panel.style.display='none'; list.innerHTML=''; return;} panel.style.display='block'; list.innerHTML=''; for(const p of s.emptyDirs){const row=document.createElement('label'); row.style.display='block'; row.style.marginBottom='4px'; const checked=s.emptySelected.has(p)?'checked':''; row.innerHTML=`<input type="checkbox" data-edir="${p}" ${checked}> <span title="${p}">${p}</span>`; list.appendChild(row);} el('emptyAll').checked=s.emptyDirs.length>0&&s.emptyDirs.every(p=>s.emptySelected.has(p));}
 async function runQueue(){if(s.queue.length===0){setStatus(s.lang==='ru'?'\u041e\u0447\u0435\u0440\u0435\u0434\u044c \u043f\u0443\u0441\u0442\u0430\u044f':'Queue is empty'); return;} await withLoader(async()=>{for(const job of s.queue){ if(job.type==='move') await window.go.main.App.BatchMove(job.paths,job.dest,job.auto); if(job.type==='delete') await window.go.main.App.BatchDelete(job.paths,job.safe);} s.queue=[]; s.selected.clear(); await runHeavy();},tr('loading'));}
@@ -177,6 +262,7 @@ el('deleteEmptyBtn').onclick=async()=>{try{const dirs=s.emptyDirs.filter(p=>s.em
 el('clearLogBtn').onclick=async()=>{try{await window.go.main.App.ClearLog(); await pollLog();}catch(e){showErr(e)}};
 el('drivesRefresh').onclick=loadDrives; el('extBtn').onclick=async()=>{try{const s1=await window.go.main.App.ExtensionStatsFast(el('path').value,20,parseInt(el('maxFiles').value||'220000',10),parseInt(el('workers').value||'24',10)); el('log').textContent+='\n[extensions]\n'+JSON.stringify(s1,null,2)+'\n';}catch(e){showErr(e)}};
 el('dupBtn').onclick=async()=>{try{const mode=el('dupMode').value||'quick-name'; const s1=await window.go.main.App.DuplicateFinderV2(el('path').value,mode,70000,30); s.dupGroups=s1||[]; renderDupGroups(); el('log').textContent+='\n[duplicates:'+mode+']\n'+JSON.stringify(s1,null,2)+'\n';}catch(e){showErr(e)}};
+el('wizBtn').onclick=runWiz;
 el('queueMoveBtn').onclick=()=>{const paths=selectedPaths(); if(paths.length===0)return; s.queue.push({type:'move',paths,dest:el('quickDest').value||'',auto:!(el('quickDest').value||'')});};
 el('queueDeleteBtn').onclick=()=>{const paths=selectedPaths(); if(paths.length===0)return; const safe=confirm(s.lang==='ru'?'\u0423\u0434\u0430\u043b\u044f\u0442\u044c \u0432 \u043a\u043e\u0440\u0437\u0438\u043d\u0443?':'Use recycle bin for batch delete?'); s.queue.push({type:'delete',paths,safe});};
 el('queueRunBtn').onclick=runQueue; el('queueClearBtn').onclick=()=>{s.queue=[]; setStatus(s.lang==='ru'?'\u041e\u0447\u0435\u0440\u0435\u0434\u044c \u043e\u0447\u0438\u0449\u0435\u043d\u0430':'Queue cleared');};
@@ -191,6 +277,8 @@ el('presetScanBtn').onclick=scanPreset; el('presetApplyBtn').onclick=applyPreset
 el('snapDiffBtn').onclick=diffSnapshots;
 el('dupKeepNewestBtn').onclick=()=>duplicateKeep('newest'); el('dupKeepOldestBtn').onclick=()=>duplicateKeep('oldest');
 el('diagBtn').onclick=watchDiagnostics;
+el('wizExtFilter').addEventListener('input',()=>{ if(s.wiz) renderWiz(s.wiz); });
+el('wizExtSort').addEventListener('change',()=>{ if(s.wiz) renderWiz(s.wiz); });
 el('historyCloseBtn').onclick=()=>el('driveHistoryPanel').style.display='none'; el('snapCloseBtn').onclick=()=>el('snapshotPanel').style.display='none';
 el('dupCloseBtn').onclick=()=>el('dupPanel').style.display='none'; el('diagCloseBtn').onclick=()=>el('diagPanel').style.display='none'; el('presetCloseBtn').onclick=()=>el('presetPanel').style.display='none';
 el('path').addEventListener('input',updateHint);
@@ -198,10 +286,29 @@ el('drives').addEventListener('click',async(e)=>{const t=e.target; if(!(t instan
 el('chkAll').addEventListener('change',(e)=>{const on=e.target.checked; s.selected.clear(); if(on) for(const it of s.heavy) s.selected.add(it.path); renderHeavy();});
 el('emptyAll').addEventListener('change',(e)=>{const on=e.target.checked; s.emptySelected.clear(); if(on) for(const p of s.emptyDirs) s.emptySelected.add(p); renderEmptyDirs();});
 el('heavyBody').addEventListener('click',async(e)=>{const t=e.target; if(!(t instanceof HTMLElement))return; if(t.dataset.openf){try{await window.go.main.App.OpenPath(t.dataset.openf);}catch(err){showErr(err)}} if(t.dataset.reveal){try{await window.go.main.App.RevealPath(t.dataset.reveal);}catch(err){showErr(err)}} if(t.dataset.amove) await moveFile(t.dataset.amove,true); if(t.dataset.move) await moveFile(t.dataset.move,false); if(t.dataset.del) await deleteFile(t.dataset.del);});
-el('heavyBody').addEventListener('change',(e)=>{const t=e.target; if(!(t instanceof HTMLElement))return; if(t.dataset.sel){if(t.checked)s.selected.add(t.dataset.sel); else s.selected.delete(t.dataset.sel); el('chkAll').checked=s.heavy.length>0&&s.heavy.every(i=>s.selected.has(i.path));}});
+el('heavyBody').addEventListener('change',async(e)=>{
+  const t=e.target;
+  if(!(t instanceof HTMLElement))return;
+  if(t.dataset.sel){
+    if(t.checked)s.selected.add(t.dataset.sel); else s.selected.delete(t.dataset.sel);
+    el('chkAll').checked=s.heavy.length>0&&s.heavy.every(i=>s.selected.has(i.path));
+    updateSelCount();
+    return;
+  }
+  if(t.dataset.actionPath){
+    const p=t.dataset.actionPath;
+    const act=t.value;
+    t.value='';
+    if(!act||!p)return;
+    if(act==='amove') await moveFile(p,true);
+    if(act==='move') await moveFile(p,false);
+    if(act==='del') await deleteFile(p);
+  }
+});
 el('emptyList').addEventListener('change',(e)=>{const t=e.target; if(!(t instanceof HTMLElement))return; if(t.dataset.edir){if(t.checked)s.emptySelected.add(t.dataset.edir); else s.emptySelected.delete(t.dataset.edir); el('emptyAll').checked=s.emptyDirs.length>0&&s.emptyDirs.every(p=>s.emptySelected.has(p));}});
 
-(async()=>{try{const d=await window.go.main.App.Defaults(); el('path').value=d.downloads||d.home||''; el('verPill').textContent=d.version||'-'; await loadSaved(); await loadDrives(); applyLang(); setInterval(pollLog,900);}catch(e){showErr(e)}})();
+(async()=>{try{const d=await window.go.main.App.Defaults(); el('path').value=d.downloads||d.home||''; el('verPill').textContent=d.version||'-'; await loadSaved(); await loadDrives(); applyLang(); setInterval(pollLog,900); setTimeout(()=>runWiz(),250);}catch(e){showErr(e)}})();
+window.addEventListener('resize',()=>{ if(s.wiz) renderWiz(s.wiz); });
 </script>
 </body>
 </html>
