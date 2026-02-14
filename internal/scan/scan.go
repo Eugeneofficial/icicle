@@ -200,6 +200,12 @@ type HeavyStats struct {
 	TopFiles []FileInfo
 }
 
+type ExtStatsItem struct {
+	Ext   string
+	Count int
+	Size  int64
+}
+
 func walkFilesConcurrent(root string, maxFiles int, onFile func(path string, size int64)) (int, bool, error) {
 	root = filepath.Clean(root)
 	workers := scanWorkers()
@@ -403,4 +409,37 @@ func ScanTree(root string, topN int) (*TreeStats, error) {
 	})
 	stats.TopFiles = top.ListDesc()
 	return stats, nil
+}
+
+func ScanExtStatsLimited(root string, maxFiles int) ([]ExtStatsItem, int, bool, error) {
+	root = filepath.Clean(root)
+	byExt := map[string]ExtStatsItem{}
+	var mu sync.Mutex
+	seen, limited, err := walkFilesConcurrent(root, maxFiles, func(path string, size int64) {
+		ext := strings.ToLower(filepath.Ext(path))
+		if ext == "" {
+			ext = "(no_ext)"
+		}
+		mu.Lock()
+		cur := byExt[ext]
+		cur.Ext = ext
+		cur.Count++
+		cur.Size += size
+		byExt[ext] = cur
+		mu.Unlock()
+	})
+	if err != nil {
+		return nil, seen, limited, err
+	}
+	out := make([]ExtStatsItem, 0, len(byExt))
+	for _, v := range byExt {
+		out = append(out, v)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Size == out[j].Size {
+			return out[i].Count > out[j].Count
+		}
+		return out[i].Size > out[j].Size
+	})
+	return out, seen, limited, nil
 }

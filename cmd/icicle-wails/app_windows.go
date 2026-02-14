@@ -120,6 +120,71 @@ type App struct {
 		Err        string
 	}
 	fullCancel context.CancelFunc
+
+	driveHistory map[string][]DriveHistoryPoint
+	schedule     scheduledScanState
+}
+
+type DriveHistoryPoint struct {
+	AtUnix int64 `json:"atUnix"`
+	Used   int64 `json:"used"`
+	Total  int64 `json:"total"`
+}
+
+type DriveHistory struct {
+	Drive  string              `json:"drive"`
+	Points []DriveHistoryPoint `json:"points"`
+}
+
+type ExtStatsResult struct {
+	Items      []ExtStat `json:"items"`
+	Seen       int       `json:"seen"`
+	Limited    bool      `json:"limited"`
+	DurationMS int64     `json:"durationMs"`
+}
+
+type SnapshotInfo struct {
+	File string `json:"file"`
+	At   int64  `json:"at"`
+	Path string `json:"path"`
+}
+
+type ScheduleStatus struct {
+	Running     bool   `json:"running"`
+	Path        string `json:"path"`
+	IntervalSec int    `json:"intervalSec"`
+	TopN        int    `json:"topN"`
+	MaxFiles    int    `json:"maxFiles"`
+	Workers     int    `json:"workers"`
+	LastRunUnix int64  `json:"lastRunUnix"`
+	LastStatus  string `json:"lastStatus"`
+}
+
+type scheduledScanState struct {
+	Running     bool
+	Path        string
+	IntervalSec int
+	TopN        int
+	MaxFiles    int
+	Workers     int
+	LastRunUnix int64
+	LastStatus  string
+	Cancel      context.CancelFunc
+}
+
+type CleanupCandidate struct {
+	Path   string `json:"path"`
+	Size   int64  `json:"size"`
+	Human  string `json:"human"`
+	Reason string `json:"reason"`
+}
+
+type CleanupPresetResult struct {
+	Preset     string             `json:"preset"`
+	Count      int                `json:"count"`
+	TotalBytes int64              `json:"totalBytes"`
+	TotalHuman string             `json:"totalHuman"`
+	Candidates []CleanupCandidate `json:"candidates"`
 }
 
 type HeavyFullProgress struct {
@@ -160,6 +225,7 @@ func (a *App) startup(ctx context.Context) {
 
 func (a *App) shutdown(context.Context) {
 	a.StopWatch()
+	a.StopScheduledScan()
 	if a.tray != nil {
 		a.tray.Close()
 	}
@@ -627,7 +693,58 @@ func (a *App) ListDrives() ([]DriveInfo, error) {
 			UsedRatio:  ratio,
 		})
 	}
+	a.recordDriveHistory(out)
 	return out, nil
+}
+
+func (a *App) recordDriveHistory(items []DriveInfo) {
+	const maxPoints = 120
+	now := time.Now().Unix()
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.driveHistory == nil {
+		a.driveHistory = map[string][]DriveHistoryPoint{}
+	}
+	for _, d := range items {
+		key := strings.ToUpper(strings.TrimSpace(d.Drive))
+		if key == "" {
+			continue
+		}
+		points := a.driveHistory[key]
+		p := DriveHistoryPoint{AtUnix: now, Used: d.Used, Total: d.Total}
+		if len(points) > 0 {
+			last := points[len(points)-1]
+			if last.Used == p.Used && last.Total == p.Total && now-last.AtUnix < 20 {
+				continue
+			}
+		}
+		points = append(points, p)
+		if len(points) > maxPoints {
+			points = points[len(points)-maxPoints:]
+		}
+		a.driveHistory[key] = points
+	}
+}
+
+func (a *App) DriveHistory() []DriveHistory {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if len(a.driveHistory) == 0 {
+		return []DriveHistory{}
+	}
+	keys := make([]string, 0, len(a.driveHistory))
+	for k := range a.driveHistory {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	out := make([]DriveHistory, 0, len(keys))
+	for _, k := range keys {
+		src := a.driveHistory[k]
+		dst := make([]DriveHistoryPoint, len(src))
+		copy(dst, src)
+		out = append(out, DriveHistory{Drive: k, Points: dst})
+	}
+	return out
 }
 
 func (a *App) OpenDrive(drive string) error {
@@ -965,6 +1082,97 @@ func (a *App) DeleteEmptyDirsToRecycle(paths []string) BatchResult {
 	return res
 }
 
+func (a *App) ScanCleanupPreset(path string, preset string, limit int, maxFiles int) (CleanupPresetResult, error) {
+	path = a.normalizePath(path, a.folders.Home)
+	preset = strings.ToLower(strings.TrimSpace(preset))
+	if preset == "" {
+		preset = "dev-cache"
+	}
+	if limit <= 0 {
+		limit = 120
+	}
+	if maxFiles < 0 {
+		maxFiles = 0
+	}
+	out := CleanupPresetResult{Preset: preset}
+	candidates := make([]CleanupCandidate, 0, limit+64)
+	seen, err := scan.WalkAllLimit(path, maxFiles, func(p string, size int64) {
+		ok, reason := matchCleanupPreset(preset, p)
+		if !ok {
+			return
+		}
+		candidates = append(candidates, CleanupCandidate{
+			Path:   p,
+			Size:   size,
+			Human:  ui.HumanBytes(size),
+			Reason: reason,
+		})
+		out.TotalBytes += size
+	})
+	if err != nil {
+		return CleanupPresetResult{}, err
+	}
+	sort.Slice(candidates, func(i, j int) bool { return candidates[i].Size > candidates[j].Size })
+	if len(candidates) > limit {
+		candidates = candidates[:limit]
+	}
+	out.Candidates = candidates
+	out.Count = len(candidates)
+	out.TotalHuman = ui.HumanBytes(out.TotalBytes)
+	a.appendLog(fmt.Sprintf("[preset-scan] %s seen=%d candidates=%d", preset, seen, out.Count))
+	return out, nil
+}
+
+func (a *App) ApplyPresetCleanup(paths []string, safe bool) BatchResult {
+	return a.BatchDelete(paths, safe)
+}
+
+func matchCleanupPreset(preset string, path string) (bool, string) {
+	lp := strings.ToLower(path)
+	ext := strings.ToLower(filepath.Ext(lp))
+	switch preset {
+	case "games":
+		if strings.Contains(lp, `\\shadercache\\`) || strings.Contains(lp, `\\crashdumps\\`) {
+			return true, "game cache"
+		}
+		switch ext {
+		case ".msi", ".iso", ".tmp", ".bak", ".dmp", ".log", ".crdownload", ".part":
+			return true, "game installer/cache file"
+		}
+		return false, ""
+	case "media":
+		switch ext {
+		case ".tmp", ".part", ".crdownload", ".download", ".m3u8", ".ts", ".srt.tmp":
+			return true, "media temp file"
+		}
+		if strings.Contains(lp, `\\cache\\`) && (strings.Contains(lp, `video`) || strings.Contains(lp, `media`)) {
+			return true, "media cache"
+		}
+		return false, ""
+	case "dev-cache":
+		devCacheMarks := []string{
+			`\\node_modules\\.cache\\`,
+			`\\appdata\\local\\npm-cache\\`,
+			`\\appdata\\local\\pnpm\\store\\`,
+			`\\.nuget\\packages\\`,
+			`\\appdata\\local\\pip\\cache\\`,
+			`\\appdata\\local\\go-build\\`,
+			`\\appdata\\roaming\\code\\cache\\`,
+		}
+		for _, m := range devCacheMarks {
+			if strings.Contains(lp, m) {
+				return true, "dev cache"
+			}
+		}
+		if ext == ".tmp" || ext == ".log" {
+			return true, "dev temp/log"
+		}
+		return false, ""
+	default:
+		return false, ""
+	}
+}
+
 func (a *App) ExtensionStats(path string, limit int) ([]ExtStat, error) {
 	path = a.normalizePath(path, a.folders.Home)
 	byExt := map[string]ExtStat{}
@@ -992,6 +1200,55 @@ func (a *App) ExtensionStats(path string, limit int) ([]ExtStat, error) {
 		out = out[:limit]
 	}
 	return out, nil
+}
+
+func (a *App) ExtensionStatsFast(path string, limit int, maxFiles int, workers int) (ExtStatsResult, error) {
+	path = a.normalizePath(path, a.folders.Home)
+	if limit <= 0 {
+		limit = 20
+	}
+	if maxFiles < 0 {
+		maxFiles = 0
+	}
+	started := time.Now()
+	a.scanMu.Lock()
+	prevWorkers, hadWorkers := os.LookupEnv("ICICLE_SCAN_WORKERS")
+	if workers > 0 {
+		_ = os.Setenv("ICICLE_SCAN_WORKERS", strconv.Itoa(workers))
+	}
+	items, seen, limited, err := scan.ScanExtStatsLimited(path, maxFiles)
+	if workers > 0 {
+		if hadWorkers {
+			_ = os.Setenv("ICICLE_SCAN_WORKERS", prevWorkers)
+		} else {
+			_ = os.Unsetenv("ICICLE_SCAN_WORKERS")
+		}
+	}
+	a.scanMu.Unlock()
+	if err != nil {
+		return ExtStatsResult{}, err
+	}
+
+	out := make([]ExtStat, 0, len(items))
+	for _, it := range items {
+		out = append(out, ExtStat{
+			Ext:   it.Ext,
+			Count: it.Count,
+			Size:  it.Size,
+			Human: ui.HumanBytes(it.Size),
+		})
+	}
+	if len(out) > limit {
+		out = out[:limit]
+	}
+	res := ExtStatsResult{
+		Items:      out,
+		Seen:       seen,
+		Limited:    limited,
+		DurationMS: time.Since(started).Milliseconds(),
+	}
+	a.appendLog(fmt.Sprintf("[extensions-fast] %s seen=%d limited=%v ms=%d", path, res.Seen, res.Limited, res.DurationMS))
+	return res, nil
 }
 
 func (a *App) DuplicateNames(path string, maxFiles int, top int) ([]DupStat, error) {
@@ -1112,6 +1369,216 @@ func (a *App) DuplicateFinderV2(path string, mode string, maxFiles int, top int)
 	})
 	if len(out) > top {
 		out = out[:top]
+	}
+	return out, nil
+}
+
+func (a *App) StartScheduledScan(path string, intervalSec int, n int, maxFiles int, workers int) error {
+	path = a.normalizePath(path, a.folders.Downloads)
+	if intervalSec < 30 {
+		intervalSec = 30
+	}
+	if n <= 0 {
+		n = 20
+	}
+	if maxFiles < 0 {
+		maxFiles = 0
+	}
+
+	a.mu.Lock()
+	if a.schedule.Running {
+		a.mu.Unlock()
+		return fmt.Errorf("scheduled scan is already running")
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	a.schedule = scheduledScanState{
+		Running:     true,
+		Path:        path,
+		IntervalSec: intervalSec,
+		TopN:        n,
+		MaxFiles:    maxFiles,
+		Workers:     workers,
+		LastStatus:  "started",
+		Cancel:      cancel,
+	}
+	a.mu.Unlock()
+
+	go a.scheduledLoop(ctx)
+	a.appendLog(fmt.Sprintf("[schedule] started: every %ds path=%s", intervalSec, path))
+	return nil
+}
+
+func (a *App) RunScheduledScanOnce(path string, n int, maxFiles int, workers int) (string, error) {
+	path = a.normalizePath(path, a.folders.Downloads)
+	if n <= 0 {
+		n = 20
+	}
+	res, err := a.RunHeavyFast(path, n, maxFiles, workers)
+	if err != nil {
+		return "", err
+	}
+	filePath, err := a.saveSnapshot(path, n, maxFiles, res)
+	if err != nil {
+		return "", err
+	}
+	a.appendLog("[schedule-once] " + filePath)
+	return filePath, nil
+}
+
+func (a *App) scheduledLoop(ctx context.Context) {
+	run := func() {
+		a.mu.Lock()
+		st := a.schedule
+		a.mu.Unlock()
+		path := st.Path
+		n := st.TopN
+		maxFiles := st.MaxFiles
+		workers := st.Workers
+		started := time.Now()
+		res, err := a.RunHeavyFast(path, n, maxFiles, workers)
+		status := "ok"
+		if err != nil {
+			status = "error: " + err.Error()
+		} else {
+			filePath, serr := a.saveSnapshot(path, n, maxFiles, res)
+			if serr != nil {
+				status = "snapshot error: " + serr.Error()
+			} else {
+				status = "ok: " + filepath.Base(filePath)
+			}
+		}
+		a.mu.Lock()
+		a.schedule.LastRunUnix = time.Now().Unix()
+		a.schedule.LastStatus = status
+		a.mu.Unlock()
+		a.appendLog(fmt.Sprintf("[schedule] run finished in %d ms (%s)", time.Since(started).Milliseconds(), status))
+	}
+
+	run()
+	a.mu.Lock()
+	interval := a.schedule.IntervalSec
+	a.mu.Unlock()
+	ticker := time.NewTicker(time.Duration(interval) * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			run()
+		}
+	}
+}
+
+func (a *App) StopScheduledScan() {
+	a.mu.Lock()
+	cancel := a.schedule.Cancel
+	running := a.schedule.Running
+	a.schedule.Running = false
+	a.schedule.Cancel = nil
+	a.mu.Unlock()
+	if running {
+		a.appendLog("[schedule] stopped")
+	}
+	if cancel != nil {
+		cancel()
+	}
+}
+
+func (a *App) ScheduledScanStatus() ScheduleStatus {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return ScheduleStatus{
+		Running:     a.schedule.Running,
+		Path:        a.schedule.Path,
+		IntervalSec: a.schedule.IntervalSec,
+		TopN:        a.schedule.TopN,
+		MaxFiles:    a.schedule.MaxFiles,
+		Workers:     a.schedule.Workers,
+		LastRunUnix: a.schedule.LastRunUnix,
+		LastStatus:  a.schedule.LastStatus,
+	}
+}
+
+func (a *App) saveSnapshot(path string, n int, maxFiles int, res HeavyResult) (string, error) {
+	reportDir, err := a.reportDir()
+	if err != nil {
+		return "", err
+	}
+	type payload struct {
+		AtUnix     int64       `json:"atUnix"`
+		Path       string      `json:"path"`
+		TopN       int         `json:"topN"`
+		MaxFiles   int         `json:"maxFiles"`
+		Seen       int         `json:"seen"`
+		Limited    bool        `json:"limited"`
+		DurationMS int64       `json:"durationMs"`
+		Items      []HeavyItem `json:"items"`
+	}
+	data, err := json.MarshalIndent(payload{
+		AtUnix:     time.Now().Unix(),
+		Path:       path,
+		TopN:       n,
+		MaxFiles:   maxFiles,
+		Seen:       res.Seen,
+		Limited:    res.Limited,
+		DurationMS: res.DurationMS,
+		Items:      res.Items,
+	}, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	fileName := "heavy-snapshot-" + time.Now().Format("20060102-150405") + ".json"
+	target := filepath.Join(reportDir, fileName)
+	if err := os.WriteFile(target, data, 0o644); err != nil {
+		return "", err
+	}
+	return target, nil
+}
+
+func (a *App) reportDir() (string, error) {
+	cfgDir, _ := os.UserConfigDir()
+	if strings.TrimSpace(cfgDir) == "" {
+		cfgDir = a.folders.Home
+	}
+	dir := filepath.Join(cfgDir, "icicle", "reports")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return "", err
+	}
+	return dir, nil
+}
+
+func (a *App) ListReportSnapshots(limit int) ([]SnapshotInfo, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	dir, err := a.reportDir()
+	if err != nil {
+		return nil, err
+	}
+	items, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]SnapshotInfo, 0, len(items))
+	for _, it := range items {
+		if it.IsDir() || !strings.HasSuffix(strings.ToLower(it.Name()), ".json") {
+			continue
+		}
+		full := filepath.Join(dir, it.Name())
+		info, ierr := it.Info()
+		if ierr != nil {
+			continue
+		}
+		out = append(out, SnapshotInfo{
+			File: full,
+			At:   info.ModTime().Unix(),
+			Path: full,
+		})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].At > out[j].At })
+	if len(out) > limit {
+		out = out[:limit]
 	}
 	return out, nil
 }
