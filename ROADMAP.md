@@ -16,27 +16,27 @@
 - [x] Faster extension analytics for huge trees
 - [x] Better i18n consistency and glossary lock
 
-### Quality Goals (Delivered)
-- [x] Keep `tree/heavy` responsive on very large disks
-- [x] Keep desktop UX fast under heavy I/O
-- [x] Keep update path one-click and rollback-safe
-- [x] Keep CI green and reproducible builds
-
-## Next (v2.3)
-
+### v2.3 (Delivered)
 - [x] Full visual charts for drive history timeline
 - [x] Snapshot diff viewer (delta between two scans)
 - [x] Preset dry-run preview with risk labels
 - [x] Smarter duplicate actions (keep newest/oldest rules)
 - [x] Better watch diagnostics panel (per-folder health)
 
-## Later (v2.4)
+### v2.4 (Delivered)
+- [x] Scheduled cleanup tasks from GUI
+- [x] Advanced ignore/include filters for heavy/tree/ext scans
+- [x] Portable encrypted profile export/import
+- [x] Optional installer + winget package templates
+- [x] Plugin-style custom routing rules
 
-- [ ] Scheduled cleanup tasks from GUI
-- [ ] Advanced ignore/include filters for heavy/tree/ext scans
-- [ ] Portable encrypted profile export/import
-- [ ] Optional installer + winget package
-- [ ] Plugin-style custom routing rules
+## Next (v2.5)
+
+- [ ] Treemap zoom breadcrumbs + keyboard navigation
+- [ ] Cleanup scheduler calendar mode (daily/weekly)
+- [ ] Profile import conflict resolver (merge vs overwrite)
+- [ ] Rule tester panel with sample file simulation
+- [ ] Full release signing pipeline in CI
 
 ## Community Track
 

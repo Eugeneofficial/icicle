@@ -131,6 +131,7 @@ type App struct {
 
 	driveHistory map[string][]DriveHistoryPoint
 	schedule     scheduledScanState
+	cleanup      scheduledCleanupState
 }
 
 type DriveHistoryPoint struct {
@@ -289,6 +290,7 @@ func (a *App) startup(ctx context.Context) {
 func (a *App) shutdown(context.Context) {
 	a.StopWatch()
 	a.StopScheduledScan()
+	a.StopScheduledCleanup()
 	if a.tray != nil {
 		a.tray.Close()
 	}
@@ -1029,7 +1031,7 @@ func (a *App) MoveFile(src string, dstDir string) (string, error) {
 	}
 	dstDir = strings.TrimSpace(dstDir)
 	if dstDir == "" {
-		auto, ok := organize.DestinationDir(a.folders.Home, src)
+		auto, ok := a.resolveAutoDestination(src)
 		if !ok {
 			return "", fmt.Errorf("no auto destination for extension")
 		}

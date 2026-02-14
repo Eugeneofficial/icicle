@@ -1,0 +1,60 @@
+<svg width="1600" height="580" viewBox="0 0 1600 580" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="580" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1220"/>
+      <stop offset="1" stop-color="#121C31"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#1A2438"/>
+      <stop offset="1" stop-color="#11192A"/>
+    </linearGradient>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#4EA1FF"/>
+      <stop offset="1" stop-color="#1F6FEB"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="580" fill="url(#bg)"/>
+  <circle cx="1360" cy="84" r="220" fill="#1A2B45" fill-opacity="0.55"/>
+  <circle cx="122" cy="510" r="240" fill="#16233A" fill-opacity="0.55"/>
+
+  <g>
+    <rect x="60" y="76" width="700" height="428" rx="18" fill="url(#panel)" stroke="#2A3C5F"/>
+    <rect x="82" y="114" width="658" height="56" rx="12" fill="#0E1729" stroke="#2B3E63"/>
+    <rect x="98" y="132" width="368" height="20" rx="8" fill="#1D2D49"/>
+    <rect x="480" y="132" width="242" height="20" rx="8" fill="#0F233F" stroke="#2B5FA3"/>
+
+    <rect x="82" y="194" width="420" height="286" rx="12" fill="#091326" stroke="#20365A"/>
+    <rect x="512" y="194" width="228" height="136" rx="12" fill="#0C1528" stroke="#24385C"/>
+    <rect x="512" y="344" width="228" height="136" rx="12" fill="#0C1528" stroke="#24385C"/>
+
+    <rect x="94" y="206" width="220" height="120" fill="#2D6A97"/>
+    <rect x="316" y="206" width="174" height="76" fill="#6E2C7C"/>
+    <rect x="316" y="284" width="174" height="42" fill="#4B4BC1"/>
+    <rect x="94" y="328" width="188" height="140" fill="#2E718D"/>
+    <rect x="284" y="328" width="206" height="140" fill="#3D2E88"/>
+
+    <rect x="526" y="208" width="200" height="12" rx="6" fill="#31496F"/>
+    <rect x="526" y="232" width="164" height="12" rx="6" fill="#29405F"/>
+    <rect x="526" y="256" width="186" height="12" rx="6" fill="#243B5A"/>
+
+    <rect x="526" y="358" width="200" height="12" rx="6" fill="#31496F"/>
+    <rect x="526" y="382" width="154" height="12" rx="6" fill="#29405F"/>
+    <rect x="526" y="406" width="170" height="12" rx="6" fill="#243B5A"/>
+  </g>
+
+  <g>
+    <text x="812" y="180" fill="#EAF2FF" font-family="Segoe UI, Arial" font-size="72" font-weight="700">icicle</text>
+    <text x="814" y="230" fill="#8FA8CC" font-family="Segoe UI, Arial" font-size="28">Windows Disk Intelligence Suite</text>
+
+    <rect x="814" y="268" width="714" height="60" rx="12" fill="#0E1728" stroke="#2A3F64"/>
+    <text x="842" y="307" fill="#D8E7FF" font-family="Consolas, monospace" font-size="24">Tree • Heavy • WizMap • Watch • Cleanup Scheduler</text>
+
+    <rect x="814" y="346" width="342" height="74" rx="14" fill="url(#acc)"/>
+    <text x="848" y="391" fill="#FFFFFF" font-family="Segoe UI, Arial" font-size="28" font-weight="700">Desktop + CLI</text>
+
+    <rect x="1172" y="346" width="356" height="74" rx="14" fill="#14243E" stroke="#2E4C7D"/>
+    <text x="1202" y="391" fill="#CAE0FF" font-family="Segoe UI, Arial" font-size="26" font-weight="600">Portable Profiles</text>
+
+    <text x="814" y="470" fill="#A7BFE0" font-family="Segoe UI, Arial" font-size="22">Fast scans • Smart routing • Safe recycle cleanup • Winget-ready</text>
+  </g>
+</svg>

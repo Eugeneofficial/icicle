@@ -1,17 +1,12 @@
-п»ї# icicle
+# icicle
 
 <p align="center">
-  <img src="docs/hero-v2.svg" alt="icicle hero" width="100%" />
+  <img src="docs/hero-v3.svg" alt="icicle hero" width="100%" />
 </p>
 
 <p align="center">
-  <strong>Premium Windows disk intelligence toolkit.</strong><br/>
-  Fast CLI + native desktop app for heavy-file analysis, folder automation, and safe cleanup.
-</p>
-
-<p align="center">
-  <strong>RU:</strong> <code>icicle</code> вЂ” Р±С‹СЃС‚СЂС‹Р№ РёРЅСЃС‚СЂСѓРјРµРЅС‚ РґР»СЏ Р°РЅР°Р»РёР·Р° Рё РѕС‡РёСЃС‚РєРё РґРёСЃРєР° РІ Windows.<br/>
-  CLI + РЅР°С‚РёРІРЅС‹Р№ Desktop GUI РґР»СЏ С‚СЏР¶С‘Р»С‹С… С„Р°Р№Р»РѕРІ, Р°РІС‚РѕСЃРѕСЂС‚РёСЂРѕРІРєРё Рё Р±РµР·РѕРїР°СЃРЅРѕР№ РѕС‡РёСЃС‚РєРё.
+  <strong>Modern Windows disk intelligence suite.</strong><br/>
+  Native desktop app + fast CLI for scanning, cleanup automation, safe file actions, and visual storage analytics.
 </p>
 
 <p align="center">
@@ -22,34 +17,18 @@
   <a href="https://github.com/Eugeneofficial/icicle/stargazers"><img src="https://img.shields.io/github/stars/Eugeneofficial/icicle?style=social" alt="Stars"></a>
 </p>
 
-## Why icicle
+## What It Does
 
-- Native Windows desktop app (`Wails`) + fast CLI in one codebase
-- Real-world performance mode for huge folders (`max files` + `workers`)
-- Direct file actions in UI: open, reveal, auto-move, move-to, delete, undo
-- Live watch mode with extension-based routing
-- Safe-delete option (Recycle Bin)
-
-## Product Highlights
-
-- `tree`: directory size map + top files
-- `heavy`: top-N largest files + export (CSV / JSON / Markdown)
-- `watch`: real-time auto-sort for incoming files
-- Drive dashboard with quick actions
-- Tray reopen + in-app update flow
-- RU/EN localization + Dark/Light themes
-- Drive history timeline data collection
-- Scheduled scan snapshots (background report generation)
-- Smart cleanup presets: `games`, `media`, `dev-cache`
-- Fast extension analytics for huge trees
-
-## Quality & Reliability
-
-- Fast-path scan mode for heavy/tree/ext with file limits + worker tuning
-- Desktop busy-guard for heavy operations under high I/O load
-- Update flow with rollback-safe backup (`.bak`) if swap/start fails
-- CI checks: format, tests, race checks (core packages), Windows CLI/Desktop build
-- Reproducible build flags in CI/release/update scripts (`-trimpath`, `-buildvcs=false`, deterministic `ldflags`)
+- Tree and heavy-file scans tuned for huge disks
+- Interactive WizMap (treemap) for space usage navigation
+- Watch mode with auto-sort and routing rules
+- Queue-based actions: move/delete with undo
+- Safe delete via Recycle Bin
+- Snapshot reports, diff viewer, and schedule automation
+- Cleanup presets (Games / Media / Dev cache)
+- Encrypted profile export/import (portable config)
+- Advanced include/ignore filters for heavy/tree/ext scans
+- RU/EN localization + dark/light theme
 
 ## Quick Start
 
@@ -62,7 +41,7 @@ go build -o icicle.exe ./cmd/icicle
 .\icicle.exe
 ```
 
-Desktop (native):
+Desktop (Wails):
 
 ```powershell
 .\scripts\build_wails.bat
@@ -75,23 +54,31 @@ Manual desktop build:
 go build -tags "wails,production" -o icicle-desktop.exe ./cmd/icicle-wails
 ```
 
-## One-Click Install (Release)
+## Main Features
+
+- `tree`: directory size map + top files
+- `heavy`: top-N largest files + export (CSV / JSON / Markdown)
+- `watch`: realtime folder watch with sorting
+- `WizMap`: interactive treemap with drill-down and extension analytics
+- Scheduled scans and scheduled cleanup tasks from GUI
+- Plugin-style custom routing rules (ext/contains/prefix/regex)
+- Encrypted profile backup/restore for portable setup
+
+## Installer & Winget (Optional)
+
+Build optional NSIS installer:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\build_installer.ps1
 ```
 
-## CLI Usage
+Generate winget manifest templates:
 
-```text
-icicle watch [--dry-run] [path]
-icicle heavy [--n 20] [path]
-icicle tree [--n 20] [--w 24] [--top 5] [path]
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\package_winget.ps1 -Version 2.3.0
 ```
 
-Defaults:
-- `watch` -> Windows `Downloads`
-- `heavy/tree` -> Windows home folder
+Templates are generated in `winget/`.
 
 ## Screens
 
@@ -101,55 +88,36 @@ Defaults:
   <img src="docs/screen-light-v2.svg" alt="dashboard light" width="32%" />
 </p>
 
-## Benchmarks
-
-See full benchmark notes: [BENCHMARKS.md](BENCHMARKS.md)
-
-## Update & Release
-
-Update local clone:
-
-```powershell
-.\update.bat
-```
-
-Create release package + checksum:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\release.ps1
-```
-
-Artifacts are produced in `dist/` (`.zip` + `.sha256`).
-
-## Roadmap & Launch Docs
+## Docs
 
 - Roadmap: [ROADMAP.md](ROADMAP.md)
 - Changelog: [CHANGELOG.md](CHANGELOG.md)
-- Release notes template: [RELEASE_NOTES_v2.0.0.md](RELEASE_NOTES_v2.0.0.md)
+- Benchmarks: [BENCHMARKS.md](BENCHMARKS.md)
+- Testing: [TESTING.md](TESTING.md)
 - Contributing: [CONTRIBUTING.md](CONTRIBUTING.md)
-- Security policy: [SECURITY.md](SECURITY.md)
-- Code signing plan: [docs/CODE_SIGNING.md](docs/CODE_SIGNING.md)
+- Security: [SECURITY.md](SECURITY.md)
+- Code signing: [docs/CODE_SIGNING.md](docs/CODE_SIGNING.md)
 
-## GitHub Growth Setup
+## RU (Полная версия)
 
-Recommended repository topics:
-`windows`, `disk-cleanup`, `file-manager`, `golang`, `wails`, `desktop-app`, `cli`, `fsnotify`, `performance`, `storage`, `automation`
+`icicle` — профессиональный Windows-инструмент для контроля свободного места, поиска тяжёлых файлов, безопасной очистки и автоматизации рутинных операций. Приложение объединяет быстрый CLI и нативный Desktop GUI (Wails), чтобы работать одинаково удобно и для power-user, и для обычного пользователя.
 
-Enable Discussions in repository settings:
-`Settings -> General -> Features -> Discussions`
+Ключевые возможности RU:
 
-## RU: РџРѕР»РЅР°СЏ Р’РµСЂСЃРёСЏ
+- интерактивная карта места (WizMap) с переходом по папкам
+- быстрые сканы `tree` / `heavy` / `extensions` с фильтрами include/ignore
+- авто-сортировка новых файлов через `watch`
+- очередь действий по файлам: перенос, удаление, undo
+- удаление в корзину как безопасный режим по умолчанию
+- планировщик сканов и планировщик очистки прямо в GUI
+- пресеты очистки (`games`, `media`, `dev-cache`) с оценкой риска
+- шифрованный экспорт/импорт профиля (сохранённые папки + правила)
+- настраиваемые plugin-style правила маршрутизации
+- RU/EN, светлая/тёмная тема, системный трей, in-app update
 
-`icicle` вЂ” РїСЂРѕС„РµСЃСЃРёРѕРЅР°Р»СЊРЅС‹Р№ РёРЅСЃС‚СЂСѓРјРµРЅС‚ РґР»СЏ РєРѕРЅС‚СЂРѕР»СЏ, Р°РЅР°Р»РёР·Р° Рё РѕС‡РёСЃС‚РєРё РґРёСЃРєРѕРІРѕРіРѕ РїСЂРѕСЃС‚СЂР°РЅСЃС‚РІР° РІ Windows. РћРЅ РѕР±СЉРµРґРёРЅСЏРµС‚ Р±С‹СЃС‚СЂС‹Р№ CLI Рё РЅР°С‚РёРІРЅС‹Р№ Desktop GUI, РїРѕР·РІРѕР»СЏСЏ Р±С‹СЃС‚СЂРѕ РЅР°С…РѕРґРёС‚СЊ С‚СЏР¶С‘Р»С‹Рµ С„Р°Р№Р»С‹, СЃС‚СЂРѕРёС‚СЊ РєР°СЂС‚Сѓ СЂР°Р·РјРµСЂРѕРІ, РЅР°РІРѕРґРёС‚СЊ РїРѕСЂСЏРґРѕРє Рё Р°РІС‚РѕРјР°С‚РёР·РёСЂРѕРІР°С‚СЊ СЂСѓС‚РёРЅСѓ.
+## Repository Topics
 
-РљР»СЋС‡РµРІС‹Рµ РІРѕР·РјРѕР¶РЅРѕСЃС‚Рё:
-
-- `tree`: РІРёР·СѓР°Р»РёР·Р°С†РёСЏ РґРµСЂРµРІР° СЂР°Р·РјРµСЂРѕРІ + С‚РѕРї С„Р°Р№Р»РѕРІ
-- `heavy`: РїРѕРёСЃРє С‚СЏР¶С‘Р»С‹С… С„Р°Р№Р»РѕРІ + СЌРєСЃРїРѕСЂС‚ (`CSV/JSON/Markdown`)
-- `watch`: Р°РІС‚Рѕ-СЃРѕСЂС‚РёСЂРѕРІРєР° РЅРѕРІС‹С… С„Р°Р№Р»РѕРІ РїРѕ СЂР°СЃС€РёСЂРµРЅРёСЏРј
-- РґРµР№СЃС‚РІРёСЏ РїРѕ С„Р°Р№Р»Р°Рј РёР· GUI: РѕС‚РєСЂС‹С‚СЊ, РїРѕРєР°Р·Р°С‚СЊ РІ РїСЂРѕРІРѕРґРЅРёРєРµ, РїРµСЂРµРЅРµСЃС‚Рё, СѓРґР°Р»РёС‚СЊ, РѕС‚РјРµРЅРёС‚СЊ РїРµСЂРµРЅРѕСЃ
-- Р±РµР·РѕРїР°СЃРЅРѕРµ СѓРґР°Р»РµРЅРёРµ РІ РєРѕСЂР·РёРЅСѓ (РѕРїС†РёРѕРЅР°Р»СЊРЅРѕ)
-- РєР°СЂС‚РѕС‡РєРё РґРёСЃРєРѕРІ, Р±С‹СЃС‚СЂС‹Р№ СЂРµР¶РёРј СЃРєР°РЅРёСЂРѕРІР°РЅРёСЏ, RU/EN, Dark/Light, С‚СЂРµР№ Рё РѕР±РЅРѕРІР»РµРЅРёСЏ
+`windows`, `disk-cleanup`, `storage-analyzer`, `file-manager`, `golang`, `wails`, `desktop-app`, `cli`, `automation`, `performance`, `treemap`
 
 ## License
 
