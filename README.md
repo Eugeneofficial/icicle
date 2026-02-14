@@ -1,12 +1,12 @@
 # icicle
 
 <p align="center">
-  <img src="docs/hero-v3.svg" alt="icicle hero" width="100%" />
+  <img src="docs/hero-v4.svg" alt="icicle v2.4 hero" width="100%" />
 </p>
 
 <p align="center">
-  <strong>Modern Windows disk intelligence suite.</strong><br/>
-  Native desktop app + fast CLI for scanning, cleanup automation, safe file actions, and visual storage analytics.
+  <strong>Premium Windows Disk Intelligence Suite</strong><br/>
+  Native Desktop App + Fast CLI for heavy scans, interactive treemap, automation, and safe cleanup.
 </p>
 
 <p align="center">
@@ -17,18 +17,33 @@
   <a href="https://github.com/Eugeneofficial/icicle/stargazers"><img src="https://img.shields.io/github/stars/Eugeneofficial/icicle?style=social" alt="Stars"></a>
 </p>
 
-## What It Does
+## EU Block (EN)
 
-- Tree and heavy-file scans tuned for huge disks
-- Interactive WizMap (treemap) for space usage navigation
-- Watch mode with auto-sort and routing rules
-- Queue-based actions: move/delete with undo
-- Safe delete via Recycle Bin
-- Snapshot reports, diff viewer, and schedule automation
-- Cleanup presets (Games / Media / Dev cache)
-- Encrypted profile export/import (portable config)
-- Advanced include/ignore filters for heavy/tree/ext scans
-- RU/EN localization + dark/light theme
+`icicle` is a production-grade Windows storage analyzer and cleanup tool.
+It combines a native Wails desktop UI with a high-performance Go CLI.
+
+Core value:
+- Fast `tree` / `heavy` / `extensions` scans on large disks
+- Interactive `WizMap` treemap with drill-down navigation
+- Scheduled scans and scheduled cleanup from GUI
+- Safe delete to Recycle Bin + queue + undo
+- Advanced include/ignore filters for scan pipelines
+- Plugin-style routing rules (`ext`, `contains`, `prefix`, `regex`)
+- Encrypted profile export/import for portable setups
+
+## RU Block (Полная версия)
+
+`icicle` — это профессиональный инструмент для Windows, который помогает быстро находить, сортировать и очищать файлы на больших дисках. Проект объединяет нативный Desktop GUI и быстрый CLI, чтобы работать одинаково удобно и руками, и через автоматизацию.
+
+Что внутри:
+- быстрые команды `tree`, `heavy`, `extensions`
+- интерактивная карта места `WizMap` (как treemap)
+- планировщик сканов и планировщик очистки прямо в GUI
+- безопасное удаление в корзину + очередь действий + `undo`
+- фильтры include/ignore для точного сканирования
+- гибкие правила маршрутизации файлов
+- шифрованный экспорт/импорт профиля (portable)
+- RU/EN локализация, dark/light тема, трей, update flow
 
 ## Quick Start
 
@@ -54,31 +69,12 @@ Manual desktop build:
 go build -tags "wails,production" -o icicle-desktop.exe ./cmd/icicle-wails
 ```
 
-## Main Features
-
-- `tree`: directory size map + top files
-- `heavy`: top-N largest files + export (CSV / JSON / Markdown)
-- `watch`: realtime folder watch with sorting
-- `WizMap`: interactive treemap with drill-down and extension analytics
-- Scheduled scans and scheduled cleanup tasks from GUI
-- Plugin-style custom routing rules (ext/contains/prefix/regex)
-- Encrypted profile backup/restore for portable setup
-
-## Installer & Winget (Optional)
-
-Build optional NSIS installer:
+## Installer / Winget (Optional)
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\build_installer.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\package_winget.ps1 -Version 2.4.0
 ```
-
-Generate winget manifest templates:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\package_winget.ps1 -Version 2.3.0
-```
-
-Templates are generated in `winget/`.
 
 ## Screens
 
@@ -90,32 +86,14 @@ Templates are generated in `winget/`.
 
 ## Docs
 
-- Roadmap: [ROADMAP.md](ROADMAP.md)
-- Changelog: [CHANGELOG.md](CHANGELOG.md)
-- Benchmarks: [BENCHMARKS.md](BENCHMARKS.md)
-- Testing: [TESTING.md](TESTING.md)
-- Contributing: [CONTRIBUTING.md](CONTRIBUTING.md)
-- Security: [SECURITY.md](SECURITY.md)
-- Code signing: [docs/CODE_SIGNING.md](docs/CODE_SIGNING.md)
+- [ROADMAP.md](ROADMAP.md)
+- [CHANGELOG.md](CHANGELOG.md)
+- [BENCHMARKS.md](BENCHMARKS.md)
+- [TESTING.md](TESTING.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [SECURITY.md](SECURITY.md)
 
-## RU (Полная версия)
-
-`icicle` — профессиональный Windows-инструмент для контроля свободного места, поиска тяжёлых файлов, безопасной очистки и автоматизации рутинных операций. Приложение объединяет быстрый CLI и нативный Desktop GUI (Wails), чтобы работать одинаково удобно и для power-user, и для обычного пользователя.
-
-Ключевые возможности RU:
-
-- интерактивная карта места (WizMap) с переходом по папкам
-- быстрые сканы `tree` / `heavy` / `extensions` с фильтрами include/ignore
-- авто-сортировка новых файлов через `watch`
-- очередь действий по файлам: перенос, удаление, undo
-- удаление в корзину как безопасный режим по умолчанию
-- планировщик сканов и планировщик очистки прямо в GUI
-- пресеты очистки (`games`, `media`, `dev-cache`) с оценкой риска
-- шифрованный экспорт/импорт профиля (сохранённые папки + правила)
-- настраиваемые plugin-style правила маршрутизации
-- RU/EN, светлая/тёмная тема, системный трей, in-app update
-
-## Repository Topics
+## Topics
 
 `windows`, `disk-cleanup`, `storage-analyzer`, `file-manager`, `golang`, `wails`, `desktop-app`, `cli`, `automation`, `performance`, `treemap`
 
