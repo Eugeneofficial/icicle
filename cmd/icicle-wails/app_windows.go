@@ -217,10 +217,10 @@ type SnapshotDiffResult struct {
 
 type DuplicateActionResult struct {
 	Rule      string      `json:"rule"`
-	KeptPath   string      `json:"keptPath"`
-	Deleted    BatchResult `json:"deleted"`
-	Skipped    int         `json:"skipped"`
-	GroupSize  int         `json:"groupSize"`
+	KeptPath  string      `json:"keptPath"`
+	Deleted   BatchResult `json:"deleted"`
+	Skipped   int         `json:"skipped"`
+	GroupSize int         `json:"groupSize"`
 }
 
 type WatchHealthItem struct {
@@ -1610,10 +1610,10 @@ func (a *App) DuplicateKeep(paths []string, rule string, safe bool) (DuplicateAc
 	br := a.BatchDelete(toDelete, safe)
 	a.appendLog(fmt.Sprintf("[dupe-keep] rule=%s keep=%s deleted=%d/%d", rule, keep, br.Succeeded, br.Processed))
 	return DuplicateActionResult{
-		Rule:     rule,
-		KeptPath: keep,
-		Deleted:  br,
-		Skipped:  len(paths) - len(meta),
+		Rule:      rule,
+		KeptPath:  keep,
+		Deleted:   br,
+		Skipped:   len(paths) - len(meta),
 		GroupSize: len(paths),
 	}, nil
 }
