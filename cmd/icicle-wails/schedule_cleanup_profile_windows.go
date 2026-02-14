@@ -24,6 +24,10 @@ type CleanupScheduleStatus struct {
 	Path        string `json:"path"`
 	Preset      string `json:"preset"`
 	IntervalSec int    `json:"intervalSec"`
+	Mode        string `json:"mode"`
+	Hour        int    `json:"hour"`
+	Minute      int    `json:"minute"`
+	Weekday     int    `json:"weekday"`
 	Safe        bool   `json:"safe"`
 	DryRun      bool   `json:"dryRun"`
 	MaxDelete   int    `json:"maxDelete"`
@@ -36,6 +40,10 @@ type scheduledCleanupState struct {
 	Path        string
 	Preset      string
 	IntervalSec int
+	Mode        string // interval|daily|weekly
+	Hour        int
+	Minute      int
+	Weekday     int // 0 sunday .. 6 saturday
 	Safe        bool
 	DryRun      bool
 	MaxDelete   int
@@ -45,13 +53,33 @@ type scheduledCleanupState struct {
 }
 
 func (a *App) StartScheduledCleanup(path string, preset string, intervalSec int, safe bool, dryRun bool, maxDelete int) error {
+	return a.StartScheduledCleanupCalendar(path, preset, "interval", intervalSec, 2, 30, 1, safe, dryRun, maxDelete)
+}
+
+func (a *App) StartScheduledCleanupCalendar(path string, preset string, mode string, intervalSec int, hour int, minute int, weekday int, safe bool, dryRun bool, maxDelete int) error {
 	path = a.normalizePath(path, a.folders.Downloads)
 	preset = strings.TrimSpace(strings.ToLower(preset))
 	if preset == "" {
 		preset = "dev-cache"
 	}
+	mode = strings.ToLower(strings.TrimSpace(mode))
+	if mode == "" {
+		mode = "interval"
+	}
+	if mode != "interval" && mode != "daily" && mode != "weekly" {
+		mode = "interval"
+	}
 	if intervalSec < 60 {
 		intervalSec = 60
+	}
+	if hour < 0 || hour > 23 {
+		hour = 2
+	}
+	if minute < 0 || minute > 59 {
+		minute = 30
+	}
+	if weekday < 0 || weekday > 6 {
+		weekday = 1
 	}
 	if maxDelete <= 0 {
 		maxDelete = 150
@@ -66,7 +94,11 @@ func (a *App) StartScheduledCleanup(path string, preset string, intervalSec int,
 		Running:     true,
 		Path:        path,
 		Preset:      preset,
+		Mode:        mode,
 		IntervalSec: intervalSec,
+		Hour:        hour,
+		Minute:      minute,
+		Weekday:     weekday,
 		Safe:        safe,
 		DryRun:      dryRun,
 		MaxDelete:   maxDelete,
@@ -75,7 +107,14 @@ func (a *App) StartScheduledCleanup(path string, preset string, intervalSec int,
 	}
 	a.mu.Unlock()
 	go a.cleanupLoop(ctx)
-	a.appendLog(fmt.Sprintf("[cleanup-schedule] started: every %ds preset=%s path=%s", intervalSec, preset, path))
+	switch mode {
+	case "daily":
+		a.appendLog(fmt.Sprintf("[cleanup-schedule] started: daily at %02d:%02d preset=%s path=%s", hour, minute, preset, path))
+	case "weekly":
+		a.appendLog(fmt.Sprintf("[cleanup-schedule] started: weekly weekday=%d at %02d:%02d preset=%s path=%s", weekday, hour, minute, preset, path))
+	default:
+		a.appendLog(fmt.Sprintf("[cleanup-schedule] started: every %ds preset=%s path=%s", intervalSec, preset, path))
+	}
 	return nil
 }
 
@@ -102,6 +141,10 @@ func (a *App) ScheduledCleanupStatus() CleanupScheduleStatus {
 		Path:        a.cleanup.Path,
 		Preset:      a.cleanup.Preset,
 		IntervalSec: a.cleanup.IntervalSec,
+		Mode:        a.cleanup.Mode,
+		Hour:        a.cleanup.Hour,
+		Minute:      a.cleanup.Minute,
+		Weekday:     a.cleanup.Weekday,
 		Safe:        a.cleanup.Safe,
 		DryRun:      a.cleanup.DryRun,
 		MaxDelete:   a.cleanup.MaxDelete,
@@ -152,19 +195,65 @@ func (a *App) cleanupLoop(ctx context.Context) {
 		a.cleanup.LastStatus = status
 		a.mu.Unlock()
 	}
-	run()
 	a.mu.Lock()
+	mode := a.cleanup.Mode
 	interval := a.cleanup.IntervalSec
 	a.mu.Unlock()
-	ticker := time.NewTicker(time.Duration(interval) * time.Second)
+	if mode == "interval" {
+		run()
+	}
+	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			run()
+			a.mu.Lock()
+			st := a.cleanup
+			a.mu.Unlock()
+			if cleanupScheduleDue(st, time.Now()) {
+				run()
+				continue
+			}
+			// fallback for interval mode with long tick.
+			if st.Mode == "interval" && st.LastRunUnix > 0 && time.Since(time.Unix(st.LastRunUnix, 0)) >= time.Duration(interval)*time.Second {
+				run()
+			}
 		}
+	}
+}
+
+func cleanupScheduleDue(st scheduledCleanupState, now time.Time) bool {
+	if !st.Running {
+		return false
+	}
+	last := time.Unix(st.LastRunUnix, 0)
+	switch st.Mode {
+	case "daily":
+		target := time.Date(now.Year(), now.Month(), now.Day(), st.Hour, st.Minute, 0, 0, now.Location())
+		if now.Before(target) {
+			return false
+		}
+		ly, lm, ld := last.Date()
+		ny, nm, nd := now.Date()
+		return !(ly == ny && lm == nm && ld == nd)
+	case "weekly":
+		if int(now.Weekday()) != st.Weekday {
+			return false
+		}
+		target := time.Date(now.Year(), now.Month(), now.Day(), st.Hour, st.Minute, 0, 0, now.Location())
+		if now.Before(target) {
+			return false
+		}
+		ly, lw := last.ISOWeek()
+		ny, nw := now.ISOWeek()
+		return !(ly == ny && lw == nw)
+	default:
+		if st.LastRunUnix == 0 {
+			return true
+		}
+		return time.Since(last) >= time.Duration(st.IntervalSec)*time.Second
 	}
 }
 
@@ -238,9 +327,17 @@ func (a *App) ExportProfileEncrypted(passphrase string) (string, error) {
 }
 
 func (a *App) ImportProfileEncrypted(passphrase string) (string, error) {
+	return a.ImportProfileEncryptedWithMode(passphrase, "merge")
+}
+
+func (a *App) ImportProfileEncryptedWithMode(passphrase string, mode string) (string, error) {
 	passphrase = strings.TrimSpace(passphrase)
 	if len(passphrase) < 6 {
 		return "", fmt.Errorf("passphrase must be at least 6 chars")
+	}
+	mode = strings.ToLower(strings.TrimSpace(mode))
+	if mode == "" {
+		mode = "merge"
 	}
 	source, err := wailsruntime.OpenFileDialog(a.ctx, wailsruntime.OpenDialogOptions{
 		Title:   "Import encrypted profile",
@@ -287,18 +384,59 @@ func (a *App) ImportProfileEncrypted(passphrase string) (string, error) {
 		return "", err
 	}
 	pl.SavedFolders = dedupePaths(pl.SavedFolders)
+	pl.RouteRules = normalizeRouteRules(pl.RouteRules)
 	a.mu.Lock()
-	a.saved = pl.SavedFolders
+	currentSaved := make([]string, len(a.saved))
+	copy(currentSaved, a.saved)
+	switch mode {
+	case "overwrite":
+		a.saved = pl.SavedFolders
+	default:
+		a.saved = dedupePaths(append(currentSaved, pl.SavedFolders...))
+	}
 	err = a.saveSavedLocked()
 	a.mu.Unlock()
 	if err != nil {
 		return "", err
 	}
-	if err := a.SaveRoutingRules(pl.RouteRules); err != nil {
+	currentRules, _ := a.ListRoutingRules()
+	rulesToSave := pl.RouteRules
+	if mode != "overwrite" {
+		rulesToSave = mergeRouteRules(currentRules, pl.RouteRules)
+	}
+	if err := a.SaveRoutingRules(rulesToSave); err != nil {
 		return "", err
 	}
-	a.appendLog(fmt.Sprintf("[profile] imported: folders=%d rules=%d", len(pl.SavedFolders), len(pl.RouteRules)))
+	a.appendLog(fmt.Sprintf("[profile] imported (%s): folders=%d rules=%d", mode, len(pl.SavedFolders), len(pl.RouteRules)))
 	return source, nil
+}
+
+func mergeRouteRules(base []RouteRule, incoming []RouteRule) []RouteRule {
+	seen := map[string]bool{}
+	out := make([]RouteRule, 0, len(base)+len(incoming))
+	for _, r := range normalizeRouteRules(base) {
+		key := strings.ToLower(strings.TrimSpace(r.ID))
+		if key == "" {
+			key = strings.ToLower(r.Name + "|" + r.Kind + "|" + r.Pattern + "|" + r.Target)
+		}
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		out = append(out, r)
+	}
+	for _, r := range normalizeRouteRules(incoming) {
+		key := strings.ToLower(strings.TrimSpace(r.ID))
+		if key == "" {
+			key = strings.ToLower(r.Name + "|" + r.Kind + "|" + r.Pattern + "|" + r.Target)
+		}
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		out = append(out, r)
+	}
+	return out
 }
 
 func deriveKey(passphrase string, salt []byte) []byte {

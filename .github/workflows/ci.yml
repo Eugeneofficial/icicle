@@ -1,8 +1,13 @@
 name: CI
 
+permissions:
+  contents: write
+
 on:
   push:
   pull_request:
+  release:
+    types: [published]
 
 jobs:
   test:
@@ -42,3 +47,57 @@ jobs:
         run: go build -v -ldflags "-s -w -buildid=" ./cmd/icicle
       - name: Build Desktop
         run: go build -v -ldflags "-s -w -buildid=" -tags "wails,production" ./cmd/icicle-wails
+
+  release-sign:
+    if: github.event_name == 'release'
+    runs-on: windows-latest
+    env:
+      GOFLAGS: -trimpath -buildvcs=false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.x'
+      - name: Build Release Binaries
+        shell: pwsh
+        run: |
+          go build -v -ldflags "-s -w -buildid=" -o icicle.exe ./cmd/icicle
+          go build -v -ldflags "-s -w -buildid=" -tags "wails,production" -o icicle-desktop.exe ./cmd/icicle-wails
+      - name: Sign Binaries (optional)
+        if: ${{ secrets.ICICLE_SIGN_PFX_B64 != '' && secrets.ICICLE_SIGN_PFX_PASSWORD != '' }}
+        shell: pwsh
+        run: |
+          $pfxPath = Join-Path $env:RUNNER_TEMP "icicle-sign.pfx"
+          [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String("${{ secrets.ICICLE_SIGN_PFX_B64 }}"))
+          $secure = ConvertTo-SecureString "${{ secrets.ICICLE_SIGN_PFX_PASSWORD }}" -AsPlainText -Force
+          Import-PfxCertificate -FilePath $pfxPath -CertStoreLocation Cert:\CurrentUser\My -Password $secure | Out-Null
+          $thumb = "${{ secrets.ICICLE_SIGN_CERT_SHA1 }}"
+          if (-not $thumb) { $thumb = (Get-ChildItem Cert:\CurrentUser\My | Sort-Object NotAfter -Descending | Select-Object -First 1).Thumbprint }
+          signtool sign /sha1 $thumb /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 icicle.exe
+          signtool sign /sha1 $thumb /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 icicle-desktop.exe
+      - name: Package + checksums
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path dist -Force | Out-Null
+          Copy-Item icicle.exe dist/icicle.exe
+          Copy-Item icicle-desktop.exe dist/icicle-desktop.exe
+          $v = "${{ github.event.release.tag_name }}"
+          $zip = "dist/icicle-$v-windows-x64.zip"
+          if (Test-Path $zip) { Remove-Item $zip -Force }
+          Compress-Archive -Path dist/icicle.exe,dist/icicle-desktop.exe -DestinationPath $zip
+          $sha1 = (Get-FileHash dist/icicle.exe -Algorithm SHA256).Hash.ToLower()
+          $sha2 = (Get-FileHash dist/icicle-desktop.exe -Algorithm SHA256).Hash.ToLower()
+          $shaz = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+          @(
+            "$sha1  icicle.exe",
+            "$sha2  icicle-desktop.exe",
+            "$shaz  $(Split-Path $zip -Leaf)"
+          ) | Set-Content dist/SHA256SUMS.txt
+      - name: Upload release artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/icicle.exe
+            dist/icicle-desktop.exe
+            dist/*.zip
+            dist/SHA256SUMS.txt

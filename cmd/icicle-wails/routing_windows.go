@@ -24,6 +24,7 @@ type RouteRule struct {
 }
 
 type RouteMatch struct {
+	Path    string `json:"path"`
 	Matched bool   `json:"matched"`
 	RuleID  string `json:"ruleId"`
 	Rule    string `json:"rule"`
@@ -90,13 +91,35 @@ func (a *App) TestRouting(path string) (RouteMatch, error) {
 			if target == "" {
 				continue
 			}
-			return RouteMatch{Matched: true, RuleID: r.ID, Rule: r.Name, Target: target}, nil
+			return RouteMatch{Path: path, Matched: true, RuleID: r.ID, Rule: r.Name, Target: target}, nil
 		}
 	}
 	if auto, ok := organize.DestinationDir(a.folders.Home, path); ok {
-		return RouteMatch{Matched: true, RuleID: "builtin", Rule: "builtin-extension", Target: auto}, nil
+		return RouteMatch{Path: path, Matched: true, RuleID: "builtin", Rule: "builtin-extension", Target: auto}, nil
 	}
-	return RouteMatch{}, nil
+	return RouteMatch{Path: path}, nil
+}
+
+func (a *App) SimulateRoutingSamples(raw string) ([]RouteMatch, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return []RouteMatch{}, nil
+	}
+	lines := strings.Split(strings.ReplaceAll(raw, "\r\n", "\n"), "\n")
+	out := make([]RouteMatch, 0, len(lines))
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		m, err := a.TestRouting(line)
+		if err != nil {
+			out = append(out, RouteMatch{Path: line, Matched: false, Rule: "error", Target: err.Error()})
+			continue
+		}
+		out = append(out, m)
+	}
+	return out, nil
 }
 
 func (a *App) resolveAutoDestination(src string) (string, bool) {

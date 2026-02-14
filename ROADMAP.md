@@ -30,13 +30,21 @@
 - [x] Optional installer + winget package templates
 - [x] Plugin-style custom routing rules
 
-## Next (v2.5)
+### v2.5 (Delivered)
 
-- [ ] Treemap zoom breadcrumbs + keyboard navigation
-- [ ] Cleanup scheduler calendar mode (daily/weekly)
-- [ ] Profile import conflict resolver (merge vs overwrite)
-- [ ] Rule tester panel with sample file simulation
-- [ ] Full release signing pipeline in CI
+- [x] Treemap zoom breadcrumbs + keyboard navigation
+- [x] Cleanup scheduler calendar mode (daily/weekly)
+- [x] Profile import conflict resolver (merge vs overwrite)
+- [x] Rule tester panel with sample file simulation
+- [x] Full release signing pipeline in CI
+
+## Next (v2.6)
+
+- [ ] Treemap hover details panel (path + ext + size heat)
+- [ ] Cleanup schedule presets per disk (C:, D:, E:)
+- [ ] Routing rules visual editor (no JSON prompt)
+- [ ] Signed installer artifact (.msi/.exe) in release pipeline
+- [ ] Multi-language glossary QA automation
 
 ## Community Track
 

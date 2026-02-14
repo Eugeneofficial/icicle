@@ -22,12 +22,15 @@
 `icicle` is a production-grade Windows storage analyzer and cleanup tool.
 
 - Fast `tree` / `heavy` / `extensions` scans on large disks
-- Interactive `WizMap` treemap with drill-down navigation
+- Interactive `WizMap` treemap with drill-down, breadcrumbs, and keyboard navigation
 - Scheduled scans and scheduled cleanup from GUI
+- Cleanup calendar mode: `interval` / `daily` / `weekly`
 - Safe delete to Recycle Bin + queue + undo
 - Include/ignore filters for scan pipelines
 - Plugin-style routing rules (`ext`, `contains`, `prefix`, `regex`)
+- Route tester panel with sample file simulation
 - Encrypted profile export/import for portable setups
+- Profile import conflict resolver: `merge` or `overwrite`
 
 ## RU
 
