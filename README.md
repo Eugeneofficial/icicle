@@ -1,7 +1,7 @@
-﻿# icicle
+# icicle
 
 <p align="center">
-  <img src="docs/hero-v4.svg" alt="icicle v2.4 hero" width="100%" />
+  <img src="https://raw.githubusercontent.com/Eugeneofficial/icicle/main/docs/hero-v4.svg" alt="icicle v2.4 hero" width="100%" />
 </p>
 
 <p align="center">
