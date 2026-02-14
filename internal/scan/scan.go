@@ -411,6 +411,49 @@ func ScanTree(root string, topN int) (*TreeStats, error) {
 	return stats, nil
 }
 
+func ScanTreeLimited(root string, topN int, maxFiles int) (*TreeStats, int, bool, error) {
+	root = filepath.Clean(root)
+	stats := &TreeStats{Root: root, ByChild: map[string]int64{}}
+	top := NewTopFiles(topN)
+	rootPrefix := root
+	if !strings.HasSuffix(rootPrefix, string(filepath.Separator)) {
+		rootPrefix += string(filepath.Separator)
+	}
+	var mu sync.Mutex
+	seen, limited, err := walkFilesConcurrent(root, maxFiles, func(path string, size int64) {
+		mu.Lock()
+		stats.Total += size
+		rel := path
+		if strings.HasPrefix(path, rootPrefix) {
+			rel = path[len(rootPrefix):]
+		}
+		if rel == "" {
+			stats.RootFiles += size
+		} else {
+			idx := strings.IndexAny(rel, `\/`)
+			if idx < 0 {
+				stats.RootFiles += size
+			} else if idx > 0 {
+				stats.ByChild[rel[:idx]] += size
+			}
+		}
+		top.Push(FileInfo{Path: path, Size: size})
+		mu.Unlock()
+	})
+	if err != nil {
+		return nil, seen, false, err
+	}
+	stats.ChildNames = make([]string, 0, len(stats.ByChild))
+	for name := range stats.ByChild {
+		stats.ChildNames = append(stats.ChildNames, name)
+	}
+	sort.Slice(stats.ChildNames, func(i, j int) bool {
+		return stats.ByChild[stats.ChildNames[i]] > stats.ByChild[stats.ChildNames[j]]
+	})
+	stats.TopFiles = top.ListDesc()
+	return stats, seen, limited, nil
+}
+
 func ScanExtStatsLimited(root string, maxFiles int) ([]ExtStatsItem, int, bool, error) {
 	root = filepath.Clean(root)
 	byExt := map[string]ExtStatsItem{}

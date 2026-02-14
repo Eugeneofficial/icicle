@@ -38,6 +38,18 @@
 - Drive dashboard with quick actions
 - Tray reopen + in-app update flow
 - RU/EN localization + Dark/Light themes
+- Drive history timeline data collection
+- Scheduled scan snapshots (background report generation)
+- Smart cleanup presets: `games`, `media`, `dev-cache`
+- Fast extension analytics for huge trees
+
+## Quality & Reliability
+
+- Fast-path scan mode for heavy/tree/ext with file limits + worker tuning
+- Desktop busy-guard for heavy operations under high I/O load
+- Update flow with rollback-safe backup (`.bak`) if swap/start fails
+- CI checks: format, tests, race checks (core packages), Windows CLI/Desktop build
+- Reproducible build flags in CI/release/update scripts (`-trimpath`, `-buildvcs=false`, deterministic `ldflags`)
 
 ## Quick Start
 

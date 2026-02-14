@@ -41,24 +41,28 @@ if errorlevel 1 (
 )
 
 if exist "icicle.exe" (
-  del /f /q "icicle.exe" >nul 2>nul
+  copy /y "icicle.exe" "icicle.exe.bak" >nul 2>nul
 )
 echo [icicle-update] building icicle.exe...
-go build -o icicle.exe ./cmd/icicle
+go build -trimpath -buildvcs=false -ldflags "-s -w -buildid=" -o icicle.exe ./cmd/icicle
 if errorlevel 1 (
   echo [icicle-update] build failed.
+  if exist "icicle.exe.bak" copy /y "icicle.exe.bak" "icicle.exe" >nul 2>nul
   set "EXITCODE=1"
   goto :end
 )
+if exist "icicle.exe.bak" del /f /q "icicle.exe.bak" >nul 2>nul
 if exist "cmd\icicle-wails\main_windows.go" (
-  if exist "icicle-desktop.exe" del /f /q "icicle-desktop.exe" >nul 2>nul
+  if exist "icicle-desktop.exe" copy /y "icicle-desktop.exe" "icicle-desktop.exe.bak" >nul 2>nul
   echo [icicle-update] building icicle-desktop.exe...
-  go build -tags "wails,production" -o icicle-desktop.exe ./cmd/icicle-wails
+  go build -trimpath -buildvcs=false -ldflags "-s -w -buildid=" -tags "wails,production" -o icicle-desktop.exe ./cmd/icicle-wails
   if errorlevel 1 (
     echo [icicle-update] desktop build failed.
+    if exist "icicle-desktop.exe.bak" copy /y "icicle-desktop.exe.bak" "icicle-desktop.exe" >nul 2>nul
     set "EXITCODE=1"
     goto :end
   )
+  if exist "icicle-desktop.exe.bak" del /f /q "icicle-desktop.exe.bak" >nul 2>nul
 )
 echo [icicle-update] done.
 

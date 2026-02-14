@@ -44,6 +44,13 @@ type HeavyResult struct {
 	DurationMS int64       `json:"durationMs"`
 }
 
+type TreeResult struct {
+	Output     string `json:"output"`
+	Seen       int    `json:"seen"`
+	Limited    bool   `json:"limited"`
+	DurationMS int64  `json:"durationMs"`
+}
+
 type ExtStat struct {
 	Ext   string `json:"ext"`
 	Count int    `json:"count"`
@@ -327,6 +334,81 @@ func (a *App) RunTree(path string, topN int, width int) (string, error) {
 	out := b.String()
 	a.appendLog("> tree " + path + "\n" + out)
 	return out, nil
+}
+
+func (a *App) RunTreeFast(path string, topN int, width int, maxFiles int, workers int) (TreeResult, error) {
+	path = a.normalizePath(path, a.folders.Home)
+	if topN <= 0 {
+		topN = 5
+	}
+	if width <= 0 {
+		width = 22
+	}
+	if maxFiles < 0 {
+		maxFiles = 0
+	}
+	started := time.Now()
+	a.scanMu.Lock()
+	prevWorkers, hadWorkers := os.LookupEnv("ICICLE_SCAN_WORKERS")
+	if workers > 0 {
+		_ = os.Setenv("ICICLE_SCAN_WORKERS", strconv.Itoa(workers))
+	}
+	stats, seen, limited, err := scan.ScanTreeLimited(path, topN, maxFiles)
+	if workers > 0 {
+		if hadWorkers {
+			_ = os.Setenv("ICICLE_SCAN_WORKERS", prevWorkers)
+		} else {
+			_ = os.Unsetenv("ICICLE_SCAN_WORKERS")
+		}
+	}
+	a.scanMu.Unlock()
+	if err != nil {
+		return TreeResult{}, err
+	}
+	var b strings.Builder
+	theme := ui.Theme{NoColor: true, NoEmoji: true}
+	b.WriteString(fmt.Sprintf("%s  (total: %s)\n", path, ui.HumanBytes(stats.Total)))
+	limit := 20
+	if len(stats.ChildNames) < limit {
+		limit = len(stats.ChildNames)
+	}
+	for i := 0; i < limit; i++ {
+		name := stats.ChildNames[i]
+		size := stats.ByChild[name]
+		ratio := 0.0
+		if stats.Total > 0 {
+			ratio = float64(size) / float64(stats.Total)
+		}
+		prefix := "|-"
+		if i == limit-1 && stats.RootFiles == 0 {
+			prefix = "`-"
+		}
+		b.WriteString(fmt.Sprintf("%s [DIR] %-20s %8s  %s\n", prefix, name, ui.HumanBytes(size), theme.Bar(ratio, width)))
+	}
+	if stats.RootFiles > 0 {
+		ratio := 0.0
+		if stats.Total > 0 {
+			ratio = float64(stats.RootFiles) / float64(stats.Total)
+		}
+		b.WriteString(fmt.Sprintf("`- [FILES] %-18s %8s  %s\n", "(root)", ui.HumanBytes(stats.RootFiles), theme.Bar(ratio, width)))
+	}
+	b.WriteString("\nTOP FILES:\n")
+	for _, file := range stats.TopFiles {
+		rel, relErr := filepath.Rel(path, file.Path)
+		if relErr != nil {
+			rel = file.Path
+		}
+		b.WriteString(fmt.Sprintf("%8s  %s\n", ui.HumanBytes(file.Size), rel))
+	}
+	out := b.String()
+	res := TreeResult{
+		Output:     out,
+		Seen:       seen,
+		Limited:    limited,
+		DurationMS: time.Since(started).Milliseconds(),
+	}
+	a.appendLog(fmt.Sprintf("> tree %s [seen=%d limited=%v ms=%d]\n%s", path, seen, limited, res.DurationMS, out))
+	return res, nil
 }
 
 func (a *App) RunHeavy(path string, n int) ([]HeavyItem, error) {

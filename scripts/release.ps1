@@ -9,11 +9,12 @@ if (-not $Version) {
 
 $ErrorActionPreference = 'Stop'
 Set-Location (Join-Path $PSScriptRoot '..')
+$env:GOFLAGS = "-trimpath -buildvcs=false"
 
 go test ./...
 go vet ./...
-go build -o icicle.exe ./cmd/icicle
-go build -tags "wails,production" -o icicle-desktop.exe ./cmd/icicle-wails
+go build -ldflags "-s -w -buildid=" -o icicle.exe ./cmd/icicle
+go build -ldflags "-s -w -buildid=" -tags "wails,production" -o icicle-desktop.exe ./cmd/icicle-wails
 
 if ($env:ICICLE_SIGN_CERT_SHA1 -and (Get-Command signtool.exe -ErrorAction SilentlyContinue)) {
   Write-Host "Signing binaries with signtool..."

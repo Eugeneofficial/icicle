@@ -7,6 +7,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      GOFLAGS: -trimpath -buildvcs=false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -23,14 +25,20 @@ jobs:
           fi
       - name: Test
         run: go test ./...
+      - name: Race (core packages)
+        run: go test -race ./internal/scan ./internal/organize
 
   build-windows:
     runs-on: windows-latest
     timeout-minutes: 10
+    env:
+      GOFLAGS: -trimpath -buildvcs=false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: '1.22.x'
-      - name: Build
-        run: go build -v ./cmd/icicle
+      - name: Build CLI
+        run: go build -v -ldflags "-s -w -buildid=" ./cmd/icicle
+      - name: Build Desktop
+        run: go build -v -ldflags "-s -w -buildid=" -tags "wails,production" ./cmd/icicle-wails
