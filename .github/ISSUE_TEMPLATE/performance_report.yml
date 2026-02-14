@@ -1,0 +1,31 @@
+﻿name: Performance Report
+description: Report slow scans/UI lag/perf regression
+labels: [performance]
+body:
+  - type: textarea
+    id: scenario
+    attributes:
+      label: Scenario
+      description: Folder size, file count, command/operation
+    validations:
+      required: true
+  - type: textarea
+    id: metrics
+    attributes:
+      label: Observed Metrics
+      description: Include timings, CPU/RAM if available
+      placeholder: |
+        heavy C:\  -> 900ms
+        tree D:\projects -> 4.2s
+    validations:
+      required: true
+  - type: textarea
+    id: baseline
+    attributes:
+      label: Baseline / Previous Version
+      description: Was it faster before?
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Trace
+      render: shell

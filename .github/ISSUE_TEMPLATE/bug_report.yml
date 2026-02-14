@@ -1,0 +1,47 @@
+﻿name: Bug Report
+description: Report a reproducible bug
+labels: [bug]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Exact steps/commands/UI actions
+      placeholder: |
+        1. Open app
+        2. Click ...
+        3. Run command ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Error Output
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: icicle Version
+      placeholder: e.g. 2.0.0
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS Version
+      placeholder: e.g. Windows 11 24H2
+    validations:
+      required: true

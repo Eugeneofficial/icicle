@@ -36,3 +36,8 @@ $zip = "$pkg.zip"
 if (Test-Path $zip) { Remove-Item -Force $zip }
 Compress-Archive -Path (Join-Path $pkg '*') -DestinationPath $zip
 Write-Host "Release package created: $zip"
+
+$sha = (Get-FileHash -Algorithm SHA256 $zip).Hash.ToLower()
+$shaFile = "$zip.sha256"
+Set-Content -Path $shaFile -Value "$sha  $([System.IO.Path]::GetFileName($zip))"
+Write-Host "SHA256 saved: $shaFile"
