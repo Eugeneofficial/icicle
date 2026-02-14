@@ -17,7 +17,7 @@
   <a href="https://github.com/Eugeneofficial/icicle/stargazers"><img src="https://img.shields.io/github/stars/Eugeneofficial/icicle?style=social" alt="Stars"></a>
 </p>
 
-## EU Block (EN)
+## EU
 
 `icicle` is a production-grade Windows storage analyzer and cleanup tool.
 It combines a native Wails desktop UI with a high-performance Go CLI.
@@ -31,8 +31,7 @@ Core value:
 - Plugin-style routing rules (`ext`, `contains`, `prefix`, `regex`)
 - Encrypted profile export/import for portable setups
 
-## RU Block (Полная версия)
-
+## RU 
 `icicle` — это профессиональный инструмент для Windows, который помогает быстро находить, сортировать и очищать файлы на больших дисках. Проект объединяет нативный Desktop GUI и быстрый CLI, чтобы работать одинаково удобно и руками, и через автоматизацию.
 
 Что внутри:
