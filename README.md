@@ -23,14 +23,18 @@
 
 - Fast `tree` / `heavy` / `extensions` scans on large disks
 - Interactive `WizMap` treemap with drill-down, breadcrumbs, and keyboard navigation
+- Hover details panel for `WizMap` (path + extension + size heat)
 - Scheduled scans and scheduled cleanup from GUI
 - Cleanup calendar mode: `interval` / `daily` / `weekly`
+- Cleanup schedule presets per disk (`C:`, `D:`, `E:`...)
 - Safe delete to Recycle Bin + queue + undo
 - Include/ignore filters for scan pipelines
 - Plugin-style routing rules (`ext`, `contains`, `prefix`, `regex`)
+- Visual routing rules editor (no raw JSON required)
 - Route tester panel with sample file simulation
 - Encrypted profile export/import for portable setups
 - Profile import conflict resolver: `merge` or `overwrite`
+- Release pipeline uploads signed binaries/installer artifacts (when signing secrets are configured)
 
 ## RU
 

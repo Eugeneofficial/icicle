@@ -40,6 +40,12 @@
     .wizCrumbs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
     .wizCrumbs button{padding:4px 8px;font-size:12px}
     .wizRect.active{outline:2px solid #8bc0ff;outline-offset:-2px}
+    .wizHover{border:1px solid var(--line);border-radius:10px;padding:8px;margin:6px 0;background:rgba(0,0,0,.12)}
+    .wizHoverPath{font-family:Consolas,monospace;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .heatBar{height:8px;background:#293247;border-radius:99px;overflow:hidden;margin-top:6px}
+    .heatFill{height:100%;background:linear-gradient(90deg,#3fa7ff,#f2cc60,#f14c4c)}
+    .routeGrid{display:grid;grid-template-columns:120px 100px 150px 1fr 30px;gap:6px;align-items:center}
+    .routeGrid input,.routeGrid select{padding:6px 8px}
     #loader{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9999}#loader.show{display:flex}.spin{width:62px;height:62px;border:4px solid rgba(255,255,255,.2);border-top-color:#7ab5ff;border-radius:50%;animation:rot 1s linear infinite}.loadText{margin-top:10px;text-align:center;color:#d9e7ff}@keyframes rot{to{transform:rotate(360deg)}}
   </style>
 </head>
@@ -66,6 +72,7 @@
       <div class="row"><input id="cleanupSec" value="900" placeholder="Cleanup sec"><select id="cleanupMode"><option value="dev-cache">dev-cache</option><option value="games">games</option><option value="media">media</option></select></div>
       <div class="row"><select id="cleanupCalendarMode"><option value="interval">interval</option><option value="daily">daily</option><option value="weekly">weekly</option></select><input id="cleanupTime" value="02:30" placeholder="HH:MM"></div>
       <div class="row"><input id="cleanupWeekday" value="1" placeholder="weekday 0-6"></div>
+      <div class="row"><button id="saveDiskPresetBtn">Save disk preset</button><button id="loadDiskPresetBtn">Load disk preset</button></div>
       <div class="row"><button id="cleanupSchedStartBtn">Start cleanup schedule</button><button id="cleanupSchedStopBtn">Stop cleanup</button><button id="cleanupRunNowBtn">Cleanup now</button></div>
       <div class="row"><button id="diagBtn">Watch diagnostics</button></div>
       <div class="row"><select id="cleanupPreset"><option value="dev-cache">preset: dev-cache</option><option value="games">preset: games</option><option value="media">preset: media</option></select><button id="presetScanBtn">Scan preset</button><button id="presetApplyBtn">Apply preset</button></div>
@@ -87,6 +94,12 @@
           <div class="wizTop"><div class="tiny" id="wizTitle">Space Map</div><div class="row"><button id="wizBackBtn">Back</button><button id="wizHomeBtn">Home</button><button id="wizFitBtn">Fit</button><button id="wizToggleSideBtn">Hide Ext</button><label class="tiny"><input id="wizTurbo" type="checkbox"> turbo</label></div></div>
           <div class="wizPath" id="wizPath">-</div>
           <div class="wizCrumbs" id="wizCrumbs"></div>
+          <div class="wizHover" id="wizHover">
+            <div class="tiny">Hover Details</div>
+            <div class="wizHoverPath" id="wizHoverPath">-</div>
+            <div class="row"><span class="pill" id="wizHoverExt">ext:-</span><span class="pill" id="wizHoverSize">size:-</span><span class="pill" id="wizHoverHeat">heat:-</span></div>
+            <div class="heatBar"><div class="heatFill" id="wizHoverFill" style="width:0%"></div></div>
+          </div>
           <div class="wizLegend" id="wizLegend"></div>
           <div class="wizMap" id="wizMap"></div>
         </div>
@@ -125,6 +138,11 @@
             <div class="row" style="margin-top:6px"><button id="routeRunBtn">Simulate</button></div>
             <pre id="routeOut" style="max-height:140px;overflow:auto;margin:8px 0 0"></pre>
           </div>
+          <div id="routeEditorPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)">
+            <div class="row" style="justify-content:space-between"><b>Routing Rules Editor</b><button id="routeEditorCloseBtn">x</button></div>
+            <div class="row" style="margin-top:6px"><button id="routeAddBtn">Add Rule</button><button id="routeReloadBtn">Reload</button><button id="routeSaveBtn">Save Rules</button></div>
+            <div id="routeRulesBody" style="margin-top:8px;display:grid;gap:6px"></div>
+          </div>
           <div class="heavyTools">
             <div class="row"><button id="queueMoveBtn">Queue: move</button><button id="queueDeleteBtn">Queue: delete</button><button id="queueRunBtn">Run queue</button><button id="queueClearBtn">Clear queue</button></div>
             <div class="row"><button id="findEmptyBtn">Find empty folders</button><button id="deleteEmptyBtn">Delete selected empty</button><span class="pill" id="selCount">selected: 0</span></div>
@@ -138,7 +156,7 @@
 
 <script>
 const el=(id)=>document.getElementById(id);
-const s={lang:'en',theme:'dark',heavy:[],queue:[],selected:new Set(),fullPoll:null,emptyDirs:[],emptySelected:new Set(),presetCandidates:[],dupGroups:[],wiz:null,wizPath:'',wizRoot:'',wizStack:[],wizSide:true,busy:false,wizRects:[],wizSel:-1};
+const s={lang:'en',theme:'dark',heavy:[],queue:[],selected:new Set(),fullPoll:null,emptyDirs:[],emptySelected:new Set(),presetCandidates:[],dupGroups:[],wiz:null,wizPath:'',wizRoot:'',wizStack:[],wizSide:true,busy:false,wizRects:[],wizSel:-1,wizTotal:0,routeRules:[]};
 const i18n={
   en:{subtitle:'Desktop App',save:'Save',use:'Use',remove:'Remove',tree:'Tree',heavy:'Heavy',start:'Start Watch',stop:'Stop',dry:'dry-run',fast:'fast mode',full:'Full scan (bg)',cancel:'Stop scan',undo:'Undo Move',clean:'Empty folders',clear:'Clear Log',csv:'Export CSV',updCheck:'Check update',updApply:'Apply update',drives:'System storage',refresh:'Refresh',types:'Extensions',dups:'Duplicates',size:'Size',file:'File',act:'Actions',hint:'Folder type',ready:'ready',running:'watch running',open:'Open',reveal:'Reveal',autoMove:'Auto Move',moveTo:'Move To',del:'Delete',loading:'Scanning...',qMove:'Queue: move',qDel:'Queue: delete',qRun:'Run queue',qClear:'Clear queue',findEmpty:'Find empty folders',delEmpty:'Delete selected empty',emptyTitle:'Empty folders',selectAll:'select all',pathPlaceholder:'Move destination (optional)',schedStart:'Start schedule',schedStop:'Stop schedule',schedNow:'Run schedule now',snapshots:'Snapshots',history:'Drive history',presetScan:'Scan preset',presetApply:'Apply preset',diag:'Watch diagnostics',presetPreview:'Preset preview',risk:'risk',dupNewest:'Keep newest',dupOldest:'Keep oldest',wiz:'WizMap',spaceMap:'Space Map',extTable:'Extensions',ext:'Ext',files:'Files',back:'Back',home:'Home',fit:'Fit',hideExt:'Hide Ext',showExt:'Show Ext'},
   ru:{subtitle:'\u0420\u0430\u0431\u043e\u0447\u0435\u0435 \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435',save:'\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c',use:'\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c',remove:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c',tree:'\u0414\u0435\u0440\u0435\u0432\u043e',heavy:'\u0422\u044f\u0436\u0451\u043b\u044b\u0435',start:'\u0421\u0442\u0430\u0440\u0442 \u0441\u043b\u0435\u0436\u0435\u043d\u0438\u044f',stop:'\u0421\u0442\u043e\u043f',dry:'\u0442\u0435\u0441\u0442\u043e\u0432\u044b\u0439 \u0440\u0435\u0436\u0438\u043c',fast:'\u0431\u044b\u0441\u0442\u0440\u044b\u0439 \u0440\u0435\u0436\u0438\u043c',full:'\u041f\u043e\u043b\u043d\u044b\u0439 \u0441\u043a\u0430\u043d (\u0444\u043e\u043d)',cancel:'\u0421\u0442\u043e\u043f \u0441\u043a\u0430\u043d',undo:'\u041e\u0442\u043c\u0435\u043d\u0438\u0442\u044c \u043f\u0435\u0440\u0435\u043d\u043e\u0441',clean:'\u041f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',clear:'\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u043b\u043e\u0433',csv:'\u042d\u043a\u0441\u043f\u043e\u0440\u0442 CSV',updCheck:'\u041f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c update',updApply:'\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c',drives:'\u041c\u0435\u0441\u0442\u043e \u043d\u0430 \u0434\u0438\u0441\u043a\u0430\u0445',refresh:'\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c',types:'\u0422\u0438\u043f\u044b',dups:'\u0414\u0443\u0431\u043b\u0438\u043a\u0430\u0442\u044b',size:'\u0420\u0430\u0437\u043c\u0435\u0440',file:'\u0424\u0430\u0439\u043b',act:'\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u044f',hint:'\u0422\u0438\u043f \u043f\u0430\u043f\u043a\u0438',ready:'\u0433\u043e\u0442\u043e\u0432\u043e',running:'\u0441\u043b\u0435\u0436\u0435\u043d\u0438\u0435 \u0430\u043a\u0442\u0438\u0432\u043d\u043e',open:'\u041e\u0442\u043a\u0440\u044b\u0442\u044c',reveal:'\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c',autoMove:'\u0410\u0432\u0442\u043e \u043f\u0435\u0440\u0435\u043d\u043e\u0441',moveTo:'\u041f\u0435\u0440\u0435\u043d\u0435\u0441\u0442\u0438',del:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c',loading:'\u0421\u043a\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435...',qMove:'\u0412 \u043e\u0447\u0435\u0440\u0435\u0434\u044c: \u043f\u0435\u0440\u0435\u043d\u043e\u0441',qDel:'\u0412 \u043e\u0447\u0435\u0440\u0435\u0434\u044c: \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u0435',qRun:'\u0412\u044b\u043f\u043e\u043b\u043d\u0438\u0442\u044c \u043e\u0447\u0435\u0440\u0435\u0434\u044c',qClear:'\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u043e\u0447\u0435\u0440\u0435\u0434\u044c',findEmpty:'\u041d\u0430\u0439\u0442\u0438 \u043f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',delEmpty:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u044b\u0435 \u043f\u0443\u0441\u0442\u044b\u0435',emptyTitle:'\u041f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',selectAll:'\u0432\u044b\u0431\u0440\u0430\u0442\u044c \u0432\u0441\u0435',pathPlaceholder:'\u041f\u0430\u043f\u043a\u0430 \u0434\u043b\u044f \u043f\u0435\u0440\u0435\u043d\u043e\u0441\u0430 (\u043e\u043f\u0446\u0438\u043e\u043d\u0430\u043b\u044c\u043d\u043e)',schedStart:'\u0421\u0442\u0430\u0440\u0442 \u0440\u0430\u0441\u043f\u0438\u0441\u0430\u043d\u0438\u044f',schedStop:'\u0421\u0442\u043e\u043f \u0440\u0430\u0441\u043f\u0438\u0441\u0430\u043d\u0438\u044f',schedNow:'\u0417\u0430\u043f\u0443\u0441\u0442\u0438\u0442\u044c \u0441\u0435\u0439\u0447\u0430\u0441',snapshots:'\u0421\u043d\u0438\u043c\u043a\u0438',history:'\u0418\u0441\u0442\u043e\u0440\u0438\u044f \u0434\u0438\u0441\u043a\u043e\u0432',presetScan:'\u0421\u043a\u0430\u043d \u043f\u0440\u0435\u0441\u0435\u0442\u0430',presetApply:'\u041f\u0440\u0438\u043c\u0435\u043d\u0438\u0442\u044c \u043f\u0440\u0435\u0441\u0435\u0442',diag:'\u0414\u0438\u0430\u0433\u043d\u043e\u0441\u0442\u0438\u043a\u0430 watch',presetPreview:'\u041f\u0440\u0435\u0432\u044c\u044e \u043f\u0440\u0435\u0441\u0435\u0442\u0430',risk:'\u0440\u0438\u0441\u043a',dupNewest:'\u041e\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u043d\u043e\u0432\u044b\u0439',dupOldest:'\u041e\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u0441\u0442\u0430\u0440\u044b\u0439',wiz:'\u041a\u0430\u0440\u0442\u0430',spaceMap:'\u041a\u0430\u0440\u0442\u0430 \u043c\u0435\u0441\u0442\u0430',extTable:'\u0420\u0430\u0441\u0448\u0438\u0440\u0435\u043d\u0438\u044f',ext:'\u0420\u0430\u0441\u0448\u0438\u0440.',files:'\u0424\u0430\u0439\u043b\u043e\u0432',back:'\u041d\u0430\u0437\u0430\u0434',home:'\u0414\u043e\u043c\u043e\u0439',fit:'\u041f\u043e\u0434\u0433\u043e\u043d\u043a\u0430',hideExt:'\u0421\u043a\u0440\u044b\u0442\u044c ext',showExt:'\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c ext'}
@@ -158,6 +176,8 @@ const tr=(k)=>i18n[s.lang][k]||k;
 const setStatus=(t)=>el('statusLine').textContent=t;
 const updateSelCount=()=>{ const n=s.selected.size; if(el('selCount')) el('selCount').textContent=(s.lang==='ru'?'\u0432\u044b\u0431\u0440\u0430\u043d\u043e: ':'selected: ')+n; };
 const shortPath=(p,max=78)=>{ if(!p) return ''; if(p.length<=max) return p; const part=Math.max(20,Math.floor((max-3)/2)); return p.slice(0,part)+'...'+p.slice(-part); };
+const pathExt=(p)=>{const m=String(p||'').toLowerCase().match(/(\.[a-z0-9]+)$/); return m?m[1]:'(no_ext)';};
+const driveFromPath=(p)=>{const m=String(p||'').trim().match(/^([a-zA-Z]:)[\\/]/); return m?m[1].toUpperCase():'';};
 const showLoader=(on,text)=>{el('loader').classList.toggle('show',on); if(text) el('loaderText').textContent=text;};
 const withLoader=async(fn,text)=>{
   while(s.busy){
@@ -182,6 +202,8 @@ function applyLang(){
   el('cleanupSchedStartBtn').textContent=s.lang==='ru'?'Старт очистки':'Start cleanup schedule';
   el('cleanupSchedStopBtn').textContent=s.lang==='ru'?'Стоп очистки':'Stop cleanup';
   el('cleanupRunNowBtn').textContent=s.lang==='ru'?'Очистить сейчас':'Cleanup now';
+  el('saveDiskPresetBtn').textContent=s.lang==='ru'?'Сохранить пресет диска':'Save disk preset';
+  el('loadDiskPresetBtn').textContent=s.lang==='ru'?'Загрузить пресет диска':'Load disk preset';
   el('snapshotsBtn').textContent=tr('snapshots'); el('historyBtn').textContent=tr('history'); el('presetScanBtn').textContent=tr('presetScan'); el('presetApplyBtn').textContent=tr('presetApply');
   el('diagBtn').textContent=tr('diag'); el('historyTitle').textContent=tr('history'); el('diagTitle').textContent=tr('diag'); el('presetTitle').textContent=tr('presetPreview');
   el('dupKeepNewestBtn').textContent=tr('dupNewest'); el('dupKeepOldestBtn').textContent=tr('dupOldest');
@@ -191,6 +213,9 @@ function applyLang(){
   el('routeTestBtn').textContent=s.lang==='ru'?'Проверить маршрут':'Test route';
   el('routeTitle').textContent=s.lang==='ru'?'Тестер маршрутов':'Route tester';
   el('routeRunBtn').textContent=s.lang==='ru'?'Симуляция':'Simulate';
+  el('routeAddBtn').textContent=s.lang==='ru'?'Добавить':'Add Rule';
+  el('routeReloadBtn').textContent=s.lang==='ru'?'Обновить':'Reload';
+  el('routeSaveBtn').textContent=s.lang==='ru'?'Сохранить':'Save Rules';
   el('wizBtn').textContent=tr('wiz'); el('wizTitle').textContent=tr('spaceMap'); el('wizExtTitle').textContent=tr('extTable');
   el('wizBackBtn').textContent=tr('back'); el('wizHomeBtn').textContent=tr('home'); el('wizFitBtn').textContent=tr('fit');
   el('wizToggleSideBtn').textContent=s.wizSide?tr('hideExt'):tr('showExt');
@@ -206,7 +231,7 @@ function toggleLang(){s.lang=s.lang==='en'?'ru':'en'; el('langBtn').textContent=
 async function updateHint(){try{const kind=await window.go.main.App.FolderHint(el('path').value); el('folderHint').textContent=tr('hint')+': '+kind;}catch{}}
 async function loadDefaults(){const d=await window.go.main.App.Defaults(); el('path').value=d.downloads||d.home||''; el('verPill').textContent=d.version||'-'; await updateHint();}
 async function loadSaved(){const list=await window.go.main.App.ListSavedFolders(); const sel=el('saved'); sel.innerHTML=''; const o0=document.createElement('option'); o0.value=''; o0.textContent=s.lang==='ru'?'\u0421\u043e\u0445\u0440\u0430\u043d\u0451\u043d\u043d\u044b\u0435 \u043f\u0430\u043f\u043a\u0438':'Saved folders'; sel.appendChild(o0); for(const p of list){const o=document.createElement('option'); o.value=p; o.textContent=p; sel.appendChild(o);}}
-async function loadDrives(){return withLoader(async()=>{const items=await window.go.main.App.ListDrives(); const wrap=el('drives'); wrap.innerHTML=''; for(const d of items){const pct=Math.max(0,Math.min(100,Math.round((d.usedRatio||0)*100))); const card=document.createElement('div'); card.className='drive'; card.innerHTML=`<div class="row" style="justify-content:space-between"><b>${d.drive}</b><span class="tiny">${pct}%</span></div><div>${d.usedHuman} / ${d.totalHuman}</div><div class="bar"><div class="fill" style="width:${pct}%"></div></div><div class="actions" style="margin-top:8px"><button data-use="${d.drive}\\">${tr('use')}</button><button data-open="${d.drive}">${tr('open')}</button><button data-tree="${d.drive}\\">${tr('tree')}</button><button data-heavy="${d.drive}\\">${tr('heavy')}</button></div>`; wrap.appendChild(card);}});}
+async function loadDrives(){return withLoader(async()=>{const items=await window.go.main.App.ListDrives(); const wrap=el('drives'); wrap.innerHTML=''; for(const d of items){const pct=Math.max(0,Math.min(100,Math.round((d.usedRatio||0)*100))); const card=document.createElement('div'); card.className='drive'; card.innerHTML=`<div class="row" style="justify-content:space-between"><b>${d.drive}</b><span class="tiny">${pct}%</span></div><div>${d.usedHuman} / ${d.totalHuman}</div><div class="bar"><div class="fill" style="width:${pct}%"></div></div><div class="actions" style="margin-top:8px"><button data-use="${d.drive}\\">${tr('use')}</button><button data-open="${d.drive}">${tr('open')}</button><button data-tree="${d.drive}\\">${tr('tree')}</button><button data-heavy="${d.drive}\\">${tr('heavy')}</button></div><div class="actions" style="margin-top:6px"><button data-savepreset="${d.drive}">save preset</button><button data-loadpreset="${d.drive}">load preset</button></div>`; wrap.appendChild(card);}});}
 function scanFilters(){ return {includePath:(el('includePath').value||''),ignorePath:(el('ignorePath').value||''),includeExt:(el('includeExt').value||''),ignoreExt:(el('ignoreExt').value||'')}; }
 async function runTree(){return withLoader(async()=>{const fast=!!el('fastMode').checked; const maxFiles=fast?parseInt(el('maxFiles').value||'220000',10):0; const workers=fast?parseInt(el('workers').value||'24',10):0; const res=await window.go.main.App.RunTreeFastFiltered(el('path').value,5,22,maxFiles,workers,scanFilters()); el('log').textContent+='\n'+res.output+'\n'; el('log').scrollTop=el('log').scrollHeight; setStatus((s.lang==='ru'?'\u0414\u0435\u0440\u0435\u0432\u043e: ':'Tree: ')+res.seen+(res.limited?(s.lang==='ru'?' (\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043e)':' (limited)'):'')+' | '+res.durationMs+' ms'); runWiz();});}
 async function runHeavy(){return withLoader(async()=>{const n=parseInt(el('topN').value||'20',10); const fast=!!el('fastMode').checked; const maxFiles=fast?parseInt(el('maxFiles').value||'220000',10):0; const workers=fast?parseInt(el('workers').value||'24',10):0; const res=await window.go.main.App.RunHeavyFastFiltered(el('path').value,n,maxFiles,workers,scanFilters()); s.heavy=res.items||[]; renderHeavy(); renderWiz({rects:fallbackRectsFromHeavy(),ext:[],total:1}); setStatus((s.lang==='ru'?'\u0424\u0430\u0439\u043b\u043e\u0432 \u043f\u0440\u043e\u0441\u043c\u043e\u0442\u0440\u0435\u043d\u043e: ':'Seen files: ')+res.seen+(res.limited?(s.lang==='ru'?' (\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043e)':' (limited)'):'')+' | '+res.durationMs+' ms');},tr('loading'));}
@@ -271,6 +296,24 @@ function setWizPathLabel(){
   el('wizPath').textContent=s.wizPath||el('path').value||'-';
   renderWizCrumbs();
 }
+function updateWizHover(it){
+  const total=Math.max(1,s.wizTotal||1);
+  if(!it){
+    el('wizHoverPath').textContent='-';
+    el('wizHoverExt').textContent='ext:-';
+    el('wizHoverSize').textContent='size:-';
+    el('wizHoverHeat').textContent='heat:-';
+    el('wizHoverFill').style.width='0%';
+    return;
+  }
+  const size=Number(it.size||0);
+  const pct=Math.max(0,Math.min(100,(size*100/total)));
+  el('wizHoverPath').textContent=it.path||it.name||'-';
+  el('wizHoverExt').textContent='ext:'+pathExt(it.name||it.path||'');
+  el('wizHoverSize').textContent='size:'+(it.human||'-');
+  el('wizHoverHeat').textContent='heat:'+pct.toFixed(1)+'%';
+  el('wizHoverFill').style.width=pct.toFixed(1)+'%';
+}
 function renderWizCrumbs(){
   const wrap=el('wizCrumbs');
   wrap.innerHTML='';
@@ -291,6 +334,7 @@ function renderWizCrumbs(){
 }
 function renderWiz(res){
   s.wiz=res;
+  s.wizTotal=Number((res&&res.total)||0);
   const map=el('wizMap');
   const extBody=el('wizExtBody');
   map.innerHTML='';
@@ -319,7 +363,8 @@ function renderWiz(res){
     if(r.w>65&&r.h>20){
       d.textContent=`${r.item.name} (${r.item.human})`;
     }
-    d.onclick=()=>{s.wizSel=itemIdx; highlightWizSelection(); setStatus(`${r.item.name} | ${r.item.human}`);};
+    d.onmouseenter=()=>updateWizHover(r.item);
+    d.onclick=()=>{s.wizSel=itemIdx; highlightWizSelection(); updateWizHover(r.item); setStatus(`${r.item.name} | ${r.item.human}`);};
     d.ondblclick=async()=>{
       try{
         if(r.item.kind==='dir'){
@@ -334,7 +379,7 @@ function renderWiz(res){
     map.appendChild(d);
     s.wizRects.push({el:d,item:r.item});
   });
-  if(s.wizRects.length>0){s.wizSel=0; highlightWizSelection();}
+  if(s.wizRects.length>0){s.wizSel=0; highlightWizSelection(); updateWizHover(s.wizRects[0].item);} else { updateWizHover(null); }
   renderWizLegend(sourceRects);
   const total=res.total||1;
   const filter=(el('wizExtFilter').value||'').toLowerCase().trim();
@@ -351,6 +396,7 @@ function renderWiz(res){
 }
 function highlightWizSelection(){
   for(const [i,wr] of s.wizRects.entries()){ wr.el.classList.toggle('active',i===s.wizSel); }
+  if(s.wizSel>=0 && s.wizSel<s.wizRects.length){ updateWizHover(s.wizRects[s.wizSel].item); }
 }
 async function runWiz(pathOverride,pushHistory=true){
   return withLoader(async()=>{
@@ -391,9 +437,62 @@ async function runScheduleNow(){try{const n=parseInt(el('topN').value||'20',10);
 async function startCleanupSchedule(){try{const sec=parseInt(el('cleanupSec').value||'900',10); const preset=el('cleanupMode').value||'dev-cache'; const safe=true; const dry=!!el('dryRun').checked; const mode=el('cleanupCalendarMode').value||'interval'; const hm=(el('cleanupTime').value||'02:30').split(':'); const hour=parseInt(hm[0]||'2',10); const minute=parseInt(hm[1]||'30',10); const weekday=parseInt(el('cleanupWeekday').value||'1',10); await window.go.main.App.StartScheduledCleanupCalendar(el('path').value,preset,mode,sec,hour,minute,weekday,safe,dry,150); setStatus(s.lang==='ru'?'Очистка по расписанию запущена':'Cleanup schedule started');}catch(e){showErr(e)}}
 async function stopCleanupSchedule(){try{await window.go.main.App.StopScheduledCleanup(); setStatus(s.lang==='ru'?'Очистка по расписанию остановлена':'Cleanup schedule stopped');}catch(e){showErr(e)}}
 async function runCleanupNow(){try{const preset=el('cleanupMode').value||'dev-cache'; const safe=true; const dry=!!el('dryRun').checked; const res=await withLoader(()=>window.go.main.App.RunScheduledCleanupOnce(el('path').value,preset,safe,dry,150),tr('loading')); el('log').textContent+='\n[cleanup-now]\n'+JSON.stringify(res,null,2)+'\n'; el('log').scrollTop=el('log').scrollHeight; await runHeavy();}catch(e){showErr(e)}}
+async function saveDiskPresetFor(drive){
+  try{
+    const payload={
+      drive: drive || driveFromPath(el('path').value),
+      preset: el('cleanupMode').value||'dev-cache',
+      mode: el('cleanupCalendarMode').value||'interval',
+      intervalSec: parseInt(el('cleanupSec').value||'900',10),
+      hour: parseInt((el('cleanupTime').value||'02:30').split(':')[0]||'2',10),
+      minute: parseInt((el('cleanupTime').value||'02:30').split(':')[1]||'30',10),
+      weekday: parseInt(el('cleanupWeekday').value||'1',10),
+      safe: true,
+      dryRun: !!el('dryRun').checked,
+      maxDelete: 150
+    };
+    if(!payload.drive){setStatus('drive not detected'); return;}
+    await window.go.main.App.SaveCleanupPresetForDrive(payload);
+    setStatus((s.lang==='ru'?'Пресет сохранён для ':'Preset saved for ')+payload.drive);
+  }catch(e){showErr(e)}
+}
+async function loadDiskPresetFor(drive){
+  try{
+    drive = drive || driveFromPath(el('path').value);
+    if(!drive){setStatus('drive not detected'); return;}
+    const p = await window.go.main.App.LoadCleanupPresetForDrive(drive);
+    el('cleanupMode').value=p.preset||'dev-cache';
+    el('cleanupCalendarMode').value=p.mode||'interval';
+    el('cleanupSec').value=String(p.intervalSec||900);
+    el('cleanupTime').value=String(p.hour||2).padStart(2,'0')+':'+String(p.minute||30).padStart(2,'0');
+    el('cleanupWeekday').value=String(p.weekday??1);
+    setStatus((s.lang==='ru'?'Пресет загружен для ':'Preset loaded for ')+drive);
+  }catch(e){showErr(e)}
+}
 async function exportProfile(){try{const pass=prompt(s.lang==='ru'?'Пароль для экспорта профиля':'Passphrase for profile export'); if(!pass)return; const file=await window.go.main.App.ExportProfileEncrypted(pass); if(file) setStatus((s.lang==='ru'?'Экспортировано: ':'Exported: ')+file);}catch(e){showErr(e)}}
 async function importProfile(){try{const pass=prompt(s.lang==='ru'?'Пароль профиля':'Profile passphrase'); if(!pass)return; const merge=confirm(s.lang==='ru'?'OK = merge, Cancel = overwrite':'OK = merge, Cancel = overwrite'); const mode=merge?'merge':'overwrite'; const file=await window.go.main.App.ImportProfileEncryptedWithMode(pass,mode); if(file){await loadSaved(); setStatus((s.lang==='ru'?'Импортировано: ':'Imported: ')+file+' ['+mode+']');}}catch(e){showErr(e)}}
-async function editRoutingRules(){try{const rules=await window.go.main.App.ListRoutingRules(); const txt=prompt((s.lang==='ru'?'Правила маршрута в JSON (массив)':'Routing rules JSON array'),JSON.stringify(rules,null,2)); if(txt===null)return; const parsed=JSON.parse(txt); await window.go.main.App.SaveRoutingRules(parsed); setStatus(s.lang==='ru'?'Правила сохранены':'Rules saved');}catch(e){showErr(e)}}
+function routeRow(rule){
+  return `<div class=\"routeGrid\" data-rule-id=\"${rule.id||''}\"><input data-k=\"name\" placeholder=\"name\" value=\"${rule.name||''}\"><select data-k=\"kind\"><option value=\"ext\" ${rule.kind==='ext'?'selected':''}>ext</option><option value=\"contains\" ${rule.kind==='contains'?'selected':''}>contains</option><option value=\"prefix\" ${rule.kind==='prefix'?'selected':''}>prefix</option><option value=\"regex\" ${rule.kind==='regex'?'selected':''}>regex</option></select><input data-k=\"pattern\" placeholder=\"pattern\" value=\"${rule.pattern||''}\"><input data-k=\"target\" placeholder=\"target folder\" value=\"${rule.target||''}\"><button data-act=\"del\">x</button></div>`;
+}
+function renderRouteEditor(){
+  const body=el('routeRulesBody');
+  body.innerHTML='';
+  for(const r of s.routeRules){ const d=document.createElement('div'); d.innerHTML=routeRow(r); body.appendChild(d.firstChild); }
+}
+async function openRouteEditor(){ try{ s.routeRules=await window.go.main.App.ListRoutingRules(); renderRouteEditor(); el('routeEditorPanel').style.display='block'; }catch(e){showErr(e)} }
+function collectRouteRules(){
+  const rows=[...el('routeRulesBody').querySelectorAll('.routeGrid')];
+  const out=[];
+  for(const row of rows){
+    const get=(k)=>{const n=row.querySelector(`[data-k=\"${k}\"]`); return n?String(n.value||'').trim():'';};
+    const id=String(row.getAttribute('data-rule-id')||'').trim();
+    const name=get('name'); const kind=get('kind'); const pattern=get('pattern'); const target=get('target');
+    if(!pattern || !target) continue;
+    out.push({id:id||`rule-${out.length+1}`,name:name||`Rule ${out.length+1}`,enabled:true,kind,pattern,target,priority:out.length});
+  }
+  return out;
+}
+async function saveRouteRules(){ try{ const payload=collectRouteRules(); await window.go.main.App.SaveRoutingRules(payload); setStatus(s.lang==='ru'?'Правила сохранены':'Rules saved'); }catch(e){showErr(e)} }
 async function testRoute(){try{let p=''; if(s.selected.size>0){p=Array.from(s.selected)[0];} if(!p){p=prompt(s.lang==='ru'?'Путь файла для проверки маршрута':'File path for route test',el('path').value||'');} if(!p)return; const r=await window.go.main.App.TestRouting(p); el('log').textContent+='\n[route-test]\n'+JSON.stringify(r,null,2)+'\n'; el('log').scrollTop=el('log').scrollHeight; el('routePanel').style.display='block'; el('routeSamples').value=p;}catch(e){showErr(e)}}
 async function runRouteSamples(){try{const raw=el('routeSamples').value||''; const out=await window.go.main.App.SimulateRoutingSamples(raw); el('routeOut').textContent=JSON.stringify(out,null,2);}catch(e){showErr(e)}}
 function renderPresetPreview(res){ const panel=el('presetPanel'),sum=el('presetSummary'),list=el('presetList'); panel.style.display='block'; sum.textContent=`${res.count} | low:${res.riskLow} medium:${res.riskMedium} high:${res.riskHigh} | ${res.totalHuman}`; list.innerHTML=''; for(const c of (res.candidates||[]).slice(0,80)){ const row=document.createElement('div'); row.className='row'; const color=c.risk==='high'?'#f14c4c':(c.risk==='medium'?'#f2cc60':'#4ec9b0'); row.innerHTML=`<span style="display:inline-block;width:8px;height:8px;border-radius:99px;background:${color}"></span><span class="tiny">${c.human}</span><span class="tiny">${c.risk}</span><span title="${c.path}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.path}</span>`; list.appendChild(row);} }
@@ -456,8 +555,10 @@ el('scheduleStartBtn').onclick=startSchedule; el('scheduleStopBtn').onclick=stop
 el('cleanupSchedStartBtn').onclick=startCleanupSchedule; el('cleanupSchedStopBtn').onclick=stopCleanupSchedule; el('cleanupRunNowBtn').onclick=runCleanupNow;
 el('snapshotsBtn').onclick=listSnapshots; el('historyBtn').onclick=showDriveHistory;
 el('presetScanBtn').onclick=scanPreset; el('presetApplyBtn').onclick=applyPreset;
-el('profileExportBtn').onclick=exportProfile; el('profileImportBtn').onclick=importProfile; el('routesBtn').onclick=editRoutingRules; el('routeTestBtn').onclick=testRoute;
+el('profileExportBtn').onclick=exportProfile; el('profileImportBtn').onclick=importProfile; el('routesBtn').onclick=openRouteEditor; el('routeTestBtn').onclick=testRoute;
+el('saveDiskPresetBtn').onclick=()=>saveDiskPresetFor(''); el('loadDiskPresetBtn').onclick=()=>loadDiskPresetFor('');
 el('routeRunBtn').onclick=runRouteSamples; el('routeCloseBtn').onclick=()=>el('routePanel').style.display='none';
+el('routeEditorCloseBtn').onclick=()=>el('routeEditorPanel').style.display='none'; el('routeAddBtn').onclick=()=>{s.routeRules.push({id:'',name:'',enabled:true,kind:'ext',pattern:'',target:''}); renderRouteEditor();}; el('routeReloadBtn').onclick=openRouteEditor; el('routeSaveBtn').onclick=saveRouteRules;
 el('snapDiffBtn').onclick=diffSnapshots;
 el('dupKeepNewestBtn').onclick=()=>duplicateKeep('newest'); el('dupKeepOldestBtn').onclick=()=>duplicateKeep('oldest');
 el('diagBtn').onclick=watchDiagnostics;
@@ -466,7 +567,8 @@ el('wizExtSort').addEventListener('change',()=>{ if(s.wiz) renderWiz(s.wiz); });
 el('historyCloseBtn').onclick=()=>el('driveHistoryPanel').style.display='none'; el('snapCloseBtn').onclick=()=>el('snapshotPanel').style.display='none';
 el('dupCloseBtn').onclick=()=>el('dupPanel').style.display='none'; el('diagCloseBtn').onclick=()=>el('diagPanel').style.display='none'; el('presetCloseBtn').onclick=()=>el('presetPanel').style.display='none';
 el('path').addEventListener('input',updateHint);
-el('drives').addEventListener('click',async(e)=>{const t=e.target; if(!(t instanceof HTMLElement))return; if(t.dataset.use){el('path').value=t.dataset.use; updateHint();} if(t.dataset.open){try{await window.go.main.App.OpenDrive(t.dataset.open);}catch(err){showErr(err)}} if(t.dataset.tree){el('path').value=t.dataset.tree; await runTree();} if(t.dataset.heavy){el('path').value=t.dataset.heavy; await runHeavy();}});
+el('drives').addEventListener('click',async(e)=>{const t=e.target; if(!(t instanceof HTMLElement))return; if(t.dataset.use){el('path').value=t.dataset.use; updateHint(); try{await loadDiskPresetFor(String(t.dataset.use).slice(0,2));}catch{}} if(t.dataset.open){try{await window.go.main.App.OpenDrive(t.dataset.open);}catch(err){showErr(err)}} if(t.dataset.tree){el('path').value=t.dataset.tree; try{await loadDiskPresetFor(String(t.dataset.tree).slice(0,2));}catch{} await runTree();} if(t.dataset.heavy){el('path').value=t.dataset.heavy; try{await loadDiskPresetFor(String(t.dataset.heavy).slice(0,2));}catch{} await runHeavy();} if(t.dataset.savepreset){await saveDiskPresetFor(t.dataset.savepreset);} if(t.dataset.loadpreset){await loadDiskPresetFor(t.dataset.loadpreset);}});
+el('routeRulesBody').addEventListener('click',(e)=>{const t=e.target; if(!(t instanceof HTMLElement))return; if(t.dataset.act==='del'){const row=t.closest('.routeGrid'); if(row) row.remove();}});
 el('chkAll').addEventListener('change',(e)=>{const on=e.target.checked; s.selected.clear(); if(on) for(const it of s.heavy) s.selected.add(it.path); renderHeavy();});
 el('emptyAll').addEventListener('change',(e)=>{const on=e.target.checked; s.emptySelected.clear(); if(on) for(const p of s.emptyDirs) s.emptySelected.add(p); renderEmptyDirs();});
 el('heavyBody').addEventListener('click',async(e)=>{const t=e.target; if(!(t instanceof HTMLElement))return; if(t.dataset.openf){try{await window.go.main.App.OpenPath(t.dataset.openf);}catch(err){showErr(err)}} if(t.dataset.reveal){try{await window.go.main.App.RevealPath(t.dataset.reveal);}catch(err){showErr(err)}} if(t.dataset.amove) await moveFile(t.dataset.amove,true); if(t.dataset.move) await moveFile(t.dataset.move,false); if(t.dataset.del) await deleteFile(t.dataset.del);});

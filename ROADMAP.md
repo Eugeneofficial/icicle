@@ -40,11 +40,19 @@
 
 ## Next (v2.6)
 
-- [ ] Treemap hover details panel (path + ext + size heat)
-- [ ] Cleanup schedule presets per disk (C:, D:, E:)
-- [ ] Routing rules visual editor (no JSON prompt)
-- [ ] Signed installer artifact (.msi/.exe) in release pipeline
-- [ ] Multi-language glossary QA automation
+- [x] Treemap hover details panel (path + ext + size heat)
+- [x] Cleanup schedule presets per disk (C:, D:, E:)
+- [x] Routing rules visual editor (no JSON prompt)
+- [x] Signed installer artifact (.msi/.exe) in release pipeline
+- [x] Multi-language glossary QA automation
+
+## Next (v2.7)
+
+- [ ] Treemap compare mode between snapshots
+- [ ] Preset import/export packs per team
+- [ ] Routing rule conflict detector and priority solver
+- [ ] Native MSI pipeline alternative (WiX)
+- [ ] Localization regression tests on GUI strings
 
 ## Community Track
 
