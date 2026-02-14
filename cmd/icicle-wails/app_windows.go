@@ -184,6 +184,7 @@ type CleanupCandidate struct {
 	Size   int64  `json:"size"`
 	Human  string `json:"human"`
 	Reason string `json:"reason"`
+	Risk   string `json:"risk"`
 }
 
 type CleanupPresetResult struct {
@@ -192,6 +193,41 @@ type CleanupPresetResult struct {
 	TotalBytes int64              `json:"totalBytes"`
 	TotalHuman string             `json:"totalHuman"`
 	Candidates []CleanupCandidate `json:"candidates"`
+	RiskLow    int                `json:"riskLow"`
+	RiskMedium int                `json:"riskMedium"`
+	RiskHigh   int                `json:"riskHigh"`
+}
+
+type SnapshotDiffItem struct {
+	Path   string `json:"path"`
+	Delta  int64  `json:"delta"`
+	Human  string `json:"human"`
+	Status string `json:"status"`
+}
+
+type SnapshotDiffResult struct {
+	Left      string             `json:"left"`
+	Right     string             `json:"right"`
+	Added     int                `json:"added"`
+	Removed   int                `json:"removed"`
+	Changed   int                `json:"changed"`
+	Top       []SnapshotDiffItem `json:"top"`
+	CreatedAt int64              `json:"createdAt"`
+}
+
+type DuplicateActionResult struct {
+	Rule      string      `json:"rule"`
+	KeptPath   string      `json:"keptPath"`
+	Deleted    BatchResult `json:"deleted"`
+	Skipped    int         `json:"skipped"`
+	GroupSize  int         `json:"groupSize"`
+}
+
+type WatchHealthItem struct {
+	Path    string `json:"path"`
+	Status  string `json:"status"`
+	Reason  string `json:"reason"`
+	Entries int    `json:"entries"`
 }
 
 type HeavyFullProgress struct {
@@ -741,6 +777,56 @@ func (a *App) StopWatch() {
 	}
 }
 
+func (a *App) WatchDiagnostics(path string, limit int) ([]WatchHealthItem, error) {
+	path = a.normalizePath(path, a.folders.Downloads)
+	if limit <= 0 {
+		limit = 30
+	}
+	out := make([]WatchHealthItem, 0, limit+1)
+	check := func(p string) WatchHealthItem {
+		it := WatchHealthItem{Path: p, Status: "ok"}
+		entries, err := os.ReadDir(p)
+		if err != nil {
+			if isDeniedError(err) {
+				it.Status = "denied"
+				it.Reason = "access denied"
+				return it
+			}
+			it.Status = "error"
+			it.Reason = err.Error()
+			return it
+		}
+		it.Entries = len(entries)
+		if len(entries) == 0 {
+			it.Status = "empty"
+		}
+		return it
+	}
+	out = append(out, check(path))
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return out, nil
+	}
+	for _, e := range entries {
+		if len(out) >= limit+1 {
+			break
+		}
+		if !e.IsDir() {
+			continue
+		}
+		if shouldSkipDirName(strings.ToLower(e.Name())) {
+			out = append(out, WatchHealthItem{
+				Path:   filepath.Join(path, e.Name()),
+				Status: "skipped",
+				Reason: "system/protected",
+			})
+			continue
+		}
+		out = append(out, check(filepath.Join(path, e.Name())))
+	}
+	return out, nil
+}
+
 func (a *App) pipe(r io.Reader) {
 	buf := make([]byte, 4096)
 	for {
@@ -1183,12 +1269,22 @@ func (a *App) ScanCleanupPreset(path string, preset string, limit int, maxFiles 
 		if !ok {
 			return
 		}
+		risk := cleanupRiskLevel(p)
 		candidates = append(candidates, CleanupCandidate{
 			Path:   p,
 			Size:   size,
 			Human:  ui.HumanBytes(size),
 			Reason: reason,
+			Risk:   risk,
 		})
+		switch risk {
+		case "high":
+			out.RiskHigh++
+		case "medium":
+			out.RiskMedium++
+		default:
+			out.RiskLow++
+		}
 		out.TotalBytes += size
 	})
 	if err != nil {
@@ -1253,6 +1349,23 @@ func matchCleanupPreset(preset string, path string) (bool, string) {
 	default:
 		return false, ""
 	}
+}
+
+func cleanupRiskLevel(path string) string {
+	p := strings.ToLower(path)
+	highMarks := []string{`\\desktop\\`, `\\documents\\`, `\\pictures\\`, `\\videos\\`}
+	for _, m := range highMarks {
+		if strings.Contains(p, m) {
+			return "high"
+		}
+	}
+	mediumMarks := []string{`\\downloads\\`, `\\music\\`}
+	for _, m := range mediumMarks {
+		if strings.Contains(p, m) {
+			return "medium"
+		}
+	}
+	return "low"
 }
 
 func (a *App) ExtensionStats(path string, limit int) ([]ExtStat, error) {
@@ -1453,6 +1566,56 @@ func (a *App) DuplicateFinderV2(path string, mode string, maxFiles int, top int)
 		out = out[:top]
 	}
 	return out, nil
+}
+
+func (a *App) DuplicateKeep(paths []string, rule string, safe bool) (DuplicateActionResult, error) {
+	if len(paths) < 2 {
+		return DuplicateActionResult{}, fmt.Errorf("need at least 2 files in duplicate group")
+	}
+	type fileMeta struct {
+		Path string
+		Time time.Time
+	}
+	meta := make([]fileMeta, 0, len(paths))
+	for _, p := range paths {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		st, err := os.Stat(p)
+		if err != nil || st.IsDir() {
+			continue
+		}
+		meta = append(meta, fileMeta{Path: p, Time: st.ModTime()})
+	}
+	if len(meta) < 2 {
+		return DuplicateActionResult{}, fmt.Errorf("not enough valid files")
+	}
+	rule = strings.ToLower(strings.TrimSpace(rule))
+	if rule == "" {
+		rule = "newest"
+	}
+	sort.Slice(meta, func(i, j int) bool { return meta[i].Time.Before(meta[j].Time) })
+	keep := meta[0].Path
+	if rule == "newest" {
+		keep = meta[len(meta)-1].Path
+	}
+	toDelete := make([]string, 0, len(meta)-1)
+	for _, m := range meta {
+		if strings.EqualFold(m.Path, keep) {
+			continue
+		}
+		toDelete = append(toDelete, m.Path)
+	}
+	br := a.BatchDelete(toDelete, safe)
+	a.appendLog(fmt.Sprintf("[dupe-keep] rule=%s keep=%s deleted=%d/%d", rule, keep, br.Succeeded, br.Processed))
+	return DuplicateActionResult{
+		Rule:     rule,
+		KeptPath: keep,
+		Deleted:  br,
+		Skipped:  len(paths) - len(meta),
+		GroupSize: len(paths),
+	}, nil
 }
 
 func (a *App) StartScheduledScan(path string, intervalSec int, n int, maxFiles int, workers int) error {
@@ -1663,6 +1826,101 @@ func (a *App) ListReportSnapshots(limit int) ([]SnapshotInfo, error) {
 		out = out[:limit]
 	}
 	return out, nil
+}
+
+type snapshotPayload struct {
+	AtUnix   int64       `json:"atUnix"`
+	Path     string      `json:"path"`
+	TopN     int         `json:"topN"`
+	MaxFiles int         `json:"maxFiles"`
+	Seen     int         `json:"seen"`
+	Limited  bool        `json:"limited"`
+	Items    []HeavyItem `json:"items"`
+}
+
+func (a *App) SnapshotDiff(leftFile string, rightFile string, top int) (SnapshotDiffResult, error) {
+	if top <= 0 {
+		top = 30
+	}
+	left, err := readSnapshotFile(leftFile)
+	if err != nil {
+		return SnapshotDiffResult{}, err
+	}
+	right, err := readSnapshotFile(rightFile)
+	if err != nil {
+		return SnapshotDiffResult{}, err
+	}
+	leftMap := make(map[string]int64, len(left.Items))
+	rightMap := make(map[string]int64, len(right.Items))
+	for _, it := range left.Items {
+		leftMap[strings.ToLower(it.Path)] = it.Size
+	}
+	for _, it := range right.Items {
+		rightMap[strings.ToLower(it.Path)] = it.Size
+	}
+
+	out := SnapshotDiffResult{
+		Left:      leftFile,
+		Right:     rightFile,
+		CreatedAt: time.Now().Unix(),
+	}
+	items := make([]SnapshotDiffItem, 0, len(leftMap)+len(rightMap))
+	for p, rv := range rightMap {
+		lv, ok := leftMap[p]
+		if !ok {
+			out.Added++
+			items = append(items, SnapshotDiffItem{Path: p, Delta: rv, Human: ui.HumanBytes(rv), Status: "added"})
+			continue
+		}
+		if lv != rv {
+			out.Changed++
+			delta := rv - lv
+			h := ui.HumanBytes(delta)
+			if delta > 0 {
+				h = "+" + h
+			}
+			items = append(items, SnapshotDiffItem{Path: p, Delta: delta, Human: h, Status: "changed"})
+		}
+	}
+	for p, lv := range leftMap {
+		if _, ok := rightMap[p]; ok {
+			continue
+		}
+		out.Removed++
+		items = append(items, SnapshotDiffItem{Path: p, Delta: -lv, Human: "-" + ui.HumanBytes(lv), Status: "removed"})
+	}
+	sort.Slice(items, func(i, j int) bool {
+		ai := items[i].Delta
+		if ai < 0 {
+			ai = -ai
+		}
+		aj := items[j].Delta
+		if aj < 0 {
+			aj = -aj
+		}
+		return ai > aj
+	})
+	if len(items) > top {
+		items = items[:top]
+	}
+	out.Top = items
+	return out, nil
+}
+
+func readSnapshotFile(path string) (snapshotPayload, error) {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return snapshotPayload{}, fmt.Errorf("snapshot path is required")
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return snapshotPayload{}, err
+	}
+	var p snapshotPayload
+	if err := json.Unmarshal(data, &p); err != nil {
+		return snapshotPayload{}, err
+	}
+	return p, nil
 }
 
 func (a *App) normalizePath(path string, fallback string) string {

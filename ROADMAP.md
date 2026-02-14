@@ -24,11 +24,11 @@
 
 ## Next (v2.3)
 
-- [ ] Full visual charts for drive history timeline
-- [ ] Snapshot diff viewer (delta between two scans)
-- [ ] Preset dry-run preview with risk labels
-- [ ] Smarter duplicate actions (keep newest/oldest rules)
-- [ ] Better watch diagnostics panel (per-folder health)
+- [x] Full visual charts for drive history timeline
+- [x] Snapshot diff viewer (delta between two scans)
+- [x] Preset dry-run preview with risk labels
+- [x] Smarter duplicate actions (keep newest/oldest rules)
+- [x] Better watch diagnostics panel (per-folder health)
 
 ## Later (v2.4)
 
