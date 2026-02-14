@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
@@ -139,13 +138,17 @@ func isWatchAccessDenied(err error) bool {
 	if os.IsPermission(err) {
 		return true
 	}
+	if errors.Is(err, fs.ErrPermission) {
+		return true
+	}
 	var pe *fs.PathError
 	if errors.As(err, &pe) {
-		if os.IsPermission(pe.Err) || errors.Is(pe.Err, syscall.ERROR_ACCESS_DENIED) {
+		if os.IsPermission(pe.Err) || errors.Is(pe.Err, fs.ErrPermission) {
 			return true
 		}
 	}
-	return errors.Is(err, syscall.ERROR_ACCESS_DENIED)
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "access is denied") || strings.Contains(msg, "permission denied")
 }
 
 func shouldSkipEvent(path string, cooldown map[string]time.Time) bool {
