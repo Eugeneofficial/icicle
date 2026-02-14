@@ -140,7 +140,7 @@ Artifacts are generated in `dist/`.
 - Contributing guide: [CONTRIBUTING.md](CONTRIBUTING.md)
 - Security policy: [SECURITY.md](SECURITY.md)
 
-## RU: Полная Версия
+## RU: 
 
 `icicle` — профессиональный инструмент для контроля, анализа и очистки дискового пространства в Windows.  
 Проект объединяет быстрый CLI и нативный Desktop GUI: можно быстро найти тяжёлые файлы, навести порядок в папках и автоматизировать рутинные операции.
