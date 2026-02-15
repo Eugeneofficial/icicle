@@ -16,10 +16,10 @@ Fast scans, interactive WizMap treemap, safe cleanup flows, automation, and rout
 ![icicle in action](docs/hero-v6.svg)
 
 > Optional media placeholders (recommended for release):
-> - `docs/screenshots/wizmap.gif`
-> - `docs/screenshots/dashboard.png`
-> - `docs/screenshots/routing-editor.png`
-> - `docs/screenshots/cli-heavy.png`
+> - `docs/screenshots/wizmap.svg`
+> - `docs/screenshots/dashboard.svg`
+> - `docs/screenshots/routing-editor.svg`
+> - `docs/screenshots/cli-heavy.svg`
 
 ## Table of Contents
 
@@ -51,35 +51,35 @@ What makes icicle different is the workflow continuity: from discovery to action
 - Optimized for large disks and heavy I/O workloads
 - Include/ignore filters and performance modes (`eco`, `balanced`, `turbo`)
 
-![Fast scan](docs/screenshots/cli-heavy.png)
+![Fast scan](docs/screenshots/cli-heavy.svg)
 
 ### 🗺️ WizMap Treemap
 - Interactive treemap with drill-down and breadcrumbs
 - Hover details panel (path, extension, size heat)
 - Keyboard navigation + snapshot delta overlays
 
-![WizMap](docs/screenshots/wizmap.gif)
+![WizMap](docs/screenshots/wizmap.svg)
 
 ### 👀 Watch + Auto-Sort
 - Folder watch with file routing by extension/prefix/regex rules
 - Visual routing rule editor + tester panel
 - New file marker (`NEW`) in heavy list
 
-![Routing editor](docs/screenshots/routing-editor.png)
+![Routing editor](docs/screenshots/routing-editor.svg)
 
 ### 🧹 Safe Cleanup Operations
 - Safe delete to Recycle Bin
 - Batch queue (move/delete), presets, undo flow
 - Empty folder discovery with selective removal
 
-![Cleanup queue](docs/screenshots/cleanup-queue.png)
+![Cleanup queue](docs/screenshots/cleanup-queue.svg)
 
 ### ⏱️ Automation & Scheduling
 - Scheduled scans + report snapshots
 - Scheduled cleanup with calendar modes (`interval`, `daily`, `weekly`)
 - Per-disk cleanup presets (`C:`, `D:`, `E:`)
 
-![Scheduler](docs/screenshots/scheduler.png)
+![Scheduler](docs/screenshots/scheduler.svg)
 
 ### 🔐 Portable Profiles
 - Encrypted profile export/import
@@ -90,15 +90,15 @@ What makes icicle different is the workflow continuity: from discovery to action
 
 | Dashboard | WizMap |
 |---|---|
-| ![Dashboard](docs/screenshots/dashboard.png) | ![WizMap](docs/screenshots/wizmap.png) |
+| ![Dashboard](docs/screenshots/dashboard.svg) | ![WizMap](docs/screenshots/wizmap.svg) |
 
 | Routing Rules | CLI Heavy |
 |---|---|
-| ![Routing](docs/screenshots/routing-editor.png) | ![CLI](docs/screenshots/cli-heavy.png) |
+| ![Routing](docs/screenshots/routing-editor.svg) | ![CLI](docs/screenshots/cli-heavy.svg) |
 
 | Snapshot Diff | Queue Ops |
 |---|---|
-| ![Snapshots](docs/screenshots/snapshots.png) | ![Queue](docs/screenshots/cleanup-queue.png) |
+| ![Snapshots](docs/screenshots/snapshots.svg) | ![Queue](docs/screenshots/cleanup-queue.svg) |
 
 ## Installation
 
@@ -261,3 +261,4 @@ cd icicle
   Built with Go + Wails • MIT • Maintained by <a href="https://github.com/Eugeneofficial">Eugeneofficial</a><br/>
   Last README update: <strong>2026-02-15</strong>
 </p>
+
