@@ -104,6 +104,7 @@
 - [x] Extra keyboard shortcuts for scan flows
 - [x] Scanner micro-optimizations in hot loops (path segment + extension parsing)
 - [x] Extended scanner tests for helper fast-paths
+- [x] Legacy `internal/gui` stack removed; Wails becomes the single desktop GUI runtime
 
 ## v3.2 (Next)
 

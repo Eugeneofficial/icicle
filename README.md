@@ -42,6 +42,8 @@ Fast scans, interactive WizMap treemap, safe cleanup flows, automation, and rout
 
 The project combines a **fast Go scanning core** with a **native Wails desktop app** and a practical CLI. You can inspect big disks quickly (`tree`, `heavy`, `extensions`), then act safely (Recycle Bin, queue, undo, dry-run).
 
+The desktop stack is now **Wails-only** (single GUI path). Legacy internal GUI code was removed to reduce maintenance overhead and avoid split behavior.
+
 What makes icicle different is the workflow continuity: from discovery to action. You can scan, visualize, schedule, route, and clean in one place without switching tools.
 
 ## Features
@@ -173,6 +175,7 @@ icicle watch "%USERPROFILE%\Downloads"
 ## GUI Highlights
 
 - Native desktop app via Wails (not browser tab)
+- Single maintained GUI runtime (legacy internal GUI removed)
 - Dark/light themes, RU/EN localization, tray behavior
 - Command palette (`Ctrl+K`)
 - Quick navigation:
