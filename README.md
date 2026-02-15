@@ -1,7 +1,7 @@
 ﻿# icicle ❄️
 
 **Windows-first disk cleanup & intelligence toolkit (CLI + native GUI).**  
-Fast scans, interactive WizMap treemap, safe cleanup flows, automation, and routing rules in one Go/Wails project.
+Fast scans, interactive WizMap treemap, safe cleanup flows, automation, and routing rules in one Go/Wails project with 50+ practical capabilities.
 
 <p align="left">
   <a href="https://github.com/Eugeneofficial/icicle/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/Eugeneofficial/icicle?style=flat-square"></a>
@@ -206,10 +206,9 @@ Reference environment:
 Source: [`ROADMAP.md`](ROADMAP.md)
 
 - v2.1-v2.8 delivered (scan pipeline, queue ops, snapshot diff/export, routing editor, signed release flow)
-- v3.0 in active hardening:
-  - final RU/EN wording polish
-  - final visual QA for 1366x768 and 4K
-  - continued performance tuning for huge datasets
+- v3.0 release prep completed (UX polish, wording QA, visual QA)
+- v3.1 delivered (performance/rendering pipeline, scan caches, adaptive polling, queue optimization)
+- v3.2 next (parallel reducers, streaming updates, benchmark pack)
 
 ## Contributing & Support
 
