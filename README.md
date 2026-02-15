@@ -34,7 +34,7 @@ Fast scans, interactive WizMap treemap, safe cleanup flows, automation, and rout
 - [Roadmap](#roadmap)
 - [Contributing & Support](#contributing--support)
 - [License](#license)
-- [RU Section (Русская версия)](#ru-section-русская-версия)
+- [RU](#ru-section-русская-версия)
 
 ## About
 
