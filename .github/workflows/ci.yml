@@ -61,6 +61,9 @@ jobs:
     runs-on: windows-latest
     env:
       GOFLAGS: -trimpath -buildvcs=false
+      SIGN_PFX_B64: ${{ secrets.ICICLE_SIGN_PFX_B64 }}
+      SIGN_PFX_PASSWORD: ${{ secrets.ICICLE_SIGN_PFX_PASSWORD }}
+      SIGN_CERT_SHA1: ${{ secrets.ICICLE_SIGN_CERT_SHA1 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -80,14 +83,14 @@ jobs:
           $ver = "${{ github.event.release.tag_name }}".TrimStart("v")
           makensis /DVERSION=$ver scripts/installer.nsi
       - name: Sign Binaries (optional)
-        if: ${{ secrets.ICICLE_SIGN_PFX_B64 != '' && secrets.ICICLE_SIGN_PFX_PASSWORD != '' }}
+        if: ${{ env.SIGN_PFX_B64 != '' && env.SIGN_PFX_PASSWORD != '' }}
         shell: pwsh
         run: |
           $pfxPath = Join-Path $env:RUNNER_TEMP "icicle-sign.pfx"
-          [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String("${{ secrets.ICICLE_SIGN_PFX_B64 }}"))
-          $secure = ConvertTo-SecureString "${{ secrets.ICICLE_SIGN_PFX_PASSWORD }}" -AsPlainText -Force
+          [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:SIGN_PFX_B64))
+          $secure = ConvertTo-SecureString $env:SIGN_PFX_PASSWORD -AsPlainText -Force
           Import-PfxCertificate -FilePath $pfxPath -CertStoreLocation Cert:\CurrentUser\My -Password $secure | Out-Null
-          $thumb = "${{ secrets.ICICLE_SIGN_CERT_SHA1 }}"
+          $thumb = $env:SIGN_CERT_SHA1
           if (-not $thumb) { $thumb = (Get-ChildItem Cert:\CurrentUser\My | Sort-Object NotAfter -Descending | Select-Object -First 1).Thumbprint }
           signtool sign /sha1 $thumb /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 icicle.exe
           signtool sign /sha1 $thumb /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 icicle-desktop.exe
@@ -116,7 +119,7 @@ jobs:
           )
           if ($installer) {
             $shaSetup = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLower()
-            $lines += \"$shaSetup  $($installer.Name)\"
+            $lines += "$shaSetup  $($installer.Name)"
           }
           $lines | Set-Content dist/SHA256SUMS.txt
       - name: Upload release artifacts
