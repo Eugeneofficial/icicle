@@ -14,11 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GOFLAGS: -trimpath -buildvcs=false
+      CGO_ENABLED: 1
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: '1.22.x'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
       - name: Format check
         run: |
           files=$(git ls-files '*.go')
@@ -33,6 +37,8 @@ jobs:
       - name: Glossary QA
         run: python3 scripts/check_glossary.py
       - name: Race (core packages)
+        env:
+          CGO_ENABLED: 1
         run: go test -race ./internal/scan ./internal/organize
 
   build-windows:
