@@ -5,7 +5,7 @@ This page tracks practical performance for major flows.
 ## Method
 
 - OS: Windows 11 (x64)
-- CPU: consumer desktop class
+- CPU: all
 - Storage: SSD/NVMe
 - Build: `go build -tags "wails,production"`
 - Command format:
