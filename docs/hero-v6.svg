@@ -1,4 +1,4 @@
-<svg width="1280" height="520" viewBox="0 0 1280 520" fill="none" xmlns="http://www.w3.org/2000/svg">
+﻿<svg width="1280" height="520" viewBox="0 0 1280 520" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1280" y2="520" gradientUnits="userSpaceOnUse">
       <stop stop-color="#0A1424"/>
@@ -38,14 +38,14 @@
   <text x="652" y="198" fill="#A8C3E8" font-family="Segoe UI, Arial" font-size="26">Desktop + CLI for Windows disk intelligence</text>
 
   <rect x="652" y="224" width="580" height="58" rx="12" fill="#0C182C" stroke="#2C486D"/>
-  <text x="676" y="260" fill="#DFECFF" font-family="Consolas, monospace" font-size="20">WizMap  •  Heavy Scan  •  Scheduler  •  Safe Cleanup</text>
+  <text x="676" y="260" fill="#DFECFF" font-family="Consolas, monospace" font-size="20">WizMap | Heavy Scan | Scheduler | Safe Cleanup</text>
 
   <rect x="652" y="304" width="270" height="68" rx="14" fill="url(#cta)"/>
   <text x="688" y="347" fill="#FFFFFF" font-family="Segoe UI, Arial" font-size="36" font-weight="700">EN / RU</text>
 
   <rect x="940" y="304" width="292" height="68" rx="14" fill="#142541" stroke="#34598A"/>
-  <text x="968" y="347" fill="#DCEAFF" font-family="Segoe UI, Arial" font-size="36" font-weight="700">v2.7 Build</text>
+  <text x="968" y="347" fill="#DCEAFF" font-family="Segoe UI, Arial" font-size="36" font-weight="700">v3.1 Release</text>
 
-  <text x="652" y="420" fill="#B9D1EE" font-family="Segoe UI, Arial" font-size="24">Fast scans  •  Team presets  •  Routing conflict solver</text>
-  <text x="652" y="452" fill="#B9D1EE" font-family="Segoe UI, Arial" font-size="24">Wails desktop  •  Signed release pipeline</text>
+  <text x="652" y="420" fill="#B9D1EE" font-family="Segoe UI, Arial" font-size="24">Fast scans | Team presets | Routing conflict solver</text>
+  <text x="652" y="452" fill="#B9D1EE" font-family="Segoe UI, Arial" font-size="24">Wails desktop | Signed release pipeline</text>
 </svg>

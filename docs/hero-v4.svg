@@ -35,17 +35,17 @@
   <rect x="624" y="430" width="156" height="12" rx="6" fill="#24405F"/>
 
   <text x="880" y="210" fill="#ECF4FF" font-family="Segoe UI, Arial" font-size="78" font-weight="700">icicle</text>
-  <text x="884" y="260" fill="#9DB8DE" font-family="Segoe UI, Arial" font-size="30">Desktop + CLI • Windows Disk Intelligence</text>
+  <text x="884" y="260" fill="#9DB8DE" font-family="Segoe UI, Arial" font-size="30">Desktop + CLI | Windows Disk Intelligence</text>
 
   <rect x="884" y="292" width="650" height="76" rx="12" fill="#0D182B" stroke="#2B456B"/>
-  <text x="906" y="326" fill="#DDEBFF" font-family="Consolas, monospace" font-size="18">WizMap • Heavy Scan • Scheduler</text>
-  <text x="906" y="350" fill="#DDEBFF" font-family="Consolas, monospace" font-size="18">Safe Cleanup • Routing Rules</text>
+  <text x="906" y="326" fill="#DDEBFF" font-family="Consolas, monospace" font-size="18">WizMap | Heavy Scan | Scheduler</text>
+  <text x="906" y="350" fill="#DDEBFF" font-family="Consolas, monospace" font-size="18">Safe Cleanup | Routing Rules</text>
 
   <rect x="884" y="382" width="320" height="78" rx="14" fill="url(#b)"/>
-  <text x="918" y="430" fill="#FFFFFF" font-family="Segoe UI, Arial" font-size="30" font-weight="700">EU / RU Ready</text>
+  <text x="918" y="430" fill="#FFFFFF" font-family="Segoe UI, Arial" font-size="30" font-weight="700">EN / RU Ready</text>
 
   <rect x="1218" y="382" width="316" height="78" rx="14" fill="#142541" stroke="#34598A"/>
-  <text x="1250" y="430" fill="#D9E9FF" font-family="Segoe UI, Arial" font-size="30" font-weight="700">v2.4 Feature Pack</text>
+  <text x="1250" y="430" fill="#D9E9FF" font-family="Segoe UI, Arial" font-size="30" font-weight="700">v3.1 Feature Pack</text>
 
-  <text x="884" y="512" fill="#AFC6E7" font-family="Segoe UI, Arial" font-size="24">Fast under heavy I/O • Encrypted profiles • Winget templates</text>
+  <text x="884" y="512" fill="#AFC6E7" font-family="Segoe UI, Arial" font-size="24">Fast under heavy I/O | Encrypted profiles | Team presets</text>
 </svg>
