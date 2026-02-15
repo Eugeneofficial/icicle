@@ -1,5 +1,28 @@
 ﻿# Changelog
 
+## 3.1.0 - 2026-02-15
+- Completed v3.0 release prep checklist (RU/EN wording pass + final visual QA targets).
+- Added high-performance heavy table pipeline:
+  - virtualized rendering with incremental chunk paint,
+  - filter/sort cache and debounced inputs,
+  - `Load more` pagination and live row counters,
+  - quick actions: `Clear filters` and `Refresh`.
+- Optimized queue execution by grouping batch jobs and deduplicating file paths.
+- Added short-lived scan caches for `tree`, `heavy`, and WizMap requests.
+- Added adaptive log polling behavior (watch-aware intervals, lower idle overhead).
+- Added persistence for scan controls and UX preferences (theme/lang/filters/perf inputs).
+- Improved quick-open and path flows:
+  - cached defaults lookup,
+  - path normalization before actions,
+  - folder picker in Analyze quick path row.
+- Added extra keyboard shortcuts for faster scanning workflows.
+- Scanner hot-path optimizations in `internal/scan`:
+  - faster extension parsing,
+  - faster first path-segment extraction for tree/overview reducers.
+- Extended scan tests to cover new helper fast-path behavior.
+- README rewritten in modern release format (EN primary + full RU section).
+- Roadmap updated with delivered `v3.1` and planned `v3.2` tracks.
+
 ## 2.0.0 - 2026-02-14
 - Added native desktop app mode with Wails (`icicle-desktop.exe`).
 - Reworked heavy-files UI block for denser, faster actions.
