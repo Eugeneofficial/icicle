@@ -44,3 +44,41 @@ func mustWriteSized(t *testing.T, path string, size int) {
 		t.Fatalf("write: %v", err)
 	}
 }
+
+func TestFastLowerExt(t *testing.T) {
+	cases := []struct {
+		in   string
+		want string
+	}{
+		{`C:\x\y\file.TXT`, ".txt"},
+		{`/tmp/a/b.tar.gz`, ".gz"},
+		{`/tmp/a/noext`, "(no_ext)"},
+		{`/tmp/a/.env`, ".env"},
+		{`C:\x\folder.with.dot\name`, "(no_ext)"},
+	}
+	for _, tc := range cases {
+		got := fastLowerExt(tc.in)
+		if got != tc.want {
+			t.Fatalf("fastLowerExt(%q)=%q want %q", tc.in, got, tc.want)
+		}
+	}
+}
+
+func TestFirstPathSegment(t *testing.T) {
+	cases := []struct {
+		in   string
+		want string
+	}{
+		{"Videos\\a\\b.mp4", "Videos"},
+		{"Downloads/file.zip", "Downloads"},
+		{"single.txt", "single.txt"},
+		{"", ""},
+		{"\\rooted", ""},
+	}
+	for _, tc := range cases {
+		got := firstPathSegment(tc.in)
+		if got != tc.want {
+			t.Fatalf("firstPathSegment(%q)=%q want %q", tc.in, got, tc.want)
+		}
+	}
+}

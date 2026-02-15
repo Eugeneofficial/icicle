@@ -10,8 +10,11 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
 	"icicle/internal/organize"
+	"icicle/internal/scan"
+	"icicle/internal/ui"
 )
 
 type RouteRule struct {
@@ -38,6 +41,27 @@ type RouteConflict struct {
 	RuleB   string `json:"ruleB"`
 	Pattern string `json:"pattern"`
 	Note    string `json:"note"`
+}
+
+type RouteSimulationRuleStat struct {
+	RuleID    string `json:"ruleId"`
+	Rule      string `json:"rule"`
+	Matched   int    `json:"matched"`
+	TotalSize int64  `json:"totalSize"`
+	Human     string `json:"human"`
+}
+
+type RouteSimulationReport struct {
+	Path             string                    `json:"path"`
+	Seen             int                       `json:"seen"`
+	Limited          bool                      `json:"limited"`
+	Matched          int                       `json:"matched"`
+	Unmatched        int                       `json:"unmatched"`
+	MatchedSize      int64                     `json:"matchedSize"`
+	MatchedSizeHuman string                    `json:"matchedSizeHuman"`
+	DurationMS       int64                     `json:"durationMs"`
+	ByRule           []RouteSimulationRuleStat `json:"byRule"`
+	UnmatchedSamples []string                  `json:"unmatchedSamples"`
 }
 
 func (a *App) routeRulesPath() string {
@@ -129,6 +153,102 @@ func (a *App) SimulateRoutingSamples(raw string) ([]RouteMatch, error) {
 		out = append(out, m)
 	}
 	return out, nil
+}
+
+func (a *App) SimulateRoutingForPath(path string, maxFiles int) (RouteSimulationReport, error) {
+	path = a.normalizePath(path, a.folders.Home)
+	if maxFiles < 0 {
+		maxFiles = 0
+	}
+	rules, err := a.ListRoutingRules()
+	if err != nil {
+		return RouteSimulationReport{}, err
+	}
+	sortRouteRules(rules)
+
+	report := RouteSimulationReport{
+		Path:             path,
+		UnmatchedSamples: make([]string, 0, 32),
+	}
+	started := time.Now()
+	byRule := map[string]*RouteSimulationRuleStat{}
+	for _, r := range rules {
+		if !r.Enabled {
+			continue
+		}
+		byRule[r.ID] = &RouteSimulationRuleStat{RuleID: r.ID, Rule: r.Name}
+	}
+
+	count, err := scan.WalkAllLimit(path, maxFiles, func(p string, size int64) {
+		report.Seen++
+		matched := false
+		for _, r := range rules {
+			if !r.Enabled {
+				continue
+			}
+			if !routeRuleMatches(r, p) {
+				continue
+			}
+			target := expandRouteTarget(r.Target, a.folders.Home)
+			if strings.TrimSpace(target) == "" {
+				continue
+			}
+			matched = true
+			report.Matched++
+			report.MatchedSize += size
+			stat := byRule[r.ID]
+			if stat == nil {
+				stat = &RouteSimulationRuleStat{RuleID: r.ID, Rule: r.Name}
+				byRule[r.ID] = stat
+			}
+			stat.Matched++
+			stat.TotalSize += size
+			break
+		}
+		if matched {
+			return
+		}
+		if _, ok := organize.DestinationDir(a.folders.Home, p); ok {
+			report.Matched++
+			report.MatchedSize += size
+			stat := byRule["builtin"]
+			if stat == nil {
+				stat = &RouteSimulationRuleStat{RuleID: "builtin", Rule: "builtin-extension"}
+				byRule["builtin"] = stat
+			}
+			stat.Matched++
+			stat.TotalSize += size
+			return
+		}
+		report.Unmatched++
+		if len(report.UnmatchedSamples) < 30 {
+			report.UnmatchedSamples = append(report.UnmatchedSamples, p)
+		}
+	})
+	if err != nil {
+		return RouteSimulationReport{}, err
+	}
+	report.Limited = maxFiles > 0 && count >= maxFiles
+	report.DurationMS = time.Since(started).Milliseconds()
+	report.MatchedSizeHuman = ui.HumanBytes(report.MatchedSize)
+
+	stats := make([]RouteSimulationRuleStat, 0, len(byRule))
+	for _, st := range byRule {
+		if st.Matched == 0 {
+			continue
+		}
+		st.Human = ui.HumanBytes(st.TotalSize)
+		stats = append(stats, *st)
+	}
+	sort.Slice(stats, func(i, j int) bool {
+		if stats[i].Matched == stats[j].Matched {
+			return stats[i].TotalSize > stats[j].TotalSize
+		}
+		return stats[i].Matched > stats[j].Matched
+	})
+	report.ByRule = stats
+	a.appendLog(fmt.Sprintf("[route-sim] %s seen=%d matched=%d unmatched=%d ms=%d", path, report.Seen, report.Matched, report.Unmatched, report.DurationMS))
+	return report, nil
 }
 
 func (a *App) resolveAutoDestination(src string) (string, bool) {

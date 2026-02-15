@@ -5,6 +5,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
@@ -224,6 +226,53 @@ func (a *App) ImportTeamPresetPack(mode string) (string, error) {
 	if err := json.Unmarshal(data, &pack); err != nil {
 		return "", err
 	}
+	if err := a.applyTeamPresetPack(pack, mode, source); err != nil {
+		return "", err
+	}
+	a.appendLog(fmt.Sprintf("[team-pack] imported (%s): %s", mode, source))
+	return source, nil
+}
+
+func (a *App) ImportTeamPresetPackFromURL(rawURL string, mode string) (string, error) {
+	rawURL = strings.TrimSpace(rawURL)
+	if rawURL == "" {
+		return "", fmt.Errorf("url is required")
+	}
+	mode = strings.ToLower(strings.TrimSpace(mode))
+	if mode == "" {
+		mode = "merge"
+	}
+
+	client := &http.Client{Timeout: 20 * time.Second}
+	req, err := http.NewRequest(http.MethodGet, rawURL, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("User-Agent", "icicle-desktop")
+	res, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		return "", fmt.Errorf("registry fetch failed: status %d", res.StatusCode)
+	}
+	body, err := io.ReadAll(io.LimitReader(res.Body, 10*1024*1024))
+	if err != nil {
+		return "", err
+	}
+	var pack TeamPresetPack
+	if err := json.Unmarshal(body, &pack); err != nil {
+		return "", fmt.Errorf("invalid team pack JSON: %w", err)
+	}
+	if err := a.applyTeamPresetPack(pack, mode, rawURL); err != nil {
+		return "", err
+	}
+	a.appendLog(fmt.Sprintf("[team-pack] imported (%s) from url: %s", mode, rawURL))
+	return rawURL, nil
+}
+
+func (a *App) applyTeamPresetPack(pack TeamPresetPack, mode string, source string) error {
 	existing, _ := a.readCleanupPresets()
 	if mode == "overwrite" {
 		existing = map[string]DiskCleanupPreset{}
@@ -237,7 +286,7 @@ func (a *App) ImportTeamPresetPack(mode string) (string, error) {
 		existing[d] = normalizeDiskCleanupPreset(v)
 	}
 	if err := a.writeCleanupPresets(existing); err != nil {
-		return "", err
+		return err
 	}
 	currentRules, _ := a.ListRoutingRules()
 	rules := normalizeRouteRules(pack.RouteRules)
@@ -245,7 +294,7 @@ func (a *App) ImportTeamPresetPack(mode string) (string, error) {
 		rules = mergeRouteRules(currentRules, rules)
 	}
 	if err := a.SaveRoutingRules(rules); err != nil {
-		return "", err
+		return err
 	}
 	a.mu.Lock()
 	if mode == "overwrite" {
@@ -253,11 +302,11 @@ func (a *App) ImportTeamPresetPack(mode string) (string, error) {
 	} else {
 		a.saved = dedupePaths(append(a.saved, pack.SavedFolders...))
 	}
-	err = a.saveSavedLocked()
+	err := a.saveSavedLocked()
 	a.mu.Unlock()
 	if err != nil {
-		return "", err
+		return err
 	}
-	a.appendLog(fmt.Sprintf("[team-pack] imported (%s): %s", mode, source))
-	return source, nil
+	a.appendLog(fmt.Sprintf("[team-pack] applied (%s): %s", mode, source))
+	return nil
 }

@@ -56,11 +56,12 @@
 
 ## Next (v2.8)
 
-- [ ] Delta heat overlay directly in live WizMap
-- [ ] Team preset registry (remote URL import)
-- [ ] Rule simulation against full scan result set
-- [ ] MSI + EXE notarization/report in release summary
-- [ ] Snapshot compare export (CSV/JSON/MD)
+- [x] Delta heat overlay directly in live WizMap
+- [x] Team preset registry (remote URL import)
+- [x] Rule simulation against full scan result set
+- [x] MSI + EXE notarization/report in release summary
+- [x] Snapshot compare export (CSV/JSON/MD)
+- [x] New file detection marker (`NEW`) in heavy list
 
 ## Community Track
 
@@ -68,3 +69,46 @@
 - [x] Pull request template
 - [ ] Public benchmark scenarios from real user datasets
 - [ ] Monthly changelog with performance deltas
+
+## v3.0 Release Prep (Completed)
+
+- [x] Full UI redesign pass (dashboard + command bar + denser file operations)
+- [x] 10+ operator features for desktop workflow
+- [x] Command palette and keyboard-first operation (`Ctrl+K`)
+- [x] Heavy table pro filters/sort/bulk selection
+- [x] Queue preset save/load
+- [x] Quick destination registry
+- [x] Live WizMap delta overlay from snapshot
+- [x] Full-route simulation report on scan set
+- [x] Snapshot compare export (CSV/JSON/MD)
+- [x] Team preset registry import via URL
+- [x] Release signing summary in CI
+- [x] `NEW` file marker in heavy list
+- [x] Final RU/EN wording polish for release notes
+- [x] Final visual QA on 1366x768 and 4K
+
+## v3.1 (Delivered)
+
+- [x] Heavy-table virtualized rendering with incremental chunk paint
+- [x] Heavy filter/sort cache + debounce for search/min-size controls
+- [x] Heavy `Load more` pagination and row stats
+- [x] Fast action bar (`Clear filters`, `Refresh`) in Analyze
+- [x] Smart selection behavior on filtered rows
+- [x] Short-lived cache for `tree`/`heavy` scan requests
+- [x] Short-lived cache for WizMap requests
+- [x] Adaptive log polling (watch-aware interval)
+- [x] Queue execution optimization (batch grouping + dedup paths)
+- [x] Input persistence for scan controls and UI preferences
+- [x] Path normalization and safer fast actions
+- [x] Reduced redundant backend calls via defaults/drive refresh caching
+- [x] Extra keyboard shortcuts for scan flows
+- [x] Scanner micro-optimizations in hot loops (path segment + extension parsing)
+- [x] Extended scanner tests for helper fast-paths
+
+## v3.2 (Next)
+
+- [ ] Parallel reducer pipeline in scanner (lower lock contention)
+- [ ] Persistent snapshot index for instant diff preloading
+- [ ] Streaming heavy/tree updates from backend workers
+- [ ] Drive-level cache invalidation strategy after file actions
+- [ ] Public benchmark dataset pack + monthly perf delta report

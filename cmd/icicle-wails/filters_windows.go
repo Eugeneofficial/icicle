@@ -57,6 +57,7 @@ func (a *App) RunHeavyFastFiltered(path string, n int, maxFiles int, workers int
 	for _, it := range items {
 		outItems = append(outItems, HeavyItem{Path: it.Path, Size: it.Size, Human: ui.HumanBytes(it.Size)})
 	}
+	outItems = a.markNewHeavy(path, outItems)
 	res := HeavyResult{
 		Items:      outItems,
 		Seen:       seen,

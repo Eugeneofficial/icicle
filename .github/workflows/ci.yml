@@ -138,6 +138,41 @@ jobs:
             $lines += "$shaMsi  $($msi.Name)"
           }
           $lines | Set-Content dist/SHA256SUMS.txt
+      - name: Release signing report
+        if: always()
+        shell: pwsh
+        run: |
+          $summary = New-Object System.Collections.Generic.List[string]
+          $summary.Add("## Release Artifact Report")
+          $summary.Add("")
+          $summary.Add("| Artifact | Exists | Signature verify |")
+          $summary.Add("|---|---|---|")
+          $targets = @("dist/icicle.exe","dist/icicle-desktop.exe")
+          $installer = Get-ChildItem dist\\*-setup.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+          $msi = Get-ChildItem dist\\*-setup.msi -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($installer) { $targets += $installer.FullName }
+          if ($msi) { $targets += $msi.FullName }
+          foreach ($t in $targets) {
+            $name = Split-Path $t -Leaf
+            if (-not (Test-Path $t)) {
+              $summary.Add("| $name | no | n/a |")
+              continue
+            }
+            $verify = "not checked"
+            if (Get-Command signtool -ErrorAction SilentlyContinue) {
+              & signtool verify /pa $t *> $null
+              if ($LASTEXITCODE -eq 0) { $verify = "ok" } else { $verify = "fail" }
+            }
+            $summary.Add("| $name | yes | $verify |")
+          }
+          $summary.Add("")
+          if (Test-Path "dist/SHA256SUMS.txt") {
+            $summary.Add("### SHA256")
+            $summary.Add("```text")
+            Get-Content dist/SHA256SUMS.txt | ForEach-Object { $summary.Add($_) }
+            $summary.Add("```")
+          }
+          $summary -join \"`n\" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
       - name: Upload release artifacts
         uses: softprops/action-gh-release@v2
         with:

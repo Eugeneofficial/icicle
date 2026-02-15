@@ -5,162 +5,250 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>icicle desktop</title>
   <style>
-    :root{--bg:#0f1115;--surface:#181c25;--surface-2:#202736;--line:#2e3547;--text:#e6edf3;--muted:#99a3b5;--accent:#3794ff;--accent-2:#1f6feb;--danger:#f14c4c;--ok:#4ec9b0;color-scheme:dark}
-    body.light{--bg:#e9edf5;--surface:#fff;--surface-2:#f6f8fc;--line:#cfd7e5;--text:#1d2433;--muted:#5e6a80;color-scheme:light}
-    *{box-sizing:border-box} body{margin:0;background:radial-gradient(1300px 700px at 80% -100px,#22314d 0%,var(--bg) 42%);color:var(--text);font:14px/1.35 "Segoe UI",sans-serif}
-    .shell{display:grid;grid-template-columns:340px 1fr;gap:14px;padding:14px;min-height:100vh}
-    .panel{background:linear-gradient(180deg,var(--surface),var(--surface-2));border:1px solid var(--line);border-radius:14px}
-    .left{padding:14px}.brand{font-size:34px;font-weight:800}.sub{color:var(--muted)} .row{display:flex;gap:8px;align-items:center}.stack>*{margin-top:10px}
-    input,select,button{border:1px solid var(--line);background:rgba(0,0,0,.08);color:var(--text);border-radius:10px;padding:9px 11px}
-    select, select option, select optgroup{background:var(--surface);color:var(--text)}
-    input,select{width:100%} button{cursor:pointer}.primary{background:linear-gradient(180deg,var(--accent),var(--accent-2));border-color:transparent;color:#fff}.danger{background:var(--danger);border-color:transparent;color:#fff}
-    .tiny{font-size:12px;color:var(--muted)} .right{display:grid;grid-template-rows:auto 1fr;gap:14px}
-    .toolbar{padding:12px;display:grid;grid-template-columns:1fr auto auto auto auto auto;gap:8px}
-    .drives{display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:10px;padding:12px}
-    .drive{border:1px solid var(--line);border-radius:12px;padding:10px}.bar{height:8px;background:#293247;border-radius:99px;overflow:hidden;margin-top:8px}.fill{height:100%;background:linear-gradient(90deg,var(--accent),#6cb6ff)}
-    .content{display:grid;grid-template-columns:1fr 520px;gap:10px}.logWrap,.heavyWrap{padding:12px}.heavyWrap{max-height:560px;overflow:auto}.log{height:220px;min-height:180px;max-height:320px;resize:vertical;border:1px solid var(--line);background:#080c13;color:#d6deeb;border-radius:12px;padding:10px;overflow:auto;white-space:pre-wrap;font:12px/1.35 Consolas,monospace}
-    .heavyWrap{overflow:auto} table{width:100%;border-collapse:collapse;table-layout:fixed} th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-    th{position:sticky;top:0;background:var(--surface-2);color:var(--muted)}
-    td.pathCell{font-family:Consolas,monospace;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .actions{display:flex;flex-wrap:nowrap;gap:4px;align-items:center}
-    .actions button{padding:4px 7px;font-size:12px;min-width:58px}
-    .actions select{width:auto;min-width:126px;padding:4px 6px;font-size:12px}
-    .heavyTools{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap}
-    .heavyTools .row{margin:0}
-    .pill{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:var(--muted)}
-    .wizWrap{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:10px;padding:12px}
-    .wizMap{height:360px;min-height:300px;border:1px solid var(--line);border-radius:10px;position:relative;overflow:hidden;background:#0b1220}
-    .wizRect{position:absolute;overflow:hidden;border:1px solid rgba(255,255,255,.15);font-size:11px;padding:4px;cursor:pointer;white-space:nowrap;text-overflow:ellipsis}
+
+    :root{--bg:#0a0c12;--bg2:#0f1420;--surface:#141a27;--surface2:#101521;--line:#273146;--text:#e7ecf6;--muted:#97a3ba;--accent:#4ea1ff;--accent2:#2f6df0;--ok:#23c369;--warn:#f59e0b;--danger:#f0556b;--radius:14px;color-scheme:dark}
+    body.light{--bg:#edf1f8;--bg2:#e3e9f5;--surface:#ffffff;--surface2:#f5f8fe;--line:#d4ddec;--text:#192236;--muted:#62708a;--accent:#2f6df0;--accent2:#1f4fb6;color-scheme:light}
+    *{box-sizing:border-box}
+    body{margin:0;color:var(--text);font:14px/1.4 "Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+      background:
+      radial-gradient(1000px 420px at -10% -120px,#234278 0%,transparent 58%),
+      radial-gradient(780px 320px at 105% -110px,#51243f 0%,transparent 54%),
+      linear-gradient(180deg,var(--bg2),var(--bg));}
+    button,input,select,textarea{font:inherit}
+    .app{min-height:100vh;display:grid;grid-template-rows:64px 1fr}
+    .appTop{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(8,12,20,.96),rgba(8,12,20,.78));backdrop-filter:blur(10px);position:sticky;top:0;z-index:25}
+    .brandRow{display:flex;align-items:center;gap:12px}.brand{font-size:30px;font-weight:900;letter-spacing:.2px}.verPill{font-size:12px;padding:4px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
+    .chipStrip{display:flex;gap:8px;flex-wrap:wrap}.chip{font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:4px 8px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted)}
+    .topActions{display:flex;gap:8px;align-items:center}
+    .appBody{display:grid;grid-template-columns:230px 1fr;gap:14px;padding:14px}
+    .rail{border:1px solid var(--line);border-radius:16px;background:linear-gradient(170deg,#0f2948,#0f1e35 45%,#12253f);padding:12px;display:grid;gap:10px;align-content:start}
+    .railTitle{font-size:12px;text-transform:uppercase;letter-spacing:.7px;color:#9ac5ff;margin:4px 2px}
+    .railBtn{height:42px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.02);color:var(--text);cursor:pointer;font-size:14px;display:flex;align-items:center;gap:8px;padding:0 10px}
+    .railBtn.active{background:linear-gradient(180deg,var(--accent),var(--accent2));border-color:transparent;color:#fff}
+    .railMini{font-size:12px;color:#b6d2f7;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.03)}
+    body.light .appTop{background:linear-gradient(180deg,rgba(245,248,253,.98),rgba(239,244,251,.94))}
+    body.light .rail{background:linear-gradient(170deg,#eaf0fb,#e3ebf8 45%,#dfe8f7)}
+    body.light .railTitle{color:#275c9b}
+    body.light .railMini{color:#2f4f76;background:rgba(255,255,255,.7)}
+    body.light .railBtn{background:rgba(255,255,255,.72)}
+    .workspace{display:grid;min-width:0}
+    .view{display:none;gap:12px;min-width:0}
+    .view.active{display:grid}
+    .panel{border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(165deg,var(--surface),var(--surface2));box-shadow:0 14px 34px rgba(0,0,0,.22)}
+    .panelHead{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+    .tiny{font-size:12px;color:var(--muted)}
+    input,select,textarea,button{border:1px solid var(--line);background:rgba(255,255,255,.02);color:var(--text);border-radius:10px;padding:9px 11px}
+    select,select option,select optgroup{background:var(--surface);color:var(--text)}
+    input::placeholder,textarea::placeholder{color:var(--muted)}
+    button{cursor:pointer;transition:all .16s ease}
+    button:hover{transform:translateY(-1px);border-color:color-mix(in oklab,var(--line),#fff 28%)}
+    .primary{border-color:transparent;background:linear-gradient(180deg,var(--accent),var(--accent2));color:#fff}
+    .danger{border-color:transparent;background:linear-gradient(180deg,#f0657c,#df3452);color:#fff}
+    .row{display:flex;gap:8px;align-items:center}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .opsGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .opsCard{padding:12px;display:grid;gap:8px}
+    .opsCard h4{margin:0 0 2px 0;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#84b3ff}
+    .driveBoard .toolbar{padding:10px 12px;display:grid;grid-template-columns:1fr repeat(5,auto);gap:8px;align-items:center;border-bottom:1px solid var(--line)}
+    .drives{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:8px;padding:10px 12px 12px}
+    .drive{border:1px solid var(--line);border-radius:10px;padding:8px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.005))}
+    .bar{height:8px;background:#2a3248;border-radius:999px;overflow:hidden;margin-top:7px}.fill{height:100%;background:linear-gradient(90deg,var(--accent),#7eb3ff)}
+    .analyzeGrid{display:grid;grid-template-columns:minmax(0,1fr) 560px;gap:12px;min-height:0}
+    .leftCol,.rightCol{display:grid;gap:12px;min-height:0}
+    .wizWrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:10px;padding:10px}
+    .wizMap{height:320px;min-height:260px;border:1px solid var(--line);border-radius:10px;position:relative;overflow:hidden;background:#090f1b}
+    .wizRect{position:absolute;overflow:hidden;border:1px solid rgba(255,255,255,.18);font-size:11px;padding:4px;cursor:pointer;white-space:nowrap;text-overflow:ellipsis}
     .wizRect.dir{background:linear-gradient(180deg,#1d3d66,#122944)} .wizRect.file{background:linear-gradient(180deg,#4b2b5a,#2f173b)}
-    .wizExt{border:1px solid var(--line);border-radius:10px;overflow:auto;max-height:260px}
-    .wizExt table{font-size:12px}
-    .wizLegend{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}.wizTag{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+    .wizRect.deltaUp{box-shadow:inset 0 0 0 1px rgba(77,204,121,.55)} .wizRect.deltaDown{box-shadow:inset 0 0 0 1px rgba(241,76,76,.55)} .wizRect.deltaNew{box-shadow:inset 0 0 0 2px rgba(127,199,255,.8)}
+    .wizRect.active{outline:2px solid #9fcbff;outline-offset:-2px}
     .wizTop{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:6px}
     .wizPath{font-family:Consolas,monospace;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .wizCrumbs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
-    .wizCrumbs button{padding:4px 8px;font-size:12px}
-    .wizRect.active{outline:2px solid #8bc0ff;outline-offset:-2px}
-    .wizHover{border:1px solid var(--line);border-radius:10px;padding:8px;margin:6px 0;background:rgba(0,0,0,.12)}
+    .wizCrumbs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.wizCrumbs button{padding:4px 8px;font-size:12px}
+    .wizHover{border:1px solid var(--line);border-radius:10px;padding:8px;margin:6px 0;background:rgba(255,255,255,.02)}
     .wizHoverPath{font-family:Consolas,monospace;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .heatBar{height:8px;background:#293247;border-radius:99px;overflow:hidden;margin-top:6px}
-    .heatFill{height:100%;background:linear-gradient(90deg,#3fa7ff,#f2cc60,#f14c4c)}
-    .routeGrid{display:grid;grid-template-columns:90px 120px 100px 90px 130px 1fr 30px;gap:6px;align-items:center}
-    .routeGrid input,.routeGrid select{padding:6px 8px}
-    #loader{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9999}#loader.show{display:flex}.spin{width:62px;height:62px;border:4px solid rgba(255,255,255,.2);border-top-color:#7ab5ff;border-radius:50%;animation:rot 1s linear infinite}.loadText{margin-top:10px;text-align:center;color:#d9e7ff}@keyframes rot{to{transform:rotate(360deg)}}
+    .heatBar{height:8px;background:#293247;border-radius:99px;overflow:hidden;margin-top:6px}.heatFill{height:100%;background:linear-gradient(90deg,#3fa7ff,#f2cc60,#f14c4c)}
+    .wizLegend{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}.wizTag{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+    .wizExt{border:1px solid var(--line);border-radius:10px;overflow:auto;max-height:280px}.wizExt table{font-size:12px}
+    .logWrap,.heavyWrap{padding:12px}.heavyWrap{max-height:650px;overflow:auto}
+    .heavyMeta{display:flex;align-items:center;gap:8px;margin:0 0 8px 0;flex-wrap:wrap}
+    .heavyMeta .spacer{flex:1}
+    .log{height:130px;min-height:120px;max-height:220px;resize:vertical;border:1px solid var(--line);background:#070c16;color:#dbe4f4;border-radius:12px;padding:10px;overflow:auto;white-space:pre-wrap;font:12px/1.38 Consolas,monospace}
+    table{width:100%;border-collapse:collapse;table-layout:fixed} th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+    th{position:sticky;top:0;background:color-mix(in oklab,var(--surface2),#000 4%);color:var(--muted)}
+    td.pathCell{font-family:Consolas,monospace;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .actions{display:flex;flex-wrap:nowrap;gap:4px;align-items:center}.actions button{padding:4px 7px;font-size:12px;min-width:58px}.actions select{width:auto;min-width:126px;padding:4px 6px;font-size:12px}
+    .pill{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:var(--muted)}.newTag{font-size:10px;border-radius:999px;padding:1px 6px;background:#27a0ff;color:#fff;margin-left:6px}
+    .heavyTools{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px}
+    .routeGrid{display:grid;grid-template-columns:90px 120px 100px 90px 130px 1fr 30px;gap:6px;align-items:center}.routeGrid input,.routeGrid select{padding:6px 8px}
+    #loader{position:fixed;inset:0;background:rgba(0,0,0,.48);display:none;align-items:center;justify-content:center;z-index:9999}#loader.show{display:flex}
+    .spin{width:62px;height:62px;border:4px solid rgba(255,255,255,.2);border-top-color:#7ab5ff;border-radius:50%;animation:rot 1s linear infinite}.loadText{margin-top:10px;text-align:center;color:#d9e7ff}@keyframes rot{to{transform:rotate(360deg)}}
+    .overlay{position:fixed;inset:0;background:rgba(3,8,16,.65);display:none;align-items:flex-start;justify-content:center;z-index:9998;padding-top:90px}.overlay.show{display:flex}
+    .palette{width:min(780px,94vw);background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}.palette input{border:none;border-bottom:1px solid var(--line);border-radius:0;padding:12px}
+    .paletteList{max-height:300px;overflow:auto}.paletteItem{padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer}.paletteItem:hover{background:rgba(255,255,255,.04)}
+    .toastWrap{position:fixed;right:14px;bottom:14px;display:grid;gap:8px;z-index:10020}
+    .toast{min-width:240px;max-width:420px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:linear-gradient(160deg,var(--surface),var(--surface2));box-shadow:0 10px 28px rgba(0,0,0,.25)}
+    .toast.ok{border-color:color-mix(in oklab,var(--ok),var(--line) 65%)}
+    .toast.err{border-color:color-mix(in oklab,var(--danger),var(--line) 65%)}
+    :focus-visible{outline:2px solid color-mix(in oklab,var(--accent),#fff 20%);outline-offset:1px}
+    @media (max-width:1320px){.drives{grid-template-columns:repeat(3,minmax(160px,1fr))}.analyzeGrid{grid-template-columns:1fr}.wizWrap{grid-template-columns:1fr}}
+    @media (max-width:1024px){.appBody{grid-template-columns:1fr}.rail{display:flex;flex-wrap:wrap;flex-direction:row}.railBtn{flex:1;min-width:140px}.opsGrid{grid-template-columns:1fr}.driveBoard .toolbar{grid-template-columns:1fr 1fr 1fr}.drives{grid-template-columns:repeat(2,minmax(150px,1fr))}}
+
   </style>
 </head>
 <body>
   <div id="loader"><div><div class="spin"></div><div class="loadText" id="loaderText">Scanning...</div></div></div>
-  <div class="shell">
-    <aside class="panel left stack">
-      <div><div class="brand">icicle</div><div class="sub" id="subtitle">Desktop App</div></div>
-      <div class="row"><button id="themeBtn">Light</button><button id="langBtn">RU</button><span id="verPill" class="tiny">v-</span></div>
-      <div class="tiny" id="folderHint">-</div>
-      <div class="row"><input id="path" placeholder="Path"><button id="browseBtn">...</button></div>
-      <div class="row"><select id="saved"></select></div>
-      <div class="row"><button id="saveBtn">Save</button><button id="useBtn">Use</button><button class="danger" id="removeBtn">Remove</button></div>
-      <div class="row"><input id="topN" value="20"><button class="primary" id="treeBtn">Tree</button><button class="primary" id="heavyBtn">Heavy</button></div>
-      <div class="row"><button class="primary" id="watchStartBtn">Start Watch</button><button class="danger" id="watchStopBtn">Stop</button></div>
-      <div class="row"><label><input type="checkbox" id="dryRun"> <span id="dryTxt">dry-run</span></label></div>
-      <div class="row"><label><input type="checkbox" id="fastMode" checked> <span id="fastModeTxt">fast mode</span></label></div>
-      <div class="row"><button id="fullScanBtn">Full scan (bg)</button><button id="fullScanCancelBtn">Stop scan</button></div>
-      <div class="row"><input id="maxFiles" value="220000" placeholder="Max files"><input id="workers" value="24" placeholder="Workers"></div>
-      <div class="row"><input id="includePath" placeholder="include path: cache,temp"><input id="ignorePath" placeholder="ignore path: node_modules,.git"></div>
-      <div class="row"><input id="includeExt" placeholder="include ext: .mp4,.zip"><input id="ignoreExt" placeholder="ignore ext: .tmp,.log"></div>
-      <div class="row"><input id="scheduleSec" value="300" placeholder="Schedule sec"><button id="scheduleStartBtn">Start schedule</button><button id="scheduleStopBtn">Stop schedule</button></div>
-      <div class="row"><button id="scheduleNowBtn">Run schedule now</button><button id="snapshotsBtn">Snapshots</button><button id="historyBtn">Drive history</button></div>
-      <div class="row"><input id="cleanupSec" value="900" placeholder="Cleanup sec"><select id="cleanupMode"><option value="dev-cache">dev-cache</option><option value="games">games</option><option value="media">media</option></select></div>
-      <div class="row"><select id="cleanupCalendarMode"><option value="interval">interval</option><option value="daily">daily</option><option value="weekly">weekly</option></select><input id="cleanupTime" value="02:30" placeholder="HH:MM"></div>
-      <div class="row"><input id="cleanupWeekday" value="1" placeholder="weekday 0-6"></div>
-      <div class="row"><button id="saveDiskPresetBtn">Save disk preset</button><button id="loadDiskPresetBtn">Load disk preset</button></div>
-      <div class="row"><button id="cleanupSchedStartBtn">Start cleanup schedule</button><button id="cleanupSchedStopBtn">Stop cleanup</button><button id="cleanupRunNowBtn">Cleanup now</button></div>
-      <div class="row"><button id="diagBtn">Watch diagnostics</button></div>
-      <div class="row"><select id="cleanupPreset"><option value="dev-cache">preset: dev-cache</option><option value="games">preset: games</option><option value="media">preset: media</option></select><button id="presetScanBtn">Scan preset</button><button id="presetApplyBtn">Apply preset</button></div>
-      <div class="row"><button id="undoBtn">Undo Move</button><button id="cleanBtn">Empty folders</button><button id="clearLogBtn">Clear Log</button></div>
-      <div class="row"><button id="expCsvBtn">Export CSV</button><button id="expJsonBtn">JSON</button><button id="expMdBtn">MD</button></div>
-      <div class="row"><button id="profileExportBtn">Export profile</button><button id="profileImportBtn">Import profile</button></div>
-      <div class="row"><button id="teamPackExportBtn">Export team pack</button><button id="teamPackImportBtn">Import team pack</button></div>
-      <div class="row"><button id="routesBtn">Routing rules</button><button id="routeTestBtn">Test route</button></div>
-      <div class="row"><button id="updCheckBtn">Check update</button><button id="updApplyBtn">Apply update</button></div>
-      <div class="row"><input id="quickDest" placeholder="Move destination (optional)"></div>
-      <div class="tiny" id="statusLine">ready</div>
-    </aside>
-    <main class="right">
-      <section class="panel">
-        <div class="toolbar"><div class="tiny" id="drivesTitle">System storage</div><button id="drivesRefresh">Refresh</button><button id="extBtn">Extensions</button><select id="dupMode"><option value="quick-name">dup: quick</option><option value="hash">dup: hash</option></select><button id="dupBtn">Duplicates</button><button id="wizBtn">WizMap</button></div>
-        <div class="drives" id="drives"></div>
-      </section>
-      <section class="panel wizWrap" id="wizWrap">
-        <div>
-          <div class="wizTop"><div class="tiny" id="wizTitle">Space Map</div><div class="row"><button id="wizBackBtn">Back</button><button id="wizHomeBtn">Home</button><button id="wizFitBtn">Fit</button><button id="wizToggleSideBtn">Hide Ext</button><label class="tiny"><input id="wizTurbo" type="checkbox"> turbo</label></div></div>
-          <div class="wizPath" id="wizPath">-</div>
-          <div class="wizCrumbs" id="wizCrumbs"></div>
-          <div class="wizHover" id="wizHover">
-            <div class="tiny">Hover Details</div>
-            <div class="wizHoverPath" id="wizHoverPath">-</div>
-            <div class="row"><span class="pill" id="wizHoverExt">ext:-</span><span class="pill" id="wizHoverSize">size:-</span><span class="pill" id="wizHoverHeat">heat:-</span></div>
-            <div class="heatBar"><div class="heatFill" id="wizHoverFill" style="width:0%"></div></div>
-          </div>
-          <div class="wizLegend" id="wizLegend"></div>
-          <div class="wizMap" id="wizMap"></div>
+
+  <div class="app">
+    <header class="appTop">
+      <div class="brandRow">
+        <div class="brand">icicle</div>
+        <span class="verPill" id="verPill">v-</span>
+        <div class="chipStrip">
+          <span class="chip" id="chipMode">mode: balanced</span>
+          <span class="chip" id="chipPath">path: -</span>
+          <span class="chip" id="chipCount">files: 0</span>
+          <span class="chip" id="chipStatus">ready</span>
         </div>
-        <div id="wizSide">
-          <div class="tiny" id="wizExtTitle" style="margin-bottom:6px">Extensions</div>
-          <div class="row" style="margin-bottom:6px"><input id="wizExtFilter" placeholder="filter ext"><select id="wizExtSort"><option value="size">size</option><option value="count">count</option><option value="name">name</option></select></div>
-          <div class="wizExt"><table><thead><tr><th id="wizThExt">Ext</th><th id="wizThPct">%</th><th id="wizThSize">Size</th><th id="wizThCount">Files</th></tr></thead><tbody id="wizExtBody"></tbody></table></div>
-        </div>
-      </section>
-      <section class="content">
-        <div class="panel logWrap"><pre class="log" id="log"></pre></div>
-        <div class="panel heavyWrap">
-          <div id="driveHistoryPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)">
-            <div class="row" style="justify-content:space-between"><b id="historyTitle">Drive history</b><button id="historyCloseBtn">x</button></div>
-            <div id="driveHistoryGrid" style="display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:8px;margin-top:6px"></div>
-          </div>
-          <div id="snapshotPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)">
-            <div class="row"><select id="snapA"></select><select id="snapB"></select><button id="snapDiffBtn">Diff</button><button id="snapMapBtn">Treemap Compare</button><button id="snapCloseBtn">x</button></div>
-            <pre id="snapDiffOut" style="max-height:160px;overflow:auto;margin:8px 0 0"></pre>
-            <div id="snapMap" class="wizMap" style="height:220px;min-height:220px;margin-top:8px;display:none"></div>
-          </div>
-          <div id="dupPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)">
-            <div class="row"><select id="dupGroupSel"></select><button id="dupKeepNewestBtn">Keep newest</button><button id="dupKeepOldestBtn">Keep oldest</button><button id="dupCloseBtn">x</button></div>
-          </div>
-          <div id="diagPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)">
-            <div class="row" style="justify-content:space-between"><b id="diagTitle">Watch diagnostics</b><button id="diagCloseBtn">x</button></div>
-            <div id="diagList" style="max-height:140px;overflow:auto;margin-top:6px"></div>
-          </div>
-          <div id="presetPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)">
-            <div class="row" style="justify-content:space-between"><b id="presetTitle">Preset preview</b><button id="presetCloseBtn">x</button></div>
-            <div id="presetSummary" class="tiny" style="margin-top:4px"></div>
-            <div id="presetList" style="max-height:140px;overflow:auto;margin-top:6px"></div>
-          </div>
-          <div id="routePanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)">
-            <div class="row" style="justify-content:space-between"><b id="routeTitle">Route tester</b><button id="routeCloseBtn">x</button></div>
-            <textarea id="routeSamples" style="width:100%;height:96px;margin-top:6px" placeholder="One file path per line"></textarea>
-            <div class="row" style="margin-top:6px"><button id="routeRunBtn">Simulate</button></div>
-            <pre id="routeOut" style="max-height:140px;overflow:auto;margin:8px 0 0"></pre>
-          </div>
-          <div id="routeEditorPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)">
-            <div class="row" style="justify-content:space-between"><b>Routing Rules Editor</b><button id="routeEditorCloseBtn">x</button></div>
-            <div class="row" style="margin-top:6px"><button id="routeAddBtn">Add Rule</button><button id="routeReloadBtn">Reload</button><button id="routeSaveBtn">Save Rules</button></div>
-            <div class="row" style="margin-top:6px"><button id="routeConflictBtn">Detect Conflicts</button><button id="routeSolveBtn">Auto Priority</button></div>
-            <pre id="routeConflictOut" style="max-height:120px;overflow:auto;margin:8px 0 0"></pre>
-            <div id="routeRulesBody" style="margin-top:8px;display:grid;gap:6px"></div>
-          </div>
-          <div class="heavyTools">
-            <div class="row"><button id="queueMoveBtn">Queue: move</button><button id="queueDeleteBtn">Queue: delete</button><button id="queueRunBtn">Run queue</button><button id="queueClearBtn">Clear queue</button></div>
-            <div class="row"><button id="findEmptyBtn">Find empty folders</button><button id="deleteEmptyBtn">Delete selected empty</button><span class="pill" id="selCount">selected: 0</span></div>
-          </div>
-          <div id="emptyPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)"><div class="row" style="justify-content:space-between"><b id="emptyTitle">Empty folders</b><label><input id="emptyAll" type="checkbox"> <span id="emptyAllTxt">select all</span></label></div><div id="emptyList" style="max-height:150px;overflow:auto;margin-top:6px"></div></div>
-          <table><colgroup><col style="width:30px"><col style="width:90px"><col><col style="width:230px"></colgroup><thead><tr><th><input id="chkAll" type="checkbox"></th><th id="thSize">Size</th><th id="thFile">File</th><th id="thAct">Actions</th></tr></thead><tbody id="heavyBody"></tbody></table>
-        </div>
-      </section>
-    </main>
+      </div>
+      <div class="topActions">
+        <button id="smartScanBtn">Smart Scan</button>
+        <button id="autoRefreshBtn">Auto Refresh</button>
+        <button id="cmdPaletteBtn">Command Palette</button>
+        <button id="themeBtn">Light</button>
+        <button id="langBtn">RU</button>
+      </div>
+    </header>
+
+    <div class="appBody">
+      <aside class="rail">
+        <div class="railTitle">Views</div>
+        <button class="railBtn active" data-view="dashboard" title="Dashboard"><span>&#x1F5A5;</span><span>Dashboard</span></button>
+        <button class="railBtn" data-view="analyze" title="Analyze"><span>&#x1F4CA;</span><span>Analyze</span></button>
+        <button class="railBtn" data-view="ops" title="Automation"><span>&#9881;</span><span>Automation</span></button>
+        <div class="railTitle">Quick Open</div>
+        <button class="railBtn" id="railDownloads"><span>&#x2B07;</span><span>Downloads</span></button>
+        <button class="railBtn" id="railDesktop"><span>&#x1F5C1;</span><span>Desktop</span></button>
+        <button class="railBtn" id="railDocuments"><span>&#x1F4C4;</span><span>Documents</span></button>
+        <div class="railMini" id="railHint">Ready</div>
+      </aside>
+
+      <main class="workspace">
+        <section id="viewDashboard" class="view active">
+          <section class="panel driveBoard">
+            <div class="toolbar"><div class="tiny" id="drivesTitle">System storage</div><button id="drivesRefresh">Refresh</button><button id="extBtn">Extensions</button><select id="dupMode"><option value="quick-name">dup: quick</option><option value="hash">dup: hash</option></select><button id="dupBtn">Duplicates</button><button id="wizBtn">WizMap</button></div>
+            <div class="drives" id="drives"></div>
+          </section>
+          <section class="panel logWrap"><pre class="log" id="log"></pre></section>
+        </section>
+
+        <section id="viewAnalyze" class="view">
+          <section class="panel" style="padding:10px 12px">
+            <div class="row"><input id="pathQuick" placeholder="Path"><button id="pathQuickBrowse">...</button><button id="pathQuickUse">Use</button><button id="pathQuickTree">Tree</button><button id="pathQuickHeavy">Heavy</button><button id="pathQuickWiz">WizMap</button></div>
+          </section>
+          <section class="analyzeGrid">
+            <div class="leftCol">
+              <section class="panel wizWrap" id="wizWrap">
+                <div>
+                  <div class="wizTop"><div class="tiny" id="wizTitle">Space Map</div><div class="row"><button id="wizBackBtn">Back</button><button id="wizHomeBtn">Home</button><button id="wizFitBtn">Fit</button><button id="wizToggleSideBtn">Hide Ext</button><label class="tiny"><input id="wizTurbo" type="checkbox"> turbo</label></div></div>
+                  <div class="row" style="margin-bottom:6px"><select id="wizDeltaSnapshot"><option value="">delta: off</option></select><button id="wizDeltaRefreshBtn">Load snapshots</button></div>
+                  <div class="wizPath" id="wizPath">-</div>
+                  <div class="wizCrumbs" id="wizCrumbs"></div>
+                  <div class="wizHover" id="wizHover"><div class="tiny">Hover Details</div><div class="wizHoverPath" id="wizHoverPath">-</div><div class="row"><span class="pill" id="wizHoverExt">ext:-</span><span class="pill" id="wizHoverSize">size:-</span><span class="pill" id="wizHoverHeat">heat:-</span><span class="pill" id="wizHoverDelta">delta:-</span></div><div class="heatBar"><div class="heatFill" id="wizHoverFill" style="width:0%"></div></div></div>
+                  <div class="wizLegend" id="wizLegend"></div>
+                  <div class="wizMap" id="wizMap"></div>
+                </div>
+                <div id="wizSide"><div class="tiny" id="wizExtTitle" style="margin-bottom:6px">Extensions</div><div class="row" style="margin-bottom:6px"><input id="wizExtFilter" placeholder="filter ext"><select id="wizExtSort"><option value="size">size</option><option value="count">count</option><option value="name">name</option></select></div><div class="wizExt"><table><thead><tr><th id="wizThExt">Ext</th><th id="wizThPct">%</th><th id="wizThSize">Size</th><th id="wizThCount">Files</th></tr></thead><tbody id="wizExtBody"></tbody></table></div></div>
+              </section>
+            </div>
+
+            <div class="rightCol">
+              <section class="panel heavyWrap">
+                <div id="driveHistoryPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)"><div class="row" style="justify-content:space-between"><b id="historyTitle">Drive history</b><button id="historyCloseBtn">x</button></div><div id="driveHistoryGrid" style="display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:8px;margin-top:6px"></div></div>
+                <div id="snapshotPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)"><div class="row"><select id="snapA"></select><select id="snapB"></select><button id="snapDiffBtn">Diff</button><button id="snapMapBtn">Treemap Compare</button><button id="snapCloseBtn">x</button></div><div class="row" style="margin-top:6px"><button id="snapExpCsvBtn">Export CSV</button><button id="snapExpJsonBtn">Export JSON</button><button id="snapExpMdBtn">Export MD</button></div><pre id="snapDiffOut" style="max-height:160px;overflow:auto;margin:8px 0 0"></pre><div id="snapMap" class="wizMap" style="height:220px;min-height:220px;margin-top:8px;display:none"></div></div>
+                <div id="dupPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)"><div class="row"><select id="dupGroupSel"></select><button id="dupKeepNewestBtn">Keep newest</button><button id="dupKeepOldestBtn">Keep oldest</button><button id="dupCloseBtn">x</button></div></div>
+                <div id="diagPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)"><div class="row" style="justify-content:space-between"><b id="diagTitle">Watch diagnostics</b><button id="diagCloseBtn">x</button></div><div id="diagList" style="max-height:140px;overflow:auto;margin-top:6px"></div></div>
+                <div id="presetPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)"><div class="row" style="justify-content:space-between"><b id="presetTitle">Preset preview</b><button id="presetCloseBtn">x</button></div><div id="presetSummary" class="tiny" style="margin-top:4px"></div><div id="presetList" style="max-height:140px;overflow:auto;margin-top:6px"></div></div>
+                <div id="routePanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)"><div class="row" style="justify-content:space-between"><b id="routeTitle">Route tester</b><button id="routeCloseBtn">x</button></div><textarea id="routeSamples" style="width:100%;height:96px;margin-top:6px" placeholder="One file path per line"></textarea><div class="row" style="margin-top:6px"><button id="routeRunBtn">Simulate</button><button id="routeFullRunBtn">Simulate full scan</button><input id="routeSimMax" value="180000" style="max-width:120px" placeholder="max files"></div><pre id="routeOut" style="max-height:140px;overflow:auto;margin:8px 0 0"></pre></div>
+                <div id="routeEditorPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)"><div class="row" style="justify-content:space-between"><b>Routing Rules Editor</b><button id="routeEditorCloseBtn">x</button></div><div class="row" style="margin-top:6px"><button id="routeAddBtn">Add Rule</button><button id="routeReloadBtn">Reload</button><button id="routeSaveBtn">Save Rules</button></div><div class="row" style="margin-top:6px"><button id="routeConflictBtn">Detect Conflicts</button><button id="routeSolveBtn">Auto Priority</button></div><pre id="routeConflictOut" style="max-height:120px;overflow:auto;margin:8px 0 0"></pre><div id="routeRulesBody" style="margin-top:8px;display:grid;gap:6px"></div></div>
+
+                <div class="heavyTools">
+                  <div class="row"><button id="queueMoveBtn">Queue: move</button><button id="queueDeleteBtn">Queue: delete</button><button id="queueRunBtn">Run queue</button><button id="queueClearBtn">Clear queue</button></div>
+                  <div class="row"><button id="queueSavePresetBtn">Save Queue Preset</button><button id="queueLoadPresetBtn">Load Queue Preset</button></div>
+                  <div class="row"><button id="findEmptyBtn">Find empty folders</button><button id="deleteEmptyBtn">Delete selected empty</button><span class="pill" id="selCount">selected: 0</span></div>
+                </div>
+                <div class="row" style="margin:0 0 8px 0"><input id="heavySearch" placeholder="filter by name/path"><input id="heavyMinSize" placeholder="min size MB"><select id="heavySort"><option value="size-desc">size desc</option><option value="size-asc">size asc</option><option value="path-asc">path asc</option><option value="new-first">new first</option></select><button id="heavyClearFiltersBtn">Clear</button><button id="heavyRefreshBtn">Refresh</button></div>
+                <div class="row" style="margin:0 0 8px 0"><button id="selTop10Btn">Select top 10</button><button id="selTop50Btn">Select top 50</button><button id="selInvertBtn">Invert</button><button id="copySelBtn">Copy selected paths</button></div>
+                <div class="heavyMeta"><span class="pill" id="heavyStats">0 rows</span><div class="spacer"></div><button id="heavyMoreBtn" style="display:none">Load more</button></div>
+                <div id="emptyPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)"><div class="row" style="justify-content:space-between"><b id="emptyTitle">Empty folders</b><label><input id="emptyAll" type="checkbox"> <span id="emptyAllTxt">select all</span></label></div><div id="emptyList" style="max-height:150px;overflow:auto;margin-top:6px"></div></div>
+                <table><colgroup><col style="width:30px"><col style="width:90px"><col><col style="width:230px"></colgroup><thead><tr><th><input id="chkAll" type="checkbox"></th><th id="thSize">Size</th><th id="thFile">File</th><th id="thAct">Actions</th></tr></thead><tbody id="heavyBody"></tbody></table>
+              </section>
+            </div>
+          </section>
+        </section>
+
+        <section id="viewOps" class="view">
+          <section class="opsGrid">
+            <div class="panel opsCard">
+              <h4 id="subtitle">Desktop App</h4>
+              <div class="tiny" id="folderHint">-</div>
+              <div class="row"><input id="path" placeholder="Path"><button id="browseBtn">...</button></div>
+              <div class="row"><select id="saved"></select></div>
+              <div class="row"><button id="saveBtn">Save</button><button id="useBtn">Use</button><button class="danger" id="removeBtn">Remove</button></div>
+              <div class="row"><input id="topN" value="20"><button class="primary" id="treeBtn">Tree</button><button class="primary" id="heavyBtn">Heavy</button></div>
+              <div class="row"><select id="perfMode"><option value="balanced">balanced</option><option value="turbo">turbo</option><option value="eco">eco</option></select><button id="applyPerfBtn">Apply Mode</button></div>
+              <div class="row"><button class="primary" id="watchStartBtn">Start Watch</button><button class="danger" id="watchStopBtn">Stop</button></div>
+              <div class="row"><label><input type="checkbox" id="dryRun"> <span id="dryTxt">dry-run</span></label><label><input type="checkbox" id="fastMode" checked> <span id="fastModeTxt">fast mode</span></label></div>
+              <div class="row"><button id="fullScanBtn">Full scan (bg)</button><button id="fullScanCancelBtn">Stop scan</button></div>
+              <div class="row"><input id="maxFiles" value="220000" placeholder="Max files"><input id="workers" value="24" placeholder="Workers"></div>
+            </div>
+
+            <div class="panel opsCard">
+              <h4>Filters + Scheduling</h4>
+              <div class="row"><input id="includePath" placeholder="include path: cache,temp"><input id="ignorePath" placeholder="ignore path: node_modules,.git"></div>
+              <div class="row"><input id="includeExt" placeholder="include ext: .mp4,.zip"><input id="ignoreExt" placeholder="ignore ext: .tmp,.log"></div>
+              <div class="row"><input id="scheduleSec" value="300" placeholder="Schedule sec"><button id="scheduleStartBtn">Start schedule</button><button id="scheduleStopBtn">Stop schedule</button></div>
+              <div class="row"><button id="scheduleNowBtn">Run schedule now</button><button id="snapshotsBtn">Snapshots</button><button id="historyBtn">Drive history</button></div>
+              <div class="row"><input id="cleanupSec" value="900" placeholder="Cleanup sec"><select id="cleanupMode"><option value="dev-cache">dev-cache</option><option value="games">games</option><option value="media">media</option></select></div>
+              <div class="row"><select id="cleanupCalendarMode"><option value="interval">interval</option><option value="daily">daily</option><option value="weekly">weekly</option></select><input id="cleanupTime" value="02:30" placeholder="HH:MM"></div>
+              <div class="row"><input id="cleanupWeekday" value="1" placeholder="weekday 0-6"></div>
+              <div class="row"><button id="saveDiskPresetBtn">Save disk preset</button><button id="loadDiskPresetBtn">Load disk preset</button></div>
+              <div class="row"><button id="cleanupSchedStartBtn">Start cleanup schedule</button><button id="cleanupSchedStopBtn">Stop cleanup</button><button id="cleanupRunNowBtn">Cleanup now</button></div>
+              <div class="row"><button id="diagBtn">Watch diagnostics</button><select id="cleanupPreset"><option value="dev-cache">preset: dev-cache</option><option value="games">preset: games</option><option value="media">preset: media</option></select><button id="presetScanBtn">Scan preset</button><button id="presetApplyBtn">Apply preset</button></div>
+            </div>
+
+            <div class="panel opsCard">
+              <h4>Export + Routing + Updates</h4>
+              <div class="row"><button id="undoBtn">Undo Move</button><button id="cleanBtn">Empty folders</button><button id="clearLogBtn">Clear Log</button></div>
+              <div class="row"><button id="expCsvBtn">Export CSV</button><button id="expJsonBtn">JSON</button><button id="expMdBtn">MD</button></div>
+              <div class="row"><button id="profileExportBtn">Export profile</button><button id="profileImportBtn">Import profile</button></div>
+              <div class="row"><button id="teamPackExportBtn">Export team pack</button><button id="teamPackImportBtn">Import team pack</button></div>
+              <div class="row"><input id="teamRegistryUrl" placeholder="Team preset registry URL"></div>
+              <div class="row"><button id="teamPackImportUrlBtn">Import from URL</button><button id="routesBtn">Routing rules</button><button id="routeTestBtn">Test route</button></div>
+              <div class="row"><button id="updCheckBtn">Check update</button><button id="updApplyBtn">Apply update</button></div>
+              <div class="row"><input id="quickDest" placeholder="Move destination (optional)"></div>
+              <div class="row"><select id="quickDestSaved"></select><button id="saveQuickDestBtn">Save Dest</button></div>
+            </div>
+          </section>
+          <section class="panel opsCard">
+            <h4>Health</h4>
+            <div class="tiny" id="healthLast">last: -</div>
+            <div class="tiny" id="healthTree">tree ms: -</div>
+            <div class="tiny" id="healthHeavy">heavy ms: -</div>
+            <div class="tiny" id="healthWiz">wiz ms: -</div>
+            <div class="tiny" id="healthErr">error: -</div>
+          </section>
+          <section class="panel" style="padding:10px 12px"><div class="tiny" id="statusLine">ready</div></section>
+        </section>
+      </main>
+    </div>
   </div>
+
+  <div class="overlay" id="paletteOverlay"><div class="palette"><input id="paletteInput" placeholder="Type command..."><div class="paletteList" id="paletteList"></div></div></div>
+  <div class="toastWrap" id="toastWrap"></div>
 
 <script>
 const el=(id)=>document.getElementById(id);
-const s={lang:'en',theme:'dark',heavy:[],queue:[],selected:new Set(),fullPoll:null,emptyDirs:[],emptySelected:new Set(),presetCandidates:[],dupGroups:[],wiz:null,wizPath:'',wizRoot:'',wizStack:[],wizSide:true,busy:false,wizRects:[],wizSel:-1,wizTotal:0,routeRules:[]};
+const s={lang:'en',theme:'dark',heavy:[],heavyFiltered:[],heavyVersion:0,heavyFilterCache:null,heavyRenderLimit:200,heavyRenderToken:0,queue:[],selected:new Set(),fullPoll:null,emptyDirs:[],emptySelected:new Set(),presetCandidates:[],dupGroups:[],wiz:null,wizPath:'',wizRoot:'',wizStack:[],wizSide:true,busy:false,wizRects:[],wizSel:-1,wizTotal:0,routeRules:[],autoRefresh:null,queuePresets:[],quickDestSaved:[],perfMode:'balanced',metrics:{treeMs:0,heavyMs:0,wizMs:0,last:'-',err:'-'},defaults:null,defaultsAt:0,hintSeq:0,lastStatusText:'',lastStatusAt:0,lastLogHash:'',pollTimer:null,pollMs:1200,lastDriveRefresh:0,renderChunk:180,wizCache:new Map(),heavyRunCache:new Map(),treeRunCache:new Map(),lastScanKey:'',lastScanAt:0};
 const i18n={
   en:{subtitle:'Desktop App',save:'Save',use:'Use',remove:'Remove',tree:'Tree',heavy:'Heavy',start:'Start Watch',stop:'Stop',dry:'dry-run',fast:'fast mode',full:'Full scan (bg)',cancel:'Stop scan',undo:'Undo Move',clean:'Empty folders',clear:'Clear Log',csv:'Export CSV',updCheck:'Check update',updApply:'Apply update',drives:'System storage',refresh:'Refresh',types:'Extensions',dups:'Duplicates',size:'Size',file:'File',act:'Actions',hint:'Folder type',ready:'ready',running:'watch running',open:'Open',reveal:'Reveal',autoMove:'Auto Move',moveTo:'Move To',del:'Delete',loading:'Scanning...',qMove:'Queue: move',qDel:'Queue: delete',qRun:'Run queue',qClear:'Clear queue',findEmpty:'Find empty folders',delEmpty:'Delete selected empty',emptyTitle:'Empty folders',selectAll:'select all',pathPlaceholder:'Move destination (optional)',schedStart:'Start schedule',schedStop:'Stop schedule',schedNow:'Run schedule now',snapshots:'Snapshots',history:'Drive history',presetScan:'Scan preset',presetApply:'Apply preset',diag:'Watch diagnostics',presetPreview:'Preset preview',risk:'risk',dupNewest:'Keep newest',dupOldest:'Keep oldest',wiz:'WizMap',spaceMap:'Space Map',extTable:'Extensions',ext:'Ext',files:'Files',back:'Back',home:'Home',fit:'Fit',hideExt:'Hide Ext',showExt:'Show Ext'},
   ru:{subtitle:'\u0420\u0430\u0431\u043e\u0447\u0435\u0435 \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435',save:'\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c',use:'\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c',remove:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c',tree:'\u0414\u0435\u0440\u0435\u0432\u043e',heavy:'\u0422\u044f\u0436\u0451\u043b\u044b\u0435',start:'\u0421\u0442\u0430\u0440\u0442 \u0441\u043b\u0435\u0436\u0435\u043d\u0438\u044f',stop:'\u0421\u0442\u043e\u043f',dry:'\u0442\u0435\u0441\u0442\u043e\u0432\u044b\u0439 \u0440\u0435\u0436\u0438\u043c',fast:'\u0431\u044b\u0441\u0442\u0440\u044b\u0439 \u0440\u0435\u0436\u0438\u043c',full:'\u041f\u043e\u043b\u043d\u044b\u0439 \u0441\u043a\u0430\u043d (\u0444\u043e\u043d)',cancel:'\u0421\u0442\u043e\u043f \u0441\u043a\u0430\u043d',undo:'\u041e\u0442\u043c\u0435\u043d\u0438\u0442\u044c \u043f\u0435\u0440\u0435\u043d\u043e\u0441',clean:'\u041f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',clear:'\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u043b\u043e\u0433',csv:'\u042d\u043a\u0441\u043f\u043e\u0440\u0442 CSV',updCheck:'\u041f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c update',updApply:'\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c',drives:'\u041c\u0435\u0441\u0442\u043e \u043d\u0430 \u0434\u0438\u0441\u043a\u0430\u0445',refresh:'\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c',types:'\u0422\u0438\u043f\u044b',dups:'\u0414\u0443\u0431\u043b\u0438\u043a\u0430\u0442\u044b',size:'\u0420\u0430\u0437\u043c\u0435\u0440',file:'\u0424\u0430\u0439\u043b',act:'\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u044f',hint:'\u0422\u0438\u043f \u043f\u0430\u043f\u043a\u0438',ready:'\u0433\u043e\u0442\u043e\u0432\u043e',running:'\u0441\u043b\u0435\u0436\u0435\u043d\u0438\u0435 \u0430\u043a\u0442\u0438\u0432\u043d\u043e',open:'\u041e\u0442\u043a\u0440\u044b\u0442\u044c',reveal:'\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c',autoMove:'\u0410\u0432\u0442\u043e \u043f\u0435\u0440\u0435\u043d\u043e\u0441',moveTo:'\u041f\u0435\u0440\u0435\u043d\u0435\u0441\u0442\u0438',del:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c',loading:'\u0421\u043a\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435...',qMove:'\u0412 \u043e\u0447\u0435\u0440\u0435\u0434\u044c: \u043f\u0435\u0440\u0435\u043d\u043e\u0441',qDel:'\u0412 \u043e\u0447\u0435\u0440\u0435\u0434\u044c: \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u0435',qRun:'\u0412\u044b\u043f\u043e\u043b\u043d\u0438\u0442\u044c \u043e\u0447\u0435\u0440\u0435\u0434\u044c',qClear:'\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u043e\u0447\u0435\u0440\u0435\u0434\u044c',findEmpty:'\u041d\u0430\u0439\u0442\u0438 \u043f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',delEmpty:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u044b\u0435 \u043f\u0443\u0441\u0442\u044b\u0435',emptyTitle:'\u041f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',selectAll:'\u0432\u044b\u0431\u0440\u0430\u0442\u044c \u0432\u0441\u0435',pathPlaceholder:'\u041f\u0430\u043f\u043a\u0430 \u0434\u043b\u044f \u043f\u0435\u0440\u0435\u043d\u043e\u0441\u0430 (\u043e\u043f\u0446\u0438\u043e\u043d\u0430\u043b\u044c\u043d\u043e)',schedStart:'\u0421\u0442\u0430\u0440\u0442 \u0440\u0430\u0441\u043f\u0438\u0441\u0430\u043d\u0438\u044f',schedStop:'\u0421\u0442\u043e\u043f \u0440\u0430\u0441\u043f\u0438\u0441\u0430\u043d\u0438\u044f',schedNow:'\u0417\u0430\u043f\u0443\u0441\u0442\u0438\u0442\u044c \u0441\u0435\u0439\u0447\u0430\u0441',snapshots:'\u0421\u043d\u0438\u043c\u043a\u0438',history:'\u0418\u0441\u0442\u043e\u0440\u0438\u044f \u0434\u0438\u0441\u043a\u043e\u0432',presetScan:'\u0421\u043a\u0430\u043d \u043f\u0440\u0435\u0441\u0435\u0442\u0430',presetApply:'\u041f\u0440\u0438\u043c\u0435\u043d\u0438\u0442\u044c \u043f\u0440\u0435\u0441\u0435\u0442',diag:'\u0414\u0438\u0430\u0433\u043d\u043e\u0441\u0442\u0438\u043a\u0430 watch',presetPreview:'\u041f\u0440\u0435\u0432\u044c\u044e \u043f\u0440\u0435\u0441\u0435\u0442\u0430',risk:'\u0440\u0438\u0441\u043a',dupNewest:'\u041e\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u043d\u043e\u0432\u044b\u0439',dupOldest:'\u041e\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u0441\u0442\u0430\u0440\u044b\u0439',wiz:'\u041a\u0430\u0440\u0442\u0430',spaceMap:'\u041a\u0430\u0440\u0442\u0430 \u043c\u0435\u0441\u0442\u0430',extTable:'\u0420\u0430\u0441\u0448\u0438\u0440\u0435\u043d\u0438\u044f',ext:'\u0420\u0430\u0441\u0448\u0438\u0440.',files:'\u0424\u0430\u0439\u043b\u043e\u0432',back:'\u041d\u0430\u0437\u0430\u0434',home:'\u0414\u043e\u043c\u043e\u0439',fit:'\u041f\u043e\u0434\u0433\u043e\u043d\u043a\u0430',hideExt:'\u0421\u043a\u0440\u044b\u0442\u044c ext',showExt:'\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c ext'}
@@ -177,21 +265,173 @@ function lockGlossary(){
 }
 lockGlossary();
 const tr=(k)=>i18n[s.lang][k]||k;
-const setStatus=(t)=>el('statusLine').textContent=t;
+const setStatus=(t)=>{
+  const msg=String(t||'');
+  const now=Date.now();
+  if(msg===s.lastStatusText && (now-s.lastStatusAt)<450) return;
+  s.lastStatusText=msg;
+  s.lastStatusAt=now;
+  el('statusLine').textContent=msg;
+  const cs=el('chipStatus');
+  if(cs) cs.textContent=shortPath(msg,44);
+};
 const updateSelCount=()=>{ const n=s.selected.size; if(el('selCount')) el('selCount').textContent=(s.lang==='ru'?'\u0432\u044b\u0431\u0440\u0430\u043d\u043e: ':'selected: ')+n; };
 const shortPath=(p,max=78)=>{ if(!p) return ''; if(p.length<=max) return p; const part=Math.max(20,Math.floor((max-3)/2)); return p.slice(0,part)+'...'+p.slice(-part); };
+const jLoad=(k,def)=>{try{const v=localStorage.getItem(k); return v?JSON.parse(v):def;}catch{return def;}};
+const jSave=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
 const pathExt=(p)=>{const m=String(p||'').toLowerCase().match(/(\.[a-z0-9]+)$/); return m?m[1]:'(no_ext)';};
 const driveFromPath=(p)=>{const m=String(p||'').trim().match(/^([a-zA-Z]:)[\\/]/); return m?m[1].toUpperCase():'';};
+const escapeHtml=(v)=>String(v??'').replace(/[&<>"']/g,(ch)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]||ch));
+const normPath=(v)=>String(v||'').trim().replace(/^["']|["']$/g,'');
+const intInput=(id,def,min,max)=>{let n=parseInt(el(id).value||String(def),10); if(Number.isNaN(n)) n=def; if(typeof min==='number' && n<min) n=min; if(typeof max==='number' && n>max) n=max; el(id).value=String(n); return n;};
+const boolInput=(id)=>!!el(id).checked;
+const debounce=(fn,ms=220)=>{let t=null; return (...args)=>{if(t) clearTimeout(t); t=setTimeout(()=>fn(...args),ms);};};
+const hashLight=(arr)=>{
+  let h=2166136261>>>0;
+  for(const it of (arr||[])){
+    const p=String(it.path||'');
+    h^=(it.size||0)>>>0; h=(h*16777619)>>>0;
+    h^=p.length; h=(h*16777619)>>>0;
+  }
+  return h.toString(16);
+};
 const showLoader=(on,text)=>{el('loader').classList.toggle('show',on); if(text) el('loaderText').textContent=text;};
+const setBusyUI=(on)=>{
+  for(const node of document.querySelectorAll('button,input,select,textarea')){
+    if(node.id==='cmdPaletteBtn' || node.id==='themeBtn' || node.id==='langBtn') continue;
+    if(on) node.setAttribute('data-busy-disabled','1');
+    else node.removeAttribute('data-busy-disabled');
+    if(node.tagName==='BUTTON' || node.tagName==='SELECT' || node.tagName==='INPUT'){
+      if(on) node.setAttribute('disabled','disabled');
+      else if(node.getAttribute('data-busy-disabled')!=='1') node.removeAttribute('disabled');
+      else node.removeAttribute('disabled');
+    }
+  }
+};
 const withLoader=async(fn,text)=>{
   while(s.busy){
     await new Promise((r)=>setTimeout(r,80));
   }
   s.busy=true;
   showLoader(true,text||tr('loading'));
-  try{return await fn();} finally{showLoader(false); s.busy=false;}
+  setBusyUI(true);
+  try{return await fn();} finally{setBusyUI(false); showLoader(false); s.busy=false;}
 };
-const showErr=(e)=>{const msg=(e&&e.message)?e.message:String(e||'error'); el('log').textContent+='\n[error] '+msg+'\n'; setStatus('[error] '+msg)};
+const showToast=(msg,type='ok')=>{
+  const wrap=el('toastWrap'); if(!wrap) return;
+  const d=document.createElement('div');
+  d.className='toast '+(type==='err'?'err':'ok');
+  d.textContent=msg;
+  wrap.appendChild(d);
+  setTimeout(()=>{ d.remove(); },3500);
+};
+const touchHealth=()=>{
+  if(el('healthTree')) el('healthTree').textContent='tree ms: '+(s.metrics.treeMs||'-');
+  if(el('healthHeavy')) el('healthHeavy').textContent='heavy ms: '+(s.metrics.heavyMs||'-');
+  if(el('healthWiz')) el('healthWiz').textContent='wiz ms: '+(s.metrics.wizMs||'-');
+  if(el('healthLast')) el('healthLast').textContent='last: '+(s.metrics.last||'-');
+  if(el('healthErr')) el('healthErr').textContent='error: '+(s.metrics.err||'-');
+};
+const callApp=async(method,args=[],opts={})=>{
+  const timeoutMs=opts.timeoutMs||45000;
+  const reqId='req-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
+  const fn=window.go?.main?.App?.[method];
+  if(typeof fn!=='function') throw new Error('missing backend method: '+method);
+  const started=performance.now();
+  try{
+    const result=await Promise.race([
+      fn(...args),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error(method+' timeout '+timeoutMs+'ms')),timeoutMs))
+    ]);
+    const ms=Math.round(performance.now()-started);
+    s.metrics.last=method+' ['+reqId+'] '+ms+'ms';
+    touchHealth();
+    return result;
+  }catch(err){
+    const msg=(err&&err.message)?err.message:String(err||'error');
+    s.metrics.err=method+': '+msg;
+    touchHealth();
+    throw err;
+  }
+};
+const showErr=(e)=>{const msg=(e&&e.message)?e.message:String(e||'error'); el('log').textContent+='\n[error] '+msg+'\n'; setStatus('[error] '+msg); showToast(msg,'err');};
+const debouncedRenderHeavy=debounce(()=>{ s.heavyRenderLimit=200; renderHeavy(); },180);
+
+function updateTopChips(){
+  el('chipMode').textContent='mode: '+(s.perfMode||'balanced');
+  el('chipPath').textContent='path: '+shortPath(el('path').value||'-',34);
+  el('chipCount').textContent='files: '+String((s.heavy||[]).length);
+  if(el('pathQuick')) el('pathQuick').value=el('path').value||'';
+}
+
+function syncPerfUI(){
+  const mode=el('perfMode').value||'balanced';
+  s.perfMode=mode;
+  const cores=Math.max(4,(navigator.hardwareConcurrency||12));
+  if(mode==='turbo'){ el('workers').value=String(Math.min(64,cores*2)); el('maxFiles').value='400000'; s.renderChunk=260; }
+  else if(mode==='eco'){ el('workers').value=String(Math.max(6,Math.floor(cores/2))); el('maxFiles').value='90000'; s.renderChunk=120; }
+  else { el('workers').value=String(Math.min(32,Math.max(12,cores))); el('maxFiles').value='240000'; s.renderChunk=180; }
+  jSave('icicle.perfMode',mode);
+  jSave('icicle.renderChunk',s.renderChunk);
+  updateTopChips();
+}
+
+function renderQuickDestSaved(){
+  const sel=el('quickDestSaved');
+  sel.innerHTML='';
+  const first=document.createElement('option');
+  first.value='';
+  first.textContent=s.lang==='ru'?'Сохранённые пути':'Saved destinations';
+  sel.appendChild(first);
+  for(const p of s.quickDestSaved||[]){
+    const o=document.createElement('option'); o.value=p; o.textContent=p; sel.appendChild(o);
+  }
+}
+
+function loadClientState(){
+  s.queuePresets=jLoad('icicle.queuePresets',[]);
+  s.quickDestSaved=jLoad('icicle.quickDestSaved',[]);
+  s.perfMode=jLoad('icicle.perfMode','balanced');
+  s.theme=jLoad('icicle.theme','dark');
+  s.lang=jLoad('icicle.lang','en');
+  s.renderChunk=jLoad('icicle.renderChunk',180);
+  document.body.classList.toggle('light',s.theme==='light');
+  el('themeBtn').textContent=s.theme==='dark'?'Light':'Dark';
+  el('langBtn').textContent=s.lang==='en'?'RU':'EN';
+  el('topN').value=String(jLoad('icicle.topN',20));
+  el('maxFiles').value=String(jLoad('icicle.maxFiles',220000));
+  el('workers').value=String(jLoad('icicle.workers',24));
+  el('fastMode').checked=!!jLoad('icicle.fastMode',true);
+  el('wizTurbo').checked=!!jLoad('icicle.wizTurbo',false);
+  el('dupMode').value=jLoad('icicle.dupMode','quick-name');
+  el('perfMode').value=s.perfMode;
+  syncPerfUI();
+  renderQuickDestSaved();
+  updateTopChips();
+}
+function saveScanInputs(){
+  jSave('icicle.topN',intInput('topN',20,1,500));
+  jSave('icicle.maxFiles',intInput('maxFiles',220000,0,900000));
+  jSave('icicle.workers',intInput('workers',24,1,128));
+  jSave('icicle.fastMode',boolInput('fastMode'));
+  jSave('icicle.wizTurbo',boolInput('wizTurbo'));
+  jSave('icicle.dupMode',el('dupMode').value||'quick-name');
+}
+
+function setView(name){
+  const views={dashboard:'viewDashboard',analyze:'viewAnalyze',ops:'viewOps'};
+  const target=views[name]||views.dashboard;
+  for(const v of document.querySelectorAll('.view')){
+    v.classList.toggle('active',v.id===target);
+  }
+  for(const b of document.querySelectorAll('.railBtn')){
+    b.classList.toggle('active',b.dataset.view===name);
+  }
+  try{localStorage.setItem('icicle.view',name);}catch{}
+  if(el('railHint')){
+    el('railHint').textContent='View: '+name;
+  }
+}
 
 function applyLang(){
   el('subtitle').textContent=tr('subtitle'); el('saveBtn').textContent=tr('save'); el('useBtn').textContent=tr('use'); el('removeBtn').textContent=tr('remove');
@@ -215,10 +455,30 @@ function applyLang(){
   el('profileImportBtn').textContent=s.lang==='ru'?'Импорт профиля':'Import profile';
   el('teamPackExportBtn').textContent=s.lang==='ru'?'Экспорт команды':'Export team pack';
   el('teamPackImportBtn').textContent=s.lang==='ru'?'Импорт команды':'Import team pack';
+  el('teamPackImportUrlBtn').textContent=s.lang==='ru'?'Импорт по URL':'Import from URL';
+  el('smartScanBtn').textContent=s.lang==='ru'?'Смарт скан':'Smart Scan';
+  el('autoRefreshBtn').textContent=s.autoRefresh?(s.lang==='ru'?'Авто-обновление: ВКЛ':'Auto Refresh: ON'):(s.lang==='ru'?'Авто-обновление: ВЫКЛ':'Auto Refresh: OFF');
+  el('cmdPaletteBtn').textContent=s.lang==='ru'?'Палитра команд':'Command Palette';
+  el('applyPerfBtn').textContent=s.lang==='ru'?'Применить режим':'Apply Mode';
+  el('queueSavePresetBtn').textContent=s.lang==='ru'?'Сохранить очередь':'Save Queue Preset';
+  el('queueLoadPresetBtn').textContent=s.lang==='ru'?'Загрузить очередь':'Load Queue Preset';
+  el('selTop10Btn').textContent=s.lang==='ru'?'Выбрать топ 10':'Select top 10';
+  el('selTop50Btn').textContent=s.lang==='ru'?'Выбрать топ 50':'Select top 50';
+  el('selInvertBtn').textContent=s.lang==='ru'?'Инвертировать':'Invert';
+  el('copySelBtn').textContent=s.lang==='ru'?'Копировать выбранные':'Copy selected paths';
+  el('heavyClearFiltersBtn').textContent=s.lang==='ru'?'Сброс':'Clear';
+  el('heavyRefreshBtn').textContent=s.lang==='ru'?'Обновить':'Refresh';
+  el('heavyMoreBtn').textContent=s.lang==='ru'?'Показать ещё':'Load more';
+  el('saveQuickDestBtn').textContent=s.lang==='ru'?'Сохранить путь':'Save Dest';
   el('routesBtn').textContent=s.lang==='ru'?'Правила маршрута':'Routing rules';
   el('routeTestBtn').textContent=s.lang==='ru'?'Проверить маршрут':'Test route';
   el('routeTitle').textContent=s.lang==='ru'?'Тестер маршрутов':'Route tester';
   el('routeRunBtn').textContent=s.lang==='ru'?'Симуляция':'Simulate';
+  el('routeFullRunBtn').textContent=s.lang==='ru'?'Симуляция полного скана':'Simulate full scan';
+  el('wizDeltaRefreshBtn').textContent=s.lang==='ru'?'Снимки':'Snapshots';
+  el('snapExpCsvBtn').textContent=s.lang==='ru'?'Экспорт CSV':'Export CSV';
+  el('snapExpJsonBtn').textContent=s.lang==='ru'?'Экспорт JSON':'Export JSON';
+  el('snapExpMdBtn').textContent=s.lang==='ru'?'Экспорт MD':'Export MD';
   el('routeAddBtn').textContent=s.lang==='ru'?'Добавить':'Add Rule';
   el('routeReloadBtn').textContent=s.lang==='ru'?'Обновить':'Reload';
   el('routeSaveBtn').textContent=s.lang==='ru'?'Сохранить':'Save Rules';
@@ -229,20 +489,112 @@ function applyLang(){
   el('wizToggleSideBtn').textContent=s.wizSide?tr('hideExt'):tr('showExt');
   el('wizThExt').textContent=tr('ext'); el('wizThPct').textContent='%'; el('wizThSize').textContent=tr('size'); el('wizThCount').textContent=tr('files');
   el('wizExtFilter').placeholder=s.lang==='ru'?'\u0444\u0438\u043b\u044c\u0442\u0440 ext':'filter ext';
+  el('heavySearch').placeholder=s.lang==='ru'?'фильтр по имени/пути':'filter by name/path';
+  el('heavyMinSize').placeholder=s.lang==='ru'?'мин размер MB':'min size MB';
   el('quickDest').placeholder=tr('pathPlaceholder');
-  setStatus(tr('ready')); updateHint(); renderHeavy(); renderEmptyDirs(); updateSelCount();
+  setStatus(tr('ready')); updateHintDebounced(); renderHeavy(); renderEmptyDirs(); updateSelCount(); renderQuickDestSaved(); updateTopChips();
 }
 
-function toggleTheme(){s.theme=s.theme==='dark'?'light':'dark'; document.body.classList.toggle('light',s.theme==='light'); el('themeBtn').textContent=s.theme==='dark'?'Light':'Dark';}
-function toggleLang(){s.lang=s.lang==='en'?'ru':'en'; el('langBtn').textContent=s.lang==='en'?'RU':'EN'; applyLang();}
+function toggleTheme(){s.theme=s.theme==='dark'?'light':'dark'; document.body.classList.toggle('light',s.theme==='light'); el('themeBtn').textContent=s.theme==='dark'?'Light':'Dark'; jSave('icicle.theme',s.theme);}
+function toggleLang(){s.lang=s.lang==='en'?'ru':'en'; el('langBtn').textContent=s.lang==='en'?'RU':'EN'; jSave('icicle.lang',s.lang); applyLang();}
 
-async function updateHint(){try{const kind=await window.go.main.App.FolderHint(el('path').value); el('folderHint').textContent=tr('hint')+': '+kind;}catch{}}
-async function loadDefaults(){const d=await window.go.main.App.Defaults(); el('path').value=d.downloads||d.home||''; el('verPill').textContent=d.version||'-'; await updateHint();}
-async function loadSaved(){const list=await window.go.main.App.ListSavedFolders(); const sel=el('saved'); sel.innerHTML=''; const o0=document.createElement('option'); o0.value=''; o0.textContent=s.lang==='ru'?'\u0421\u043e\u0445\u0440\u0430\u043d\u0451\u043d\u043d\u044b\u0435 \u043f\u0430\u043f\u043a\u0438':'Saved folders'; sel.appendChild(o0); for(const p of list){const o=document.createElement('option'); o.value=p; o.textContent=p; sel.appendChild(o);}}
-async function loadDrives(){return withLoader(async()=>{const items=await window.go.main.App.ListDrives(); const wrap=el('drives'); wrap.innerHTML=''; for(const d of items){const pct=Math.max(0,Math.min(100,Math.round((d.usedRatio||0)*100))); const card=document.createElement('div'); card.className='drive'; card.innerHTML=`<div class="row" style="justify-content:space-between"><b>${d.drive}</b><span class="tiny">${pct}%</span></div><div>${d.usedHuman} / ${d.totalHuman}</div><div class="bar"><div class="fill" style="width:${pct}%"></div></div><div class="actions" style="margin-top:8px"><button data-use="${d.drive}\\">${tr('use')}</button><button data-open="${d.drive}">${tr('open')}</button><button data-tree="${d.drive}\\">${tr('tree')}</button><button data-heavy="${d.drive}\\">${tr('heavy')}</button></div><div class="actions" style="margin-top:6px"><button data-savepreset="${d.drive}">save preset</button><button data-loadpreset="${d.drive}">load preset</button></div>`; wrap.appendChild(card);}});}
+async function getDefaultsCached(force=false){
+  const now=Date.now();
+  if(!force && s.defaults && (now-s.defaultsAt)<30000) return s.defaults;
+  const d=await callApp('Defaults',[],{timeoutMs:12000});
+  s.defaults=d||{};
+  s.defaultsAt=now;
+  return s.defaults;
+}
+async function updateHint(){
+  const seq=++s.hintSeq;
+  const p=el('path').value;
+  try{
+    const kind=await window.go.main.App.FolderHint(p);
+    if(seq!==s.hintSeq) return;
+    el('folderHint').textContent=tr('hint')+': '+kind;
+  }catch{}
+}
+const updateHintDebounced=debounce(updateHint,180);
+async function loadDefaults(){const d=await getDefaultsCached(true); el('path').value=d.downloads||d.home||''; el('verPill').textContent=d.version||'-'; await updateHint();}
+async function loadSaved(){const list=await callApp('ListSavedFolders',[],{timeoutMs:12000}); const sel=el('saved'); sel.innerHTML=''; const o0=document.createElement('option'); o0.value=''; o0.textContent=s.lang==='ru'?'\u0421\u043e\u0445\u0440\u0430\u043d\u0451\u043d\u043d\u044b\u0435 \u043f\u0430\u043f\u043a\u0438':'Saved folders'; sel.appendChild(o0); for(const p of list){const o=document.createElement('option'); o.value=p; o.textContent=p; sel.appendChild(o);}}
+async function loadDrives(force=false){
+  const now=Date.now();
+  if(!force && (now-s.lastDriveRefresh)<6000) return;
+  return withLoader(async()=>{
+    const items=await callApp('ListDrives',[],{timeoutMs:18000});
+    const wrap=el('drives');
+    wrap.innerHTML='';
+    for(const d of items){
+      const pct=Math.max(0,Math.min(100,Math.round((d.usedRatio||0)*100)));
+      const card=document.createElement('div');
+      card.className='drive';
+      card.innerHTML=`<div class="row" style="justify-content:space-between"><b>${escapeHtml(d.drive)}</b><span class="tiny">${pct}%</span></div><div>${escapeHtml(d.usedHuman)} / ${escapeHtml(d.totalHuman)}</div><div class="bar"><div class="fill" style="width:${pct}%"></div></div><div class="actions" style="margin-top:8px"><button data-use="${escapeHtml(d.drive)}\\">${tr('use')}</button><button data-open="${escapeHtml(d.drive)}">${tr('open')}</button><button data-tree="${escapeHtml(d.drive)}\\">${tr('tree')}</button><button data-heavy="${escapeHtml(d.drive)}\\">${tr('heavy')}</button></div><div class="actions" style="margin-top:6px"><button data-savepreset="${escapeHtml(d.drive)}">save preset</button><button data-loadpreset="${escapeHtml(d.drive)}">load preset</button></div>`;
+      wrap.appendChild(card);
+    }
+    s.lastDriveRefresh=Date.now();
+  });
+}
 function scanFilters(){ return {includePath:(el('includePath').value||''),ignorePath:(el('ignorePath').value||''),includeExt:(el('includeExt').value||''),ignoreExt:(el('ignoreExt').value||'')}; }
-async function runTree(){return withLoader(async()=>{const fast=!!el('fastMode').checked; const maxFiles=fast?parseInt(el('maxFiles').value||'220000',10):0; const workers=fast?parseInt(el('workers').value||'24',10):0; const res=await window.go.main.App.RunTreeFastFiltered(el('path').value,5,22,maxFiles,workers,scanFilters()); el('log').textContent+='\n'+res.output+'\n'; el('log').scrollTop=el('log').scrollHeight; setStatus((s.lang==='ru'?'\u0414\u0435\u0440\u0435\u0432\u043e: ':'Tree: ')+res.seen+(res.limited?(s.lang==='ru'?' (\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043e)':' (limited)'):'')+' | '+res.durationMs+' ms'); runWiz();});}
-async function runHeavy(){return withLoader(async()=>{const n=parseInt(el('topN').value||'20',10); const fast=!!el('fastMode').checked; const maxFiles=fast?parseInt(el('maxFiles').value||'220000',10):0; const workers=fast?parseInt(el('workers').value||'24',10):0; const res=await window.go.main.App.RunHeavyFastFiltered(el('path').value,n,maxFiles,workers,scanFilters()); s.heavy=res.items||[]; renderHeavy(); renderWiz({rects:fallbackRectsFromHeavy(),ext:[],total:1}); setStatus((s.lang==='ru'?'\u0424\u0430\u0439\u043b\u043e\u0432 \u043f\u0440\u043e\u0441\u043c\u043e\u0442\u0440\u0435\u043d\u043e: ':'Seen files: ')+res.seen+(res.limited?(s.lang==='ru'?' (\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043e)':' (limited)'):'')+' | '+res.durationMs+' ms');},tr('loading'));}
+function treeCacheKey(path,maxFiles,workers,filters){
+  return [normPath(path),maxFiles,workers,filters.includePath,filters.ignorePath,filters.includeExt,filters.ignoreExt].join('|');
+}
+function heavyCacheKey(path,n,maxFiles,workers,filters){
+  return [normPath(path),n,maxFiles,workers,filters.includePath,filters.ignorePath,filters.includeExt,filters.ignoreExt].join('|');
+}
+function readShortCache(map,key,ttlMs){
+  const now=Date.now();
+  const it=map.get(key);
+  if(!it) return null;
+  if((now-it.at)>ttlMs){ map.delete(key); return null; }
+  return it.val;
+}
+function writeShortCache(map,key,val,max=14){
+  map.set(key,{at:Date.now(),val});
+  if(map.size>max){
+    const k=map.keys().next().value;
+    if(k!==undefined) map.delete(k);
+  }
+}
+async function runTree(){return withLoader(async()=>{
+  const fast=boolInput('fastMode');
+  const path=normPath(el('path').value);
+  el('path').value=path;
+  const maxFiles=fast?intInput('maxFiles',220000,0,900000):0;
+  const workers=fast?intInput('workers',24,1,128):0;
+  const filters=scanFilters();
+  const key=treeCacheKey(path,maxFiles,workers,filters);
+  const cached=readShortCache(s.treeRunCache,key,9000);
+  const res=cached || await callApp('RunTreeFastFiltered',[path,5,22,maxFiles,workers,filters]);
+  if(!cached) writeShortCache(s.treeRunCache,key,res);
+  s.metrics.treeMs=res.durationMs||0; touchHealth();
+  el('log').textContent+='\n'+res.output+'\n';
+  el('log').scrollTop=el('log').scrollHeight;
+  setStatus((s.lang==='ru'?'\u0414\u0435\u0440\u0435\u0432\u043e: ':'Tree: ')+res.seen+(res.limited?(s.lang==='ru'?' (\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043e)':' (limited)'):'')+' | '+res.durationMs+' ms'+(cached?' [cache]':''));
+  if(document.getElementById('viewAnalyze')?.classList.contains('active')) runWiz();
+});}
+async function runHeavy(){return withLoader(async()=>{
+  const n=intInput('topN',20,1,500);
+  const fast=boolInput('fastMode');
+  const path=normPath(el('path').value);
+  el('path').value=path;
+  const maxFiles=fast?intInput('maxFiles',220000,0,900000):0;
+  const workers=fast?intInput('workers',24,1,128):0;
+  const filters=scanFilters();
+  const key=heavyCacheKey(path,n,maxFiles,workers,filters);
+  const cached=readShortCache(s.heavyRunCache,key,9000);
+  const res=cached || await callApp('RunHeavyFastFiltered',[path,n,maxFiles,workers,filters]);
+  if(!cached) writeShortCache(s.heavyRunCache,key,res);
+  s.metrics.heavyMs=res.durationMs||0; touchHealth();
+  s.heavy=res.items||[];
+  const keep=new Set();
+  for(const it of s.heavy){ if(s.selected.has(it.path)) keep.add(it.path); }
+  s.selected=keep;
+  s.heavyVersion++; s.heavyFilterCache=null; s.heavyRenderLimit=200; s.heavyFiltered=[];
+  renderHeavy();
+  renderWiz({rects:fallbackRectsFromHeavy(),ext:[],total:1});
+  setStatus((s.lang==='ru'?'\u0424\u0430\u0439\u043b\u043e\u0432 \u043f\u0440\u043e\u0441\u043c\u043e\u0442\u0440\u0435\u043d\u043e: ':'Seen files: ')+res.seen+(res.limited?(s.lang==='ru'?' (\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043e)':' (limited)'):'')+' | '+res.durationMs+' ms'+(cached?' [cache]':''));
+},tr('loading'));}
 function buildTreemap(rects,w,h){
   const list=(rects||[]).filter(x=>x.size>0).slice().sort((a,b)=>b.size-a.size);
   const out=[];
@@ -273,6 +625,13 @@ function fallbackRectsFromHeavy(){
   return s.heavy.slice(0,80).map((it)=>({name:(it.path||'').split(/[\\\\/]/).pop()||it.path,path:it.path,kind:'file',size:it.size||0,human:it.human||''}));
 }
 function colorByName(name){ let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))>>>0; const hue=h%360; return `hsl(${hue} 55% 32%)`; }
+function wizRectColor(it){
+  if(it&&it.isNew) return 'linear-gradient(180deg,#177ac8,#0f4f80)';
+  const d=Number((it&&it.delta)||0);
+  if(d>0) return 'linear-gradient(180deg,#216a3d,#143f25)';
+  if(d<0) return 'linear-gradient(180deg,#7a2d2d,#4c1d1d)';
+  return colorByName(((it&&it.kind)||'')+':'+((it&&it.name)||(it&&it.path)||'x'));
+}
 function renderWizLegend(rects){
   const wrap=el('wizLegend');
   wrap.innerHTML='';
@@ -311,6 +670,7 @@ function updateWizHover(it){
     el('wizHoverExt').textContent='ext:-';
     el('wizHoverSize').textContent='size:-';
     el('wizHoverHeat').textContent='heat:-';
+    el('wizHoverDelta').textContent='delta:-';
     el('wizHoverFill').style.width='0%';
     return;
   }
@@ -320,6 +680,9 @@ function updateWizHover(it){
   el('wizHoverExt').textContent='ext:'+pathExt(it.name||it.path||'');
   el('wizHoverSize').textContent='size:'+(it.human||'-');
   el('wizHoverHeat').textContent='heat:'+pct.toFixed(1)+'%';
+  const dh=it.deltaHuman||((it.delta===0||it.delta===undefined)?'0':String(it.delta));
+  const newTag=it.isNew?' new':'';
+  el('wizHoverDelta').textContent='delta:'+dh+newTag;
   el('wizHoverFill').style.width=pct.toFixed(1)+'%';
 }
 function renderWizCrumbs(){
@@ -366,10 +729,14 @@ function renderWiz(res){
     d.style.top=r.y+'px';
     d.style.width=r.w+'px';
     d.style.height=r.h+'px';
-    d.style.background=colorByName((r.item.kind||'')+':'+(r.item.name||r.item.path||'x'));
-    d.title=`${r.item.name} | ${r.item.human}`;
+    d.style.background=wizRectColor(r.item);
+    if((r.item.delta||0)>0) d.classList.add('deltaUp');
+    if((r.item.delta||0)<0) d.classList.add('deltaDown');
+    if(r.item.isNew) d.classList.add('deltaNew');
+    d.title=`${r.item.name} | ${r.item.human}${r.item.deltaHuman?` | ${r.item.deltaHuman}`:''}${r.item.isNew?' | NEW':''}`;
     if(r.w>65&&r.h>20){
-      d.textContent=`${r.item.name} (${r.item.human})`;
+      const extra=r.item.isNew?' NEW':(r.item.deltaHuman?` ${r.item.deltaHuman}`:'');
+      d.textContent=`${r.item.name} (${r.item.human})${extra}`;
     }
     d.onmouseenter=()=>updateWizHover(r.item);
     d.onclick=()=>{s.wizSel=itemIdx; highlightWizSelection(); updateWizHover(r.item); setStatus(`${r.item.name} | ${r.item.human}`);};
@@ -417,7 +784,29 @@ async function runWiz(pathOverride,pushHistory=true){
       s.wizStack.push(s.wizPath);
     }
     s.wizPath=path;
-    const res=turbo ? await window.go.main.App.WizMapTurbo(path,maxFiles,32,120,40) : await window.go.main.App.WizMap(path,maxFiles,workers,24,80,25);
+    const snap=el('wizDeltaSnapshot').value||'';
+    const cacheKey=[path,snap,turbo?'1':'0',maxFiles,workers].join('|');
+    const now=Date.now();
+    const cached=s.wizCache.get(cacheKey);
+    if(cached && (now-cached.at)<14000){
+      s.metrics.wizMs=cached.res.durationMs||0; touchHealth();
+      renderWiz(cached.res);
+      setStatus((s.lang==='ru'?'\u041a\u0430\u0440\u0442\u0430: ':'WizMap: ')+cached.res.seen+(cached.res.limited?(s.lang==='ru'?' (\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043e)':' (limited)'):'')+' | '+cached.res.durationMs+' ms [cache]');
+      return;
+    }
+    let res;
+    if(snap){
+      const wizWorkers=turbo ? Math.max(24,workers*2) : workers;
+      res=await callApp('WizMapWithDelta',[path,snap,maxFiles,wizWorkers,turbo?32:24,turbo?120:80,turbo?40:25]);
+    } else {
+      res=turbo ? await callApp('WizMapTurbo',[path,maxFiles,32,120,40]) : await callApp('WizMap',[path,maxFiles,workers,24,80,25]);
+    }
+    s.metrics.wizMs=res.durationMs||0; touchHealth();
+    s.wizCache.set(cacheKey,{at:now,res});
+    if(s.wizCache.size>16){
+      const firstKey=s.wizCache.keys().next().value;
+      if(firstKey!==undefined) s.wizCache.delete(firstKey);
+    }
     renderWiz(res);
     setStatus((s.lang==='ru'?'\u041a\u0430\u0440\u0442\u0430: ':'WizMap: ')+res.seen+(res.limited?(s.lang==='ru'?' (\u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u043e)':' (limited)'):'')+' | '+res.durationMs+' ms');
   },tr('loading'));
@@ -437,8 +826,8 @@ async function wizOpenSelected(){
 function drawSpark(points){ if(!points||points.length===0) return ''; const w=240,h=70,pad=6; const vals=points.map(x=>x.total>0?x.used/x.total:0); let min=1,max=0; for(const v of vals){ if(v<min)min=v; if(v>max)max=v; } if(max===min){max=min+0.01;} const step=(w-pad*2)/Math.max(1,vals.length-1); const pts=vals.map((v,i)=>{const x=pad+i*step; const y=pad+(1-(v-min)/(max-min))*(h-pad*2); return `${x.toFixed(1)},${y.toFixed(1)}`;}).join(' '); return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="#6cb6ff" stroke-width="2"/></svg>`; }
 function renderDriveHistory(rows){ const wrap=el('driveHistoryGrid'); wrap.innerHTML=''; for(const r of rows||[]){ const card=document.createElement('div'); card.style.border='1px solid var(--line)'; card.style.borderRadius='10px'; card.style.padding='6px'; const pts=(r.points||[]).slice(-24); card.innerHTML=`<div class="row" style="justify-content:space-between"><b>${r.drive}</b><span class="tiny">${pts.length}</span></div>${drawSpark(pts)}`; wrap.appendChild(card);} }
 async function showDriveHistory(){try{const rows=await window.go.main.App.DriveHistory(); if(!rows||rows.length===0){setStatus(s.lang==='ru'?'\u0418\u0441\u0442\u043e\u0440\u0438\u044f \u043f\u0443\u0441\u0442\u0430':'History is empty'); return;} renderDriveHistory(rows); el('driveHistoryPanel').style.display='block';}catch(e){showErr(e)}}
-async function listSnapshots(){try{const rows=await window.go.main.App.ListReportSnapshots(40); const a=el('snapA'),b=el('snapB'); a.innerHTML=''; b.innerHTML=''; for(const it of rows||[]){const o=document.createElement('option'); o.value=it.file; o.textContent=it.file.split(/[\\\\/]/).pop(); a.appendChild(o); const o2=o.cloneNode(true); b.appendChild(o2);} if(b.options.length>1) b.selectedIndex=1; el('snapshotPanel').style.display='block';}catch(e){showErr(e)}}
-async function diffSnapshots(){try{const left=el('snapA').value,right=el('snapB').value; if(!left||!right){setStatus('select snapshots');return;} const res=await withLoader(()=>window.go.main.App.SnapshotDiff(left,right,40),tr('loading')); el('snapDiffOut').textContent=JSON.stringify(res,null,2);}catch(e){showErr(e)}}
+async function listSnapshots(showPanel=true){try{const rows=await callApp('ListReportSnapshots',[40],{timeoutMs:15000}); const a=el('snapA'),b=el('snapB'),w=el('wizDeltaSnapshot'); a.innerHTML=''; b.innerHTML=''; w.innerHTML=''; const off=document.createElement('option'); off.value=''; off.textContent=s.lang==='ru'?'delta: выкл':'delta: off'; w.appendChild(off); for(const it of rows||[]){const name=it.file.split(/[\\\\/]/).pop(); const o=document.createElement('option'); o.value=it.file; o.textContent=name; a.appendChild(o); const o2=o.cloneNode(true); b.appendChild(o2); const ow=document.createElement('option'); ow.value=it.file; ow.textContent=name; w.appendChild(ow);} if(b.options.length>1) b.selectedIndex=1; if(showPanel){el('snapshotPanel').style.display='block';}}catch(e){showErr(e)}}
+async function diffSnapshots(){try{const left=el('snapA').value,right=el('snapB').value; if(!left||!right){setStatus('select snapshots');return;} const res=await withLoader(()=>callApp('SnapshotDiff',[left,right,40],{timeoutMs:20000}),tr('loading')); el('snapDiffOut').textContent=JSON.stringify(res,null,2);}catch(e){showErr(e)}}
 function renderSnapshotTreemap(items,totalAbs){
   const map=el('snapMap');
   map.style.display='block';
@@ -459,7 +848,16 @@ function renderSnapshotTreemap(items,totalAbs){
     map.appendChild(d);
   }
 }
-async function compareSnapshotsTreemap(){try{const left=el('snapA').value,right=el('snapB').value; if(!left||!right){setStatus('select snapshots');return;} const res=await withLoader(()=>window.go.main.App.SnapshotTreemapDiff(left,right,120),tr('loading')); el('snapDiffOut').textContent=JSON.stringify({left:res.left,right:res.right,totalHuman:res.totalHuman,count:(res.items||[]).length},null,2); renderSnapshotTreemap(res.items||[],res.totalAbs||0);}catch(e){showErr(e)}}
+async function compareSnapshotsTreemap(){try{const left=el('snapA').value,right=el('snapB').value; if(!left||!right){setStatus('select snapshots');return;} const res=await withLoader(()=>callApp('SnapshotTreemapDiff',[left,right,120],{timeoutMs:20000}),tr('loading')); el('snapDiffOut').textContent=JSON.stringify({left:res.left,right:res.right,totalHuman:res.totalHuman,count:(res.items||[]).length},null,2); renderSnapshotTreemap(res.items||[],res.totalAbs||0);}catch(e){showErr(e)}}
+async function exportSnapshotCompare(format){
+  try{
+    const left=el('snapA').value,right=el('snapB').value;
+    if(!left||!right){setStatus('select snapshots');return;}
+    const mode=(el('snapMap').style.display==='block')?'treemap':'diff';
+    const file=await window.go.main.App.ExportSnapshotCompare(left,right,120,format,mode);
+    if(file){setStatus((s.lang==='ru'?'Экспортировано: ':'Exported: ')+file);}
+  }catch(e){showErr(e)}
+}
 async function startSchedule(){try{const sec=parseInt(el('scheduleSec').value||'300',10); const n=parseInt(el('topN').value||'20',10); const maxFiles=parseInt(el('maxFiles').value||'220000',10); const workers=parseInt(el('workers').value||'24',10); await window.go.main.App.StartScheduledScan(el('path').value,sec,n,maxFiles,workers); setStatus(s.lang==='ru'?'\u0420\u0430\u0441\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0437\u0430\u043f\u0443\u0449\u0435\u043d\u043e':'Schedule started');}catch(e){showErr(e)}}
 async function stopSchedule(){try{await window.go.main.App.StopScheduledScan(); setStatus(s.lang==='ru'?'\u0420\u0430\u0441\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u043e\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u043e':'Schedule stopped');}catch(e){showErr(e)}}
 async function runScheduleNow(){try{const n=parseInt(el('topN').value||'20',10); const maxFiles=parseInt(el('maxFiles').value||'220000',10); const workers=parseInt(el('workers').value||'24',10); const snap=await withLoader(()=>window.go.main.App.RunScheduledScanOnce(el('path').value,n,maxFiles,workers),tr('loading')); setStatus((s.lang==='ru'?'\u0421\u043d\u0438\u043c\u043e\u043a: ':'Snapshot: ')+snap);}catch(e){showErr(e)}}
@@ -481,22 +879,32 @@ async function saveDiskPresetFor(drive){
       maxDelete: 150
     };
     if(!payload.drive){setStatus('drive not detected'); return;}
-    await window.go.main.App.SaveCleanupPresetForDrive(payload);
+    await callApp('SaveCleanupPresetForDrive',[payload],{timeoutMs:12000});
     setStatus((s.lang==='ru'?'Пресет сохранён для ':'Preset saved for ')+payload.drive);
   }catch(e){showErr(e)}
 }
-async function loadDiskPresetFor(drive){
+async function loadDiskPresetFor(drive,silent=false){
   try{
     drive = drive || driveFromPath(el('path').value);
-    if(!drive){setStatus('drive not detected'); return;}
-    const p = await window.go.main.App.LoadCleanupPresetForDrive(drive);
+    if(!drive){ if(!silent) setStatus(s.lang==='ru'?'Диск не определён':'Drive not detected'); return false; }
+    const p = await callApp('LoadCleanupPresetForDrive',[drive],{timeoutMs:12000});
     el('cleanupMode').value=p.preset||'dev-cache';
     el('cleanupCalendarMode').value=p.mode||'interval';
     el('cleanupSec').value=String(p.intervalSec||900);
     el('cleanupTime').value=String(p.hour||2).padStart(2,'0')+':'+String(p.minute||30).padStart(2,'0');
     el('cleanupWeekday').value=String(p.weekday??1);
-    setStatus((s.lang==='ru'?'Пресет загружен для ':'Preset loaded for ')+drive);
-  }catch(e){showErr(e)}
+    if(!silent) setStatus((s.lang==='ru'?'Пресет загружен для ':'Preset loaded for ')+drive);
+    return true;
+  }catch(e){
+    const msg=String((e&&e.message)?e.message:e||'');
+    const notFound = msg.toLowerCase().includes('preset not found');
+    if(notFound){
+      if(!silent){ setStatus((s.lang==='ru'?'Для диска нет пресета: ':'No preset for drive: ')+(drive||'-')); }
+      return false;
+    }
+    if(!silent) showErr(e);
+    return false;
+  }
 }
 async function exportProfile(){try{const pass=prompt(s.lang==='ru'?'Пароль для экспорта профиля':'Passphrase for profile export'); if(!pass)return; const file=await window.go.main.App.ExportProfileEncrypted(pass); if(file) setStatus((s.lang==='ru'?'Экспортировано: ':'Exported: ')+file);}catch(e){showErr(e)}}
 async function importProfile(){try{const pass=prompt(s.lang==='ru'?'Пароль профиля':'Profile passphrase'); if(!pass)return; const merge=confirm(s.lang==='ru'?'OK = merge, Cancel = overwrite':'OK = merge, Cancel = overwrite'); const mode=merge?'merge':'overwrite'; const file=await window.go.main.App.ImportProfileEncryptedWithMode(pass,mode); if(file){await loadSaved(); setStatus((s.lang==='ru'?'Импортировано: ':'Imported: ')+file+' ['+mode+']');}}catch(e){showErr(e)}}
@@ -530,61 +938,299 @@ function collectRouteRules(){
 async function saveRouteRules(){ try{ const payload=collectRouteRules(); await window.go.main.App.SaveRoutingRules(payload); setStatus(s.lang==='ru'?'Правила сохранены':'Rules saved'); }catch(e){showErr(e)} }
 async function testRoute(){try{let p=''; if(s.selected.size>0){p=Array.from(s.selected)[0];} if(!p){p=prompt(s.lang==='ru'?'Путь файла для проверки маршрута':'File path for route test',el('path').value||'');} if(!p)return; const r=await window.go.main.App.TestRouting(p); el('log').textContent+='\n[route-test]\n'+JSON.stringify(r,null,2)+'\n'; el('log').scrollTop=el('log').scrollHeight; el('routePanel').style.display='block'; el('routeSamples').value=p;}catch(e){showErr(e)}}
 async function runRouteSamples(){try{const raw=el('routeSamples').value||''; const out=await window.go.main.App.SimulateRoutingSamples(raw); el('routeOut').textContent=JSON.stringify(out,null,2);}catch(e){showErr(e)}}
+async function runRouteFullSimulation(){try{const max=parseInt(el('routeSimMax').value||'180000',10); const out=await withLoader(()=>window.go.main.App.SimulateRoutingForPath(el('path').value,isNaN(max)?180000:max),tr('loading')); el('routeOut').textContent=JSON.stringify(out,null,2);}catch(e){showErr(e)}}
 async function detectRouteConflicts(){try{const out=await window.go.main.App.DetectRoutingConflicts(); el('routeConflictOut').textContent=JSON.stringify(out,null,2);}catch(e){showErr(e)}}
 async function autoSolveRoutePriority(){try{const out=await window.go.main.App.AutoResolveRoutingPriorities(); s.routeRules=out||[]; renderRouteEditor(); setStatus(s.lang==='ru'?'Приоритеты пересчитаны':'Priorities recalculated');}catch(e){showErr(e)}}
 async function exportTeamPack(){try{const name=prompt(s.lang==='ru'?'Имя пакета команды':'Team pack name','team-pack'); if(name===null)return; const file=await window.go.main.App.ExportTeamPresetPack(name); if(file){setStatus((s.lang==='ru'?'Экспорт: ':'Export: ')+file);}}catch(e){showErr(e)}}
 async function importTeamPack(){try{const merge=confirm(s.lang==='ru'?'OK = merge, Cancel = overwrite':'OK = merge, Cancel = overwrite'); const mode=merge?'merge':'overwrite'; const file=await window.go.main.App.ImportTeamPresetPack(mode); if(file){await loadSaved(); setStatus((s.lang==='ru'?'Импорт: ':'Import: ')+file+' ['+mode+']');}}catch(e){showErr(e)}}
+async function importTeamPackFromURL(){try{const url=(el('teamRegistryUrl').value||'').trim(); if(!url){setStatus(s.lang==='ru'?'Укажи URL':'Provide URL'); return;} const merge=confirm(s.lang==='ru'?'OK = merge, Cancel = overwrite':'OK = merge, Cancel = overwrite'); const mode=merge?'merge':'overwrite'; const file=await withLoader(()=>window.go.main.App.ImportTeamPresetPackFromURL(url,mode),tr('loading')); if(file){await loadSaved(); setStatus((s.lang==='ru'?'Импорт по URL: ':'Imported from URL: ')+file+' ['+mode+']');}}catch(e){showErr(e)}}
 function renderPresetPreview(res){ const panel=el('presetPanel'),sum=el('presetSummary'),list=el('presetList'); panel.style.display='block'; sum.textContent=`${res.count} | low:${res.riskLow} medium:${res.riskMedium} high:${res.riskHigh} | ${res.totalHuman}`; list.innerHTML=''; for(const c of (res.candidates||[]).slice(0,80)){ const row=document.createElement('div'); row.className='row'; const color=c.risk==='high'?'#f14c4c':(c.risk==='medium'?'#f2cc60':'#4ec9b0'); row.innerHTML=`<span style="display:inline-block;width:8px;height:8px;border-radius:99px;background:${color}"></span><span class="tiny">${c.human}</span><span class="tiny">${c.risk}</span><span title="${c.path}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.path}</span>`; list.appendChild(row);} }
 async function scanPreset(){try{const preset=el('cleanupPreset').value||'dev-cache'; const res=await withLoader(()=>window.go.main.App.ScanCleanupPreset(el('path').value,preset,120,parseInt(el('maxFiles').value||'220000',10)),tr('loading')); s.presetCandidates=(res&&res.candidates)||[]; renderPresetPreview(res); setStatus((s.lang==='ru'?'\u041a\u0430\u043d\u0434\u0438\u0434\u0430\u0442\u043e\u0432: ':'Candidates: ')+s.presetCandidates.length);}catch(e){showErr(e)}}
 async function applyPreset(){try{if(!s.presetCandidates||s.presetCandidates.length===0){setStatus(s.lang==='ru'?'\u041d\u0435\u0442 \u043a\u0430\u043d\u0434\u0438\u0434\u0430\u0442\u043e\u0432':'No preset candidates');return;} const safe=confirm(s.lang==='ru'?'\u0423\u0434\u0430\u043b\u044f\u0442\u044c \u0432 \u043a\u043e\u0440\u0437\u0438\u043d\u0443?':'Use recycle bin?'); const paths=s.presetCandidates.map(x=>x.path); const res=await withLoader(()=>window.go.main.App.ApplyPresetCleanup(paths,safe),tr('loading')); el('log').textContent+='\n[preset-apply]\n'+JSON.stringify(res,null,2)+'\n'; el('log').scrollTop=el('log').scrollHeight; s.presetCandidates=[]; await runHeavy();}catch(e){showErr(e)}}
 function renderDupGroups(){ const sel=el('dupGroupSel'); sel.innerHTML=''; for(const g of s.dupGroups){ const o=document.createElement('option'); o.value=g.key; o.textContent=`${g.key} (${g.count})`; sel.appendChild(o);} el('dupPanel').style.display=s.dupGroups.length?'block':'none'; }
 async function duplicateKeep(rule){ try{const key=el('dupGroupSel').value; const g=s.dupGroups.find(x=>x.key===key); if(!g){setStatus('group not selected');return;} const safe=confirm(s.lang==='ru'?'\u0423\u0434\u0430\u043b\u044f\u0442\u044c \u0432 \u043a\u043e\u0440\u0437\u0438\u043d\u0443?':'Use recycle bin?'); const res=await withLoader(()=>window.go.main.App.DuplicateKeep(g.paths,rule,safe),tr('loading')); el('log').textContent+='\n[dupe-keep]\n'+JSON.stringify(res,null,2)+'\n'; el('log').scrollTop=el('log').scrollHeight; await runHeavy(); }catch(e){showErr(e)} }
 async function watchDiagnostics(){ try{const rows=await window.go.main.App.WatchDiagnostics(el('path').value,32); const list=el('diagList'); list.innerHTML=''; for(const r of rows||[]){ const row=document.createElement('div'); row.className='row'; row.innerHTML=`<span class="tiny">${r.status}</span><span class="tiny">${r.entries||0}</span><span title="${r.path}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.path}</span>`; list.appendChild(row);} el('diagPanel').style.display='block'; }catch(e){showErr(e)} }
-function renderHeavy(){
-  const body=el('heavyBody'); body.innerHTML='';
-  for(const it of s.heavy){
-    const checked=s.selected.has(it.path)?'checked':'';
-    const p=shortPath(it.path,84);
-    const trEl=document.createElement('tr');
-    trEl.innerHTML=`<td><input type="checkbox" data-sel="${it.path}" ${checked}></td><td>${it.human}</td><td class="pathCell" title="${it.path}">${p}</td><td><div class="actions"><button data-openf="${it.path}">${tr('open')}</button><button data-reveal="${it.path}">${tr('reveal')}</button><select data-action-path="${it.path}"><option value="">${tr('act')}</option><option value="amove">${tr('autoMove')}</option><option value="move">${tr('moveTo')}</option><option value="del">${tr('del')}</option></select></div></td>`;
-    body.appendChild(trEl);
-  }
-  el('chkAll').checked=s.heavy.length>0&&s.heavy.every(i=>s.selected.has(i.path));
-  updateSelCount();
+function heavyFilterKey(){
+  return [s.heavyVersion,el('heavySearch').value||'',el('heavyMinSize').value||'',el('heavySort').value||'size-desc'].join('|');
 }
-function selectedPaths(){return s.heavy.filter(i=>s.selected.has(i.path)).map(i=>i.path);}
+function computeHeavyRows(){
+  const key=heavyFilterKey();
+  if(s.heavyFilterCache && s.heavyFilterCache.key===key) return s.heavyFilterCache.rows;
+  const q=(el('heavySearch').value||'').toLowerCase().trim();
+  const minMb=parseFloat(el('heavyMinSize').value||'0');
+  const minBytes=isNaN(minMb)?0:Math.max(0,Math.floor(minMb*1024*1024));
+  const sortBy=el('heavySort').value||'size-desc';
+  let rows=(s.heavy||[]).filter((it)=>{
+    if((it.size||0)<minBytes) return false;
+    if(!q) return true;
+    const p=String(it.path||'').toLowerCase();
+    return p.includes(q) || String(pathExt(p)).includes(q);
+  }).slice();
+  if(sortBy==='size-asc') rows.sort((a,b)=>(a.size||0)-(b.size||0));
+  else if(sortBy==='path-asc') rows.sort((a,b)=>String(a.path||'').localeCompare(String(b.path||'')));
+  else if(sortBy==='new-first') rows.sort((a,b)=>Number(!!b.new)-Number(!!a.new) || (b.size||0)-(a.size||0));
+  else rows.sort((a,b)=>(b.size||0)-(a.size||0));
+  s.heavyFilterCache={key,rows};
+  return rows;
+}
+function rowMarkup(it){
+  const checked=s.selected.has(it.path)?'checked':'';
+  const full=String(it.path||'');
+  const p=shortPath(full,84);
+  const safePath=escapeHtml(full);
+  const safeShort=escapeHtml(p);
+  const safeHuman=escapeHtml(it.human||'');
+  return `<td><input type="checkbox" data-sel="${safePath}" ${checked}></td><td>${safeHuman}${it.new?'<span class="newTag">NEW</span>':''}</td><td class="pathCell" title="${safePath}">${safeShort}</td><td><div class="actions"><button data-openf="${safePath}">${tr('open')}</button><button data-reveal="${safePath}">${tr('reveal')}</button><select data-action-path="${safePath}"><option value="">${tr('act')}</option><option value="amove">${tr('autoMove')}</option><option value="move">${tr('moveTo')}</option><option value="del">${tr('del')}</option></select></div></td>`;
+}
+function renderHeavy(){
+  const token=++s.heavyRenderToken;
+  const body=el('heavyBody');
+  body.innerHTML='';
+  const rows=computeHeavyRows();
+  s.heavyFiltered=rows;
+  const max=Math.min(rows.length,Math.max(40,s.heavyRenderLimit||200));
+  const heavyStats=el('heavyStats');
+  const left=rows.length-max;
+  if(heavyStats) heavyStats.textContent=(s.lang==='ru'?'строки: ':'rows: ')+max+' / '+rows.length;
+  const moreBtn=el('heavyMoreBtn');
+  if(moreBtn){
+    moreBtn.style.display=left>0?'inline-flex':'none';
+    moreBtn.textContent=(s.lang==='ru'?'Показать ещё ':'Load more ')+(left>0?left:'');
+  }
+  if(max<=0){
+    el('chkAll').checked=false;
+    updateSelCount();
+    updateTopChips();
+    return;
+  }
+  const chunk=Math.max(80,Math.min(280,s.renderChunk||180));
+  let i=0;
+  const appendChunk=()=>{
+    if(token!==s.heavyRenderToken) return;
+    const frag=document.createDocumentFragment();
+    const end=Math.min(max,i+chunk);
+    for(;i<end;i++){
+      const trEl=document.createElement('tr');
+      trEl.innerHTML=rowMarkup(rows[i]);
+      frag.appendChild(trEl);
+    }
+    body.appendChild(frag);
+    if(i<max){
+      requestAnimationFrame(appendChunk);
+    }else{
+      if(token!==s.heavyRenderToken) return;
+      el('chkAll').checked=rows.length>0&&rows.every((item)=>s.selected.has(item.path));
+      updateSelCount();
+      updateTopChips();
+    }
+  };
+  requestAnimationFrame(appendChunk);
+}
+function selectedPaths(){return s.heavy.filter((i)=>s.selected.has(i.path)).map((i)=>i.path);}
 function renderEmptyDirs(){const panel=el('emptyPanel'),list=el('emptyList'); if(!s.emptyDirs||s.emptyDirs.length===0){panel.style.display='none'; list.innerHTML=''; return;} panel.style.display='block'; list.innerHTML=''; for(const p of s.emptyDirs){const row=document.createElement('label'); row.style.display='block'; row.style.marginBottom='4px'; const checked=s.emptySelected.has(p)?'checked':''; row.innerHTML=`<input type="checkbox" data-edir="${p}" ${checked}> <span title="${p}">${p}</span>`; list.appendChild(row);} el('emptyAll').checked=s.emptyDirs.length>0&&s.emptyDirs.every(p=>s.emptySelected.has(p));}
-async function runQueue(){if(s.queue.length===0){setStatus(s.lang==='ru'?'\u041e\u0447\u0435\u0440\u0435\u0434\u044c \u043f\u0443\u0441\u0442\u0430\u044f':'Queue is empty'); return;} await withLoader(async()=>{for(const job of s.queue){ if(job.type==='move') await window.go.main.App.BatchMove(job.paths,job.dest,job.auto); if(job.type==='delete') await window.go.main.App.BatchDelete(job.paths,job.safe);} s.queue=[]; s.selected.clear(); await runHeavy();},tr('loading'));}
-function startFullScanPoll(){if(s.fullPoll)clearInterval(s.fullPoll); s.fullPoll=setInterval(async()=>{try{const p=await window.go.main.App.GetHeavyFullProgress(); if(p&&p.items&&p.items.length>0){s.heavy=p.items; renderHeavy();} if(p.running)setStatus((s.lang==='ru'?'\u041f\u043e\u043b\u043d\u044b\u0439 \u0441\u043a\u0430\u043d: ':'Full scan: ')+p.seen+' | '+p.durationMs+' ms'); if(p.done){clearInterval(s.fullPoll); s.fullPoll=null;}}catch{}},450);}
-async function pollLog(){try{const txt=await window.go.main.App.WatchLog(); const running=await window.go.main.App.WatchRunning(); el('log').textContent=(running?'['+tr('running')+']\n':'')+txt; el('log').scrollTop=el('log').scrollHeight;}catch(e){showErr(e)}}
+async function runQueue(){
+  if(s.queue.length===0){setStatus(s.lang==='ru'?'\u041e\u0447\u0435\u0440\u0435\u0434\u044c \u043f\u0443\u0441\u0442\u0430\u044f':'Queue is empty'); return;}
+  await withLoader(async()=>{
+    const moveBuckets=new Map();
+    const delBuckets=new Map();
+    for(const job of s.queue){
+      if(job.type==='move'){
+        const k=(job.auto?'1':'0')+'|'+(job.dest||'');
+        if(!moveBuckets.has(k)) moveBuckets.set(k,{paths:[],dest:job.dest||'',auto:!!job.auto});
+        moveBuckets.get(k).paths.push(...(job.paths||[]));
+      }else if(job.type==='delete'){
+        const k=job.safe?'1':'0';
+        if(!delBuckets.has(k)) delBuckets.set(k,{paths:[],safe:!!job.safe});
+        delBuckets.get(k).paths.push(...(job.paths||[]));
+      }
+    }
+    for(const b of moveBuckets.values()){
+      const uniq=[...new Set(b.paths)];
+      if(uniq.length) await window.go.main.App.BatchMove(uniq,b.dest,b.auto);
+    }
+    for(const b of delBuckets.values()){
+      const uniq=[...new Set(b.paths)];
+      if(uniq.length) await window.go.main.App.BatchDelete(uniq,b.safe);
+    }
+    s.queue=[];
+    s.selected.clear();
+    await runHeavy();
+  },tr('loading'));
+}
+function startFullScanPoll(){if(s.fullPoll)clearInterval(s.fullPoll); s.fullPoll=setInterval(async()=>{try{const p=await window.go.main.App.GetHeavyFullProgress(); if(p&&p.items&&p.items.length>0){s.heavy=p.items; s.heavyVersion++; s.heavyFilterCache=null; renderHeavy();} if(p.running)setStatus((s.lang==='ru'?'\u041f\u043e\u043b\u043d\u044b\u0439 \u0441\u043a\u0430\u043d: ':'Full scan: ')+p.seen+' | '+p.durationMs+' ms'); if(p.done){clearInterval(s.fullPoll); s.fullPoll=null;}}catch{}},450);}
+async function pollLog(){
+  try{
+    const txt=await window.go.main.App.WatchLog();
+    const running=await window.go.main.App.WatchRunning();
+    const merged=(running?'['+tr('running')+']\n':'')+txt;
+    const hash=hashLight([{path:merged,size:merged.length}]);
+    if(hash!==s.lastLogHash){
+      s.lastLogHash=hash;
+      el('log').textContent=merged;
+      el('log').scrollTop=el('log').scrollHeight;
+    }
+    s.pollMs=running?900:2500;
+  }catch(e){
+    s.pollMs=3000;
+  }finally{
+    if(s.pollTimer) clearTimeout(s.pollTimer);
+    s.pollTimer=setTimeout(pollLog,s.pollMs);
+  }
+}
 async function moveFile(path,auto){try{let dst=''; if(!auto) dst=el('quickDest').value||''; await window.go.main.App.MoveFile(path,dst); await runHeavy();}catch(e){showErr(e)}}
 async function deleteFile(path){try{const safe=confirm(s.lang==='ru'?'\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0432 \u043a\u043e\u0440\u0437\u0438\u043d\u0443?':'Use recycle bin?'); await window.go.main.App.DeleteFile(path,safe); await runHeavy();}catch(e){showErr(e)}}
+async function runSmartScan(){
+  const path=normPath(el('path').value);
+  const key=[path,el('topN').value,el('maxFiles').value,el('workers').value,boolInput('fastMode')?'1':'0'].join('|');
+  const now=Date.now();
+  if(s.lastScanKey===key && (now-s.lastScanAt)<1400){
+    setStatus(s.lang==='ru'?'Слишком часто: подожди 1с':'Too frequent: wait 1s');
+    return;
+  }
+  s.lastScanKey=key;
+  s.lastScanAt=now;
+  await runTree();
+  await runHeavy();
+  if(!s.wiz || !s.wiz.rects || s.wiz.rects.length===0){
+    await runWiz();
+  }else if(document.getElementById('viewAnalyze')?.classList.contains('active')){
+    await runWiz();
+  }
+}
+function toggleAutoRefresh(){
+  if(s.autoRefresh){ clearInterval(s.autoRefresh); s.autoRefresh=null; }
+  else { s.autoRefresh=setInterval(()=>{ if(!s.busy){ loadDrives(false); } },12000); }
+  applyLang();
+}
+function selectTopN(n){
+  const rows=(s.heavyFiltered||s.heavy||[]).slice().sort((a,b)=>(b.size||0)-(a.size||0)).slice(0,n);
+  s.selected.clear();
+  for(const it of rows){ s.selected.add(it.path); }
+  renderHeavy();
+}
+function invertSelection(){
+  const next=new Set();
+  for(const it of s.heavyFiltered||[]){ if(!s.selected.has(it.path)) next.add(it.path); }
+  s.selected=next;
+  renderHeavy();
+}
+async function copySelectedPaths(){
+  const paths=selectedPaths();
+  if(paths.length===0){ setStatus(s.lang==='ru'?'Ничего не выбрано':'Nothing selected'); return; }
+  try{
+    await navigator.clipboard.writeText(paths.join('\n'));
+    setStatus((s.lang==='ru'?'Скопировано: ':'Copied: ')+paths.length);
+  }catch{
+    el('log').textContent+='\n'+paths.join('\n')+'\n';
+    setStatus((s.lang==='ru'?'Выведено в лог: ':'Printed to log: ')+paths.length);
+  }
+}
+function saveQueuePreset(){
+  const name=prompt(s.lang==='ru'?'Имя пресета очереди':'Queue preset name','default');
+  if(!name) return;
+  const cleanName=name.trim();
+  const list=(s.queuePresets||[]).filter((x)=>x.name!==cleanName);
+  list.push({name:cleanName,items:s.queue||[]});
+  s.queuePresets=list;
+  jSave('icicle.queuePresets',list);
+  setStatus((s.lang==='ru'?'Пресет сохранён: ':'Preset saved: ')+cleanName);
+}
+function loadQueuePreset(){
+  if(!s.queuePresets||s.queuePresets.length===0){ setStatus(s.lang==='ru'?'Нет пресетов':'No presets'); return; }
+  const names=s.queuePresets.map((x)=>x.name).join(', ');
+  const pick=prompt((s.lang==='ru'?'Выбери пресет: ':'Pick preset: ')+names,s.queuePresets[0].name);
+  if(!pick) return;
+  const found=s.queuePresets.find((x)=>x.name===pick.trim());
+  if(!found){ setStatus(s.lang==='ru'?'Не найдено':'Not found'); return; }
+  s.queue=(found.items||[]).slice();
+  setStatus((s.lang==='ru'?'Очередь загружена: ':'Queue loaded: ')+found.name);
+}
+function saveQuickDestination(){
+  const p=(el('quickDest').value||'').trim();
+  if(!p) return;
+  const list=[p,...(s.quickDestSaved||[]).filter((x)=>x!==p)].slice(0,20);
+  s.quickDestSaved=list;
+  jSave('icicle.quickDestSaved',list);
+  renderQuickDestSaved();
+}
+function openPalette(){
+  const ov=el('paletteOverlay'); ov.classList.add('show');
+  const input=el('paletteInput'); input.value=''; renderPaletteList(''); input.focus();
+}
+function closePalette(){ el('paletteOverlay').classList.remove('show'); }
+function paletteCommands(){
+  return [
+    {name:'Smart Scan',run:runSmartScan},
+    {name:'Run Tree',run:runTree},
+    {name:'Run Heavy',run:runHeavy},
+    {name:'Run WizMap',run:runWiz},
+    {name:'Find Empty Dirs',run:()=>el('findEmptyBtn').click()},
+    {name:'Start Watch',run:()=>el('watchStartBtn').click()},
+    {name:'Stop Watch',run:()=>el('watchStopBtn').click()},
+    {name:'Toggle Auto Refresh',run:toggleAutoRefresh},
+    {name:'Load Snapshots',run:()=>listSnapshots(true)},
+    {name:'Simulate Full Route',run:runRouteFullSimulation},
+    {name:'Export Heavy CSV',run:()=>el('expCsvBtn').click()},
+    {name:'Check Update',run:()=>el('updCheckBtn').click()},
+  ];
+}
+function renderPaletteList(q){
+  const list=el('paletteList'); list.innerHTML='';
+  const rows=paletteCommands().filter((c)=>!q||c.name.toLowerCase().includes(q.toLowerCase()));
+  for(const c of rows){
+    const item=document.createElement('div');
+    item.className='paletteItem';
+    item.textContent=c.name;
+    item.onclick=async()=>{ closePalette(); await c.run(); };
+    list.appendChild(item);
+  }
+}
 
 el('themeBtn').onclick=toggleTheme; el('langBtn').onclick=toggleLang;
-el('browseBtn').onclick=async()=>{try{const p=await window.go.main.App.PickFolder(); if(p){el('path').value=p; updateHint();}}catch(e){showErr(e)}};
-el('saveBtn').onclick=async()=>{try{await window.go.main.App.SaveFolder(el('path').value); await loadSaved();}catch(e){showErr(e)}};
-el('useBtn').onclick=()=>{if(el('saved').value)el('path').value=el('saved').value; updateHint();};
+el('smartScanBtn').onclick=runSmartScan; el('autoRefreshBtn').onclick=toggleAutoRefresh; el('cmdPaletteBtn').onclick=openPalette;
+const quickOpen=async(kind)=>{
+  try{
+    const d=await getDefaultsCached(false);
+    const next=d[kind]||d.home||'';
+    if(next){el('path').value=next; el('pathQuick').value=next;}
+    updateHintDebounced();
+    updateTopChips();
+    setView('analyze');
+  }catch(e){showErr(e)}
+};
+el('railDownloads').onclick=()=>quickOpen('downloads');
+el('railDesktop').onclick=()=>quickOpen('desktop');
+el('railDocuments').onclick=()=>quickOpen('documents');
+el('pathQuickUse').onclick=()=>{el('path').value=el('pathQuick').value||el('path').value; updateHintDebounced(); updateTopChips();};
+el('pathQuickBrowse').onclick=async()=>{try{const p=await callApp('PickFolder',[],{timeoutMs:30000}); if(p){el('pathQuick').value=p; el('path').value=p; updateHintDebounced(); updateTopChips();}}catch(e){showErr(e)}};
+el('pathQuickTree').onclick=async()=>{el('path').value=el('pathQuick').value||el('path').value; await runTree();};
+el('pathQuickHeavy').onclick=async()=>{el('path').value=el('pathQuick').value||el('path').value; await runHeavy();};
+el('pathQuickWiz').onclick=async()=>{el('path').value=el('pathQuick').value||el('path').value; await runWiz();};
+el('browseBtn').onclick=async()=>{try{const p=await callApp('PickFolder',[],{timeoutMs:30000}); if(p){el('path').value=p; el('pathQuick').value=p; updateHintDebounced(); updateTopChips();}}catch(e){showErr(e)}};
+el('saveBtn').onclick=async()=>{try{el('path').value=normPath(el('path').value); await window.go.main.App.SaveFolder(el('path').value); await loadSaved();}catch(e){showErr(e)}};
+el('useBtn').onclick=()=>{if(el('saved').value)el('path').value=normPath(el('saved').value); el('pathQuick').value=el('path').value; updateHintDebounced(); updateTopChips();};
 el('removeBtn').onclick=async()=>{try{if(el('saved').value){await window.go.main.App.RemoveSavedFolder(el('saved').value); await loadSaved();}}catch(e){showErr(e)}};
 el('treeBtn').onclick=runTree; el('heavyBtn').onclick=runHeavy;
 el('fullScanBtn').onclick=async()=>{try{await window.go.main.App.StartHeavyFullScan(el('path').value,parseInt(el('topN').value||'20',10)); startFullScanPoll();}catch(e){showErr(e)}};
 el('fullScanCancelBtn').onclick=async()=>{try{await window.go.main.App.CancelHeavyFullScan(); if(s.fullPoll){clearInterval(s.fullPoll); s.fullPoll=null;}}catch(e){showErr(e)}};
-el('watchStartBtn').onclick=async()=>{try{await window.go.main.App.StartWatch(el('path').value,!!el('dryRun').checked);}catch(e){showErr(e)}};
+el('watchStartBtn').onclick=async()=>{try{el('path').value=normPath(el('path').value); await window.go.main.App.StartWatch(el('path').value,!!el('dryRun').checked);}catch(e){showErr(e)}};
 el('watchStopBtn').onclick=async()=>{try{await window.go.main.App.StopWatch();}catch(e){showErr(e)}};
 el('undoBtn').onclick=async()=>{try{await window.go.main.App.UndoMove(); await runHeavy();}catch(e){showErr(e)}};
 el('cleanBtn').onclick=()=>el('findEmptyBtn').click();
 el('findEmptyBtn').onclick=async()=>{try{const dirs=await withLoader(()=>window.go.main.App.FindEmptyDirs(el('path').value,5000),tr('loading')); s.emptyDirs=dirs||[]; s.emptySelected=new Set(s.emptyDirs); renderEmptyDirs(); setStatus((s.lang==='ru'?'\u041d\u0430\u0439\u0434\u0435\u043d\u043e \u043f\u0443\u0441\u0442\u044b\u0445 \u043f\u0430\u043f\u043e\u043a: ':'Empty folders found: ')+s.emptyDirs.length);}catch(e){showErr(e)}};
 el('deleteEmptyBtn').onclick=async()=>{try{const dirs=s.emptyDirs.filter(p=>s.emptySelected.has(p)); if(dirs.length===0){setStatus(s.lang==='ru'?'\u0412\u044b\u0431\u0435\u0440\u0438 \u043f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438':'Select empty folders'); return;} const ok=confirm((s.lang==='ru'?'\u041f\u0435\u0440\u0435\u043c\u0435\u0441\u0442\u0438\u0442\u044c \u0432 \u043a\u043e\u0440\u0437\u0438\u043d\u0443 \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u044b\u0435 \u043f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438: ':'Move selected empty folders to Recycle Bin: ')+dirs.length+'?'); if(!ok)return; const res=await withLoader(()=>window.go.main.App.DeleteEmptyDirsToRecycle(dirs),tr('loading')); setStatus((s.lang==='ru'?'\u0412 \u043a\u043e\u0440\u0437\u0438\u043d\u0443: ':'Moved to Recycle Bin: ')+res.succeeded+'/'+res.processed); el('findEmptyBtn').click();}catch(e){showErr(e)}};
-el('clearLogBtn').onclick=async()=>{try{await window.go.main.App.ClearLog(); await pollLog();}catch(e){showErr(e)}};
-el('drivesRefresh').onclick=loadDrives; el('extBtn').onclick=async()=>{try{const s1=await window.go.main.App.ExtensionStatsFastFiltered(el('path').value,20,parseInt(el('maxFiles').value||'220000',10),parseInt(el('workers').value||'24',10),scanFilters()); el('log').textContent+='\n[extensions]\n'+JSON.stringify(s1,null,2)+'\n';}catch(e){showErr(e)}};
+el('clearLogBtn').onclick=async()=>{try{await window.go.main.App.ClearLog(); el('log').textContent=''; setStatus(s.lang==='ru'?'Лог очищен':'Log cleared');}catch(e){showErr(e)}};
+el('drivesRefresh').onclick=()=>loadDrives(true); el('extBtn').onclick=async()=>{try{const s1=await window.go.main.App.ExtensionStatsFastFiltered(el('path').value,20,parseInt(el('maxFiles').value||'220000',10),parseInt(el('workers').value||'24',10),scanFilters()); el('log').textContent+='\n[extensions]\n'+JSON.stringify(s1,null,2)+'\n';}catch(e){showErr(e)}};
 el('dupBtn').onclick=async()=>{try{const mode=el('dupMode').value||'quick-name'; const s1=await window.go.main.App.DuplicateFinderV2(el('path').value,mode,70000,30); s.dupGroups=s1||[]; renderDupGroups(); el('log').textContent+='\n[duplicates:'+mode+']\n'+JSON.stringify(s1,null,2)+'\n';}catch(e){showErr(e)}};
 el('wizBtn').onclick=runWiz;
 el('wizBackBtn').onclick=async()=>{ if(s.wizStack.length===0) return; const p=s.wizStack.pop(); await runWiz(p,false); };
 el('wizHomeBtn').onclick=async()=>{ const p=s.wizRoot||el('path').value; s.wizStack=[]; await runWiz(p,false); };
 el('wizFitBtn').onclick=()=>{ if(s.wiz) renderWiz(s.wiz); };
 el('wizToggleSideBtn').onclick=()=>{ s.wizSide=!s.wizSide; el('wizSide').style.display=s.wizSide?'block':'none'; el('wizWrap').style.gridTemplateColumns=s.wizSide?'minmax(0,1fr) 340px':'1fr'; el('wizToggleSideBtn').textContent=s.wizSide?tr('hideExt'):tr('showExt'); if(s.wiz) setTimeout(()=>renderWiz(s.wiz),40); };
-el('queueMoveBtn').onclick=()=>{const paths=selectedPaths(); if(paths.length===0)return; s.queue.push({type:'move',paths,dest:el('quickDest').value||'',auto:!(el('quickDest').value||'')});};
-el('queueDeleteBtn').onclick=()=>{const paths=selectedPaths(); if(paths.length===0)return; const safe=confirm(s.lang==='ru'?'\u0423\u0434\u0430\u043b\u044f\u0442\u044c \u0432 \u043a\u043e\u0440\u0437\u0438\u043d\u0443?':'Use recycle bin for batch delete?'); s.queue.push({type:'delete',paths,safe});};
+el('queueMoveBtn').onclick=()=>{const paths=selectedPaths(); if(paths.length===0)return; s.queue.push({type:'move',paths,dest:el('quickDest').value||'',auto:!(el('quickDest').value||'')}); setStatus((s.lang==='ru'?'В очереди задач: ':'Queued jobs: ')+s.queue.length);};
+el('queueDeleteBtn').onclick=()=>{const paths=selectedPaths(); if(paths.length===0)return; const safe=confirm(s.lang==='ru'?'\u0423\u0434\u0430\u043b\u044f\u0442\u044c \u0432 \u043a\u043e\u0440\u0437\u0438\u043d\u0443?':'Use recycle bin for batch delete?'); s.queue.push({type:'delete',paths,safe}); setStatus((s.lang==='ru'?'В очереди задач: ':'Queued jobs: ')+s.queue.length);};
 el('queueRunBtn').onclick=runQueue; el('queueClearBtn').onclick=()=>{s.queue=[]; setStatus(s.lang==='ru'?'\u041e\u0447\u0435\u0440\u0435\u0434\u044c \u043e\u0447\u0438\u0449\u0435\u043d\u0430':'Queue cleared');};
+el('queueSavePresetBtn').onclick=saveQueuePreset; el('queueLoadPresetBtn').onclick=loadQueuePreset;
 el('expCsvBtn').onclick=async()=>{try{await window.go.main.App.ExportHeavy(el('path').value,parseInt(el('topN').value||'20',10),'csv');}catch(e){showErr(e)}};
 el('expJsonBtn').onclick=async()=>{try{await window.go.main.App.ExportHeavy(el('path').value,parseInt(el('topN').value||'20',10),'json');}catch(e){showErr(e)}};
 el('expMdBtn').onclick=async()=>{try{await window.go.main.App.ExportHeavy(el('path').value,parseInt(el('topN').value||'20',10),'md');}catch(e){showErr(e)}};
@@ -592,25 +1238,37 @@ el('updCheckBtn').onclick=async()=>{try{const u=await window.go.main.App.CheckFo
 el('updApplyBtn').onclick=async()=>{try{const msg=await window.go.main.App.ApplyUpdate(); setStatus(msg||'updating...');}catch(e){showErr(e)}};
 el('scheduleStartBtn').onclick=startSchedule; el('scheduleStopBtn').onclick=stopSchedule; el('scheduleNowBtn').onclick=runScheduleNow;
 el('cleanupSchedStartBtn').onclick=startCleanupSchedule; el('cleanupSchedStopBtn').onclick=stopCleanupSchedule; el('cleanupRunNowBtn').onclick=runCleanupNow;
-el('snapshotsBtn').onclick=listSnapshots; el('historyBtn').onclick=showDriveHistory;
+el('snapshotsBtn').onclick=()=>listSnapshots(true); el('historyBtn').onclick=showDriveHistory;
 el('presetScanBtn').onclick=scanPreset; el('presetApplyBtn').onclick=applyPreset;
 el('profileExportBtn').onclick=exportProfile; el('profileImportBtn').onclick=importProfile; el('routesBtn').onclick=openRouteEditor; el('routeTestBtn').onclick=testRoute;
 el('teamPackExportBtn').onclick=exportTeamPack; el('teamPackImportBtn').onclick=importTeamPack;
+el('teamPackImportUrlBtn').onclick=importTeamPackFromURL;
 el('saveDiskPresetBtn').onclick=()=>saveDiskPresetFor(''); el('loadDiskPresetBtn').onclick=()=>loadDiskPresetFor('');
-el('routeRunBtn').onclick=runRouteSamples; el('routeCloseBtn').onclick=()=>el('routePanel').style.display='none';
+el('saveQuickDestBtn').onclick=saveQuickDestination; el('quickDestSaved').onchange=()=>{ if(el('quickDestSaved').value) el('quickDest').value=el('quickDestSaved').value; };
+el('applyPerfBtn').onclick=syncPerfUI; el('perfMode').onchange=syncPerfUI;
+el('heavyClearFiltersBtn').onclick=()=>{el('heavySearch').value=''; el('heavyMinSize').value=''; el('heavySort').value='size-desc'; localStorage.removeItem('icicle.heavySearch'); localStorage.removeItem('icicle.heavyMinSize'); localStorage.setItem('icicle.heavySort','size-desc'); s.heavyRenderLimit=200; renderHeavy();};
+el('heavyRefreshBtn').onclick=runHeavy;
+el('routeRunBtn').onclick=runRouteSamples; el('routeFullRunBtn').onclick=runRouteFullSimulation; el('routeCloseBtn').onclick=()=>el('routePanel').style.display='none';
 el('routeEditorCloseBtn').onclick=()=>el('routeEditorPanel').style.display='none'; el('routeAddBtn').onclick=()=>{s.routeRules.push({id:'',name:'',enabled:true,kind:'ext',pattern:'',target:''}); renderRouteEditor();}; el('routeReloadBtn').onclick=openRouteEditor; el('routeSaveBtn').onclick=saveRouteRules; el('routeConflictBtn').onclick=detectRouteConflicts; el('routeSolveBtn').onclick=autoSolveRoutePriority;
 el('snapDiffBtn').onclick=diffSnapshots;
 el('snapMapBtn').onclick=compareSnapshotsTreemap;
+el('snapExpCsvBtn').onclick=()=>exportSnapshotCompare('csv');
+el('snapExpJsonBtn').onclick=()=>exportSnapshotCompare('json');
+el('snapExpMdBtn').onclick=()=>exportSnapshotCompare('md');
+el('wizDeltaRefreshBtn').onclick=()=>listSnapshots(false);
+el('wizDeltaSnapshot').addEventListener('change',()=>{ if(s.wizPath||el('path').value){ runWiz(s.wizPath||el('path').value,false); }});
 el('dupKeepNewestBtn').onclick=()=>duplicateKeep('newest'); el('dupKeepOldestBtn').onclick=()=>duplicateKeep('oldest');
 el('diagBtn').onclick=watchDiagnostics;
 el('wizExtFilter').addEventListener('input',()=>{ if(s.wiz) renderWiz(s.wiz); });
 el('wizExtSort').addEventListener('change',()=>{ if(s.wiz) renderWiz(s.wiz); });
 el('historyCloseBtn').onclick=()=>el('driveHistoryPanel').style.display='none'; el('snapCloseBtn').onclick=()=>el('snapshotPanel').style.display='none';
 el('dupCloseBtn').onclick=()=>el('dupPanel').style.display='none'; el('diagCloseBtn').onclick=()=>el('diagPanel').style.display='none'; el('presetCloseBtn').onclick=()=>el('presetPanel').style.display='none';
-el('path').addEventListener('input',updateHint);
-el('drives').addEventListener('click',async(e)=>{const t=e.target; if(!(t instanceof HTMLElement))return; if(t.dataset.use){el('path').value=t.dataset.use; updateHint(); try{await loadDiskPresetFor(String(t.dataset.use).slice(0,2));}catch{}} if(t.dataset.open){try{await window.go.main.App.OpenDrive(t.dataset.open);}catch(err){showErr(err)}} if(t.dataset.tree){el('path').value=t.dataset.tree; try{await loadDiskPresetFor(String(t.dataset.tree).slice(0,2));}catch{} await runTree();} if(t.dataset.heavy){el('path').value=t.dataset.heavy; try{await loadDiskPresetFor(String(t.dataset.heavy).slice(0,2));}catch{} await runHeavy();} if(t.dataset.savepreset){await saveDiskPresetFor(t.dataset.savepreset);} if(t.dataset.loadpreset){await loadDiskPresetFor(t.dataset.loadpreset);}});
+el('path').addEventListener('input',()=>{updateHintDebounced(); updateTopChips();});
+el('pathQuick').addEventListener('input',()=>{el('path').value=el('pathQuick').value; updateHintDebounced(); updateTopChips();});
+el('pathQuick').addEventListener('keydown',async(e)=>{if(e.key==='Enter'){e.preventDefault(); await runHeavy();}});
+el('drives').addEventListener('click',async(e)=>{const t=e.target; if(!(t instanceof HTMLElement))return; if(t.dataset.use){el('path').value=t.dataset.use; el('pathQuick').value=t.dataset.use; updateHintDebounced(); try{await loadDiskPresetFor(String(t.dataset.use).slice(0,2),true);}catch{}} if(t.dataset.open){try{await window.go.main.App.OpenDrive(t.dataset.open);}catch(err){showErr(err)}} if(t.dataset.tree){el('path').value=t.dataset.tree; el('pathQuick').value=t.dataset.tree; try{await loadDiskPresetFor(String(t.dataset.tree).slice(0,2),true);}catch{} await runTree();} if(t.dataset.heavy){el('path').value=t.dataset.heavy; el('pathQuick').value=t.dataset.heavy; try{await loadDiskPresetFor(String(t.dataset.heavy).slice(0,2),true);}catch{} await runHeavy();} if(t.dataset.savepreset){await saveDiskPresetFor(t.dataset.savepreset);} if(t.dataset.loadpreset){await loadDiskPresetFor(t.dataset.loadpreset,false);}});
 el('routeRulesBody').addEventListener('click',(e)=>{const t=e.target; if(!(t instanceof HTMLElement))return; if(t.dataset.act==='del'){const row=t.closest('.routeGrid'); if(row) row.remove();}});
-el('chkAll').addEventListener('change',(e)=>{const on=e.target.checked; s.selected.clear(); if(on) for(const it of s.heavy) s.selected.add(it.path); renderHeavy();});
+el('chkAll').addEventListener('change',(e)=>{const on=e.target.checked; s.selected.clear(); if(on) for(const it of (s.heavyFiltered||s.heavy)) s.selected.add(it.path); renderHeavy();});
 el('emptyAll').addEventListener('change',(e)=>{const on=e.target.checked; s.emptySelected.clear(); if(on) for(const p of s.emptyDirs) s.emptySelected.add(p); renderEmptyDirs();});
 el('heavyBody').addEventListener('click',async(e)=>{const t=e.target; if(!(t instanceof HTMLElement))return; if(t.dataset.openf){try{await window.go.main.App.OpenPath(t.dataset.openf);}catch(err){showErr(err)}} if(t.dataset.reveal){try{await window.go.main.App.RevealPath(t.dataset.reveal);}catch(err){showErr(err)}} if(t.dataset.amove) await moveFile(t.dataset.amove,true); if(t.dataset.move) await moveFile(t.dataset.move,false); if(t.dataset.del) await deleteFile(t.dataset.del);});
 el('heavyBody').addEventListener('change',async(e)=>{
@@ -633,8 +1291,36 @@ el('heavyBody').addEventListener('change',async(e)=>{
   }
 });
 el('emptyList').addEventListener('change',(e)=>{const t=e.target; if(!(t instanceof HTMLElement))return; if(t.dataset.edir){if(t.checked)s.emptySelected.add(t.dataset.edir); else s.emptySelected.delete(t.dataset.edir); el('emptyAll').checked=s.emptyDirs.length>0&&s.emptyDirs.every(p=>s.emptySelected.has(p));}});
+el('heavySearch').addEventListener('input',()=>{try{localStorage.setItem('icicle.heavySearch',el('heavySearch').value||'');}catch{} debouncedRenderHeavy();});
+el('heavyMinSize').addEventListener('input',()=>{try{localStorage.setItem('icicle.heavyMinSize',el('heavyMinSize').value||'');}catch{} debouncedRenderHeavy();});
+el('heavySort').addEventListener('change',()=>{try{localStorage.setItem('icicle.heavySort',el('heavySort').value||'');}catch{} s.heavyRenderLimit=200; renderHeavy();});
+el('heavyMoreBtn').addEventListener('click',()=>{ s.heavyRenderLimit+=200; renderHeavy();});
+el('topN').addEventListener('change',saveScanInputs);
+el('maxFiles').addEventListener('change',saveScanInputs);
+el('workers').addEventListener('change',saveScanInputs);
+el('fastMode').addEventListener('change',saveScanInputs);
+el('wizTurbo').addEventListener('change',saveScanInputs);
+el('dupMode').addEventListener('change',saveScanInputs);
+el('selTop10Btn').onclick=()=>selectTopN(10); el('selTop50Btn').onclick=()=>selectTopN(50); el('selInvertBtn').onclick=invertSelection; el('copySelBtn').onclick=copySelectedPaths;
+el('paletteOverlay').addEventListener('click',(e)=>{if(e.target===el('paletteOverlay')) closePalette();});
+el('paletteInput').addEventListener('input',(e)=>renderPaletteList(e.target.value||''));
+document.querySelectorAll('.railBtn').forEach((btn)=>{
+  if(btn.dataset.view){
+    btn.addEventListener('click',()=>setView(btn.dataset.view));
+  }
+});
 
 document.addEventListener('keydown',async(e)=>{
+  if(e.altKey && e.key==='1'){ e.preventDefault(); setView('dashboard'); return; }
+  if(e.altKey && e.key==='2'){ e.preventDefault(); setView('analyze'); return; }
+  if(e.altKey && e.key==='3'){ e.preventDefault(); setView('ops'); return; }
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); openPalette(); return; }
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='f'){ e.preventDefault(); setView('analyze'); el('heavySearch').focus(); return; }
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='r'){ e.preventDefault(); runSmartScan(); return; }
+  if((e.ctrlKey||e.metaKey) && e.shiftKey && e.key.toLowerCase()==='h'){ e.preventDefault(); runHeavy(); return; }
+  if((e.ctrlKey||e.metaKey) && e.shiftKey && e.key.toLowerCase()==='t'){ e.preventDefault(); runTree(); return; }
+  if((e.ctrlKey||e.metaKey) && e.shiftKey && e.key.toLowerCase()==='w'){ e.preventDefault(); runWiz(); return; }
+  if(e.key==='Escape' && el('paletteOverlay').classList.contains('show')){ e.preventDefault(); closePalette(); return; }
   const tag=(e.target && e.target.tagName)?String(e.target.tagName).toLowerCase():'';
   if(tag==='input' || tag==='textarea' || tag==='select') return;
   if(!s.wizRects || s.wizRects.length===0) return;
@@ -644,7 +1330,7 @@ document.addEventListener('keydown',async(e)=>{
   if(e.key==='Backspace'){ e.preventDefault(); if(s.wizStack.length>0){ const p=s.wizStack.pop(); await runWiz(p,false);} return; }
 });
 
-(async()=>{try{const d=await window.go.main.App.Defaults(); el('path').value=d.downloads||d.home||''; el('verPill').textContent=d.version||'-'; await loadSaved(); await loadDrives(); applyLang(); setInterval(pollLog,900); setTimeout(()=>runWiz(),250);}catch(e){showErr(e)}})();
+(async()=>{try{const d=await getDefaultsCached(true); el('path').value=d.downloads||d.home||''; el('pathQuick').value=el('path').value; el('verPill').textContent=d.version||'-'; loadClientState(); el('heavySearch').value=localStorage.getItem('icicle.heavySearch')||''; el('heavyMinSize').value=localStorage.getItem('icicle.heavyMinSize')||''; el('heavySort').value=localStorage.getItem('icicle.heavySort')||'size-desc'; await loadSaved(); await loadDrives(true); await listSnapshots(false); applyLang(); const v=localStorage.getItem('icicle.view')||'analyze'; setView(v); pollLog(); setTimeout(()=>runWiz(),250);}catch(e){showErr(e)}})();
 window.addEventListener('resize',()=>{ if(s.wiz) renderWiz(s.wiz); });
 </script>
 </body>

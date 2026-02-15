@@ -342,6 +342,41 @@ func fastJoin(dir, name string) string {
 	return dir + string(filepath.Separator) + name
 }
 
+func firstPathSegment(rel string) string {
+	if rel == "" {
+		return ""
+	}
+	for i := 0; i < len(rel); i++ {
+		if rel[i] == '\\' || rel[i] == '/' {
+			if i == 0 {
+				return ""
+			}
+			return rel[:i]
+		}
+	}
+	return rel
+}
+
+func fastLowerExt(path string) string {
+	// Faster than filepath.Ext for hot loops; supports Windows and POSIX separators.
+	lastSep := -1
+	lastDot := -1
+	for i := len(path) - 1; i >= 0; i-- {
+		c := path[i]
+		if c == '\\' || c == '/' {
+			lastSep = i
+			break
+		}
+		if c == '.' && lastDot < 0 {
+			lastDot = i
+		}
+	}
+	if lastDot <= lastSep || lastDot < 0 || lastDot == len(path)-1 {
+		return "(no_ext)"
+	}
+	return strings.ToLower(path[lastDot:])
+}
+
 func ScanTopFiles(root string, topN int) (*HeavyStats, error) {
 	root = filepath.Clean(root)
 	stats := &HeavyStats{Root: root}
@@ -397,11 +432,11 @@ func ScanTree(root string, topN int) (*TreeStats, error) {
 		if rel == "" {
 			stats.RootFiles += size
 		} else {
-			idx := strings.IndexAny(rel, `\/`)
-			if idx < 0 {
+			child := firstPathSegment(rel)
+			if child == rel || child == "" {
 				stats.RootFiles += size
-			} else if idx > 0 {
-				stats.ByChild[rel[:idx]] += size
+			} else {
+				stats.ByChild[child] += size
 			}
 		}
 		top.Push(FileInfo{Path: path, Size: size})
@@ -440,11 +475,11 @@ func ScanTreeLimited(root string, topN int, maxFiles int) (*TreeStats, int, bool
 		if rel == "" {
 			stats.RootFiles += size
 		} else {
-			idx := strings.IndexAny(rel, `\/`)
-			if idx < 0 {
+			child := firstPathSegment(rel)
+			if child == rel || child == "" {
 				stats.RootFiles += size
-			} else if idx > 0 {
-				stats.ByChild[rel[:idx]] += size
+			} else {
+				stats.ByChild[child] += size
 			}
 		}
 		top.Push(FileInfo{Path: path, Size: size})
@@ -469,10 +504,7 @@ func ScanExtStatsLimited(root string, maxFiles int) ([]ExtStatsItem, int, bool, 
 	byExt := map[string]ExtStatsItem{}
 	var mu sync.Mutex
 	seen, limited, err := walkFilesConcurrent(root, maxFiles, func(path string, size int64) {
-		ext := strings.ToLower(filepath.Ext(path))
-		if ext == "" {
-			ext = "(no_ext)"
-		}
+		ext := fastLowerExt(path)
 		mu.Lock()
 		cur := byExt[ext]
 		cur.Ext = ext
@@ -512,17 +544,14 @@ func ScanOverviewLimited(root string, maxFiles int, topFilesN int, topExtN int) 
 
 	var mu sync.Mutex
 	seen, limited, err := walkFilesConcurrent(root, maxFiles, func(path string, size int64) {
-		ext := strings.ToLower(filepath.Ext(path))
-		if ext == "" {
-			ext = "(no_ext)"
-		}
+		ext := fastLowerExt(path)
 		rel := path
 		if strings.HasPrefix(path, rootPrefix) {
 			rel = path[len(rootPrefix):]
 		}
 		child := "(root)"
-		if idx := strings.IndexAny(rel, `\/`); idx > 0 {
-			child = rel[:idx]
+		if first := firstPathSegment(rel); first != "" && first != rel {
+			child = first
 		}
 
 		mu.Lock()

@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	goruntime "runtime"
 	"sort"
 	"strconv"
@@ -36,6 +37,7 @@ type HeavyItem struct {
 	Path  string `json:"path"`
 	Size  int64  `json:"size"`
 	Human string `json:"human"`
+	New   bool   `json:"new,omitempty"`
 }
 
 type HeavyResult struct {
@@ -129,9 +131,10 @@ type App struct {
 	}
 	fullCancel context.CancelFunc
 
-	driveHistory map[string][]DriveHistoryPoint
-	schedule     scheduledScanState
-	cleanup      scheduledCleanupState
+	driveHistory    map[string][]DriveHistoryPoint
+	schedule        scheduledScanState
+	cleanup         scheduledCleanupState
+	heavySeenByRoot map[string]map[string]struct{}
 }
 
 type DriveHistoryPoint struct {
@@ -153,11 +156,14 @@ type ExtStatsResult struct {
 }
 
 type VizRect struct {
-	Name  string `json:"name"`
-	Path  string `json:"path"`
-	Kind  string `json:"kind"`
-	Size  int64  `json:"size"`
-	Human string `json:"human"`
+	Name       string `json:"name"`
+	Path       string `json:"path"`
+	Kind       string `json:"kind"`
+	Size       int64  `json:"size"`
+	Human      string `json:"human"`
+	Delta      int64  `json:"delta,omitempty"`
+	DeltaHuman string `json:"deltaHuman,omitempty"`
+	IsNew      bool   `json:"isNew,omitempty"`
 }
 
 type WizMapResult struct {
@@ -286,7 +292,10 @@ type BatchResult struct {
 }
 
 func NewApp(appPath string) *App {
-	return &App{appPath: appPath}
+	return &App{
+		appPath:         appPath,
+		heavySeenByRoot: map[string]map[string]struct{}{},
+	}
 }
 
 func (a *App) startup(ctx context.Context) {
@@ -506,6 +515,7 @@ func (a *App) RunHeavy(path string, n int) ([]HeavyItem, error) {
 		}
 		b.WriteString(fmt.Sprintf("%8s  %s\n", ui.HumanBytes(f.Size), rel))
 	}
+	items = a.markNewHeavy(path, items)
 	a.appendLog(b.String())
 	return items, nil
 }
@@ -541,6 +551,7 @@ func (a *App) RunHeavyFast(path string, n int, maxFiles int, workers int) (Heavy
 	for _, f := range stats.TopFiles {
 		items = append(items, HeavyItem{Path: f.Path, Size: f.Size, Human: ui.HumanBytes(f.Size)})
 	}
+	items = a.markNewHeavy(path, items)
 	out := HeavyResult{
 		Items:      items,
 		Seen:       seen,
@@ -1602,6 +1613,83 @@ func (a *App) WizMapTurbo(path string, maxFiles int, topDirs int, topFiles int, 
 	return res, err
 }
 
+func (a *App) WizMapWithDelta(path string, snapshotFile string, maxFiles int, workers int, topDirs int, topFiles int, topExt int) (WizMapResult, error) {
+	res, err := a.WizMap(path, maxFiles, workers, topDirs, topFiles, topExt)
+	if err != nil {
+		return WizMapResult{}, err
+	}
+	snapshotFile = strings.TrimSpace(snapshotFile)
+	if snapshotFile == "" {
+		return res, nil
+	}
+	snap, err := readSnapshotFile(snapshotFile)
+	if err != nil {
+		return WizMapResult{}, err
+	}
+	prev := make(map[string]int64, len(snap.Items))
+	for _, it := range snap.Items {
+		prev[normalizePathKey(it.Path)] = it.Size
+	}
+	a.applySnapshotDeltaToWiz(&res, prev)
+	a.appendLog(fmt.Sprintf("[wizmap-delta] snapshot=%s rects=%d", snapshotFile, len(res.Rects)))
+	return res, nil
+}
+
+func (a *App) applySnapshotDeltaToWiz(res *WizMapResult, prev map[string]int64) {
+	if res == nil || len(res.Rects) == 0 || len(prev) == 0 {
+		return
+	}
+	dirCache := map[string]int64{}
+	for i := range res.Rects {
+		r := &res.Rects[i]
+		key := normalizePathKey(r.Path)
+		if key == "" {
+			continue
+		}
+		prevSize, ok := prev[key]
+		if r.Kind == "dir" {
+			if cached, found := dirCache[key]; found {
+				prevSize = cached
+				ok = true
+			} else {
+				sum := int64(0)
+				prefix := key
+				if !strings.HasSuffix(prefix, "\\") {
+					prefix += "\\"
+				}
+				for p, s := range prev {
+					if p == key || strings.HasPrefix(p, prefix) {
+						sum += s
+					}
+				}
+				if sum > 0 {
+					prevSize = sum
+					ok = true
+					dirCache[key] = sum
+				}
+			}
+		}
+		if !ok {
+			if r.Kind == "file" {
+				r.IsNew = true
+				r.Delta = r.Size
+				r.DeltaHuman = "+" + ui.HumanBytes(r.Size)
+			}
+			continue
+		}
+		delta := r.Size - prevSize
+		r.Delta = delta
+		if delta > 0 {
+			r.DeltaHuman = "+" + ui.HumanBytes(delta)
+		} else {
+			r.DeltaHuman = ui.HumanBytes(delta)
+		}
+		if prevSize == 0 && r.Size > 0 {
+			r.IsNew = true
+		}
+	}
+}
+
 func (a *App) DuplicateNames(path string, maxFiles int, top int) ([]DupStat, error) {
 	path = a.normalizePath(path, a.folders.Home)
 	files := 0
@@ -2139,6 +2227,128 @@ func (a *App) SnapshotTreemapDiff(leftFile string, rightFile string, top int) (S
 	return out, nil
 }
 
+func (a *App) ExportSnapshotCompare(leftFile string, rightFile string, top int, format string, mode string) (string, error) {
+	format = strings.ToLower(strings.TrimSpace(format))
+	mode = strings.ToLower(strings.TrimSpace(mode))
+	if format == "" {
+		format = "csv"
+	}
+	if mode == "" {
+		mode = "diff"
+	}
+
+	var (
+		body   string
+		filter runtime.FileFilter
+		ext    string
+	)
+	switch format {
+	case "json":
+		filter = runtime.FileFilter{DisplayName: "JSON", Pattern: "*.json"}
+		ext = "json"
+	case "md":
+		filter = runtime.FileFilter{DisplayName: "Markdown", Pattern: "*.md"}
+		ext = "md"
+	default:
+		filter = runtime.FileFilter{DisplayName: "CSV", Pattern: "*.csv"}
+		ext = "csv"
+		format = "csv"
+	}
+
+	if mode == "treemap" {
+		res, err := a.SnapshotTreemapDiff(leftFile, rightFile, top)
+		if err != nil {
+			return "", err
+		}
+		switch format {
+		case "json":
+			raw, err := json.MarshalIndent(res, "", "  ")
+			if err != nil {
+				return "", err
+			}
+			body = string(raw) + "\n"
+		case "md":
+			var b strings.Builder
+			b.WriteString("# Snapshot Treemap Compare\n\n")
+			b.WriteString("- Left: `" + strings.ReplaceAll(res.Left, "`", "'") + "`\n")
+			b.WriteString("- Right: `" + strings.ReplaceAll(res.Right, "`", "'") + "`\n")
+			b.WriteString("- Total abs delta: **" + res.TotalHuman + "**\n\n")
+			b.WriteString("| Status | Delta | Path |\n|---|---:|---|\n")
+			for _, it := range res.Items {
+				b.WriteString("| " + it.Status + " | " + it.Human + " | `" + strings.ReplaceAll(it.Path, "`", "'") + "` |\n")
+			}
+			body = b.String()
+		default:
+			var b strings.Builder
+			b.WriteString("status,delta,path\n")
+			for _, it := range res.Items {
+				b.WriteString(csvLine([]string{it.Status, it.Human, it.Path}) + "\n")
+			}
+			body = b.String()
+		}
+	} else {
+		res, err := a.SnapshotDiff(leftFile, rightFile, top)
+		if err != nil {
+			return "", err
+		}
+		switch format {
+		case "json":
+			raw, err := json.MarshalIndent(res, "", "  ")
+			if err != nil {
+				return "", err
+			}
+			body = string(raw) + "\n"
+		case "md":
+			var b strings.Builder
+			b.WriteString("# Snapshot Diff\n\n")
+			b.WriteString("- Left: `" + strings.ReplaceAll(res.Left, "`", "'") + "`\n")
+			b.WriteString("- Right: `" + strings.ReplaceAll(res.Right, "`", "'") + "`\n")
+			b.WriteString("- Added: **" + strconv.Itoa(res.Added) + "**\n")
+			b.WriteString("- Removed: **" + strconv.Itoa(res.Removed) + "**\n")
+			b.WriteString("- Changed: **" + strconv.Itoa(res.Changed) + "**\n\n")
+			b.WriteString("| Status | Delta | Path |\n|---|---:|---|\n")
+			for _, it := range res.Top {
+				b.WriteString("| " + it.Status + " | " + it.Human + " | `" + strings.ReplaceAll(it.Path, "`", "'") + "` |\n")
+			}
+			body = b.String()
+		default:
+			var b strings.Builder
+			b.WriteString("status,delta,path\n")
+			for _, it := range res.Top {
+				b.WriteString(csvLine([]string{it.Status, it.Human, it.Path}) + "\n")
+			}
+			body = b.String()
+		}
+	}
+
+	filename := "snapshot-compare-" + time.Now().Format("20060102-150405") + "." + ext
+	target, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           "Export snapshot compare",
+		DefaultFilename: filename,
+		Filters:         []runtime.FileFilter{filter},
+	})
+	if err != nil {
+		return "", err
+	}
+	if strings.TrimSpace(target) == "" {
+		return "", nil
+	}
+	if err := os.WriteFile(target, []byte(body), 0o644); err != nil {
+		return "", err
+	}
+	a.appendLog("[snapshot-export] " + target)
+	return target, nil
+}
+
+func csvLine(parts []string) string {
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		s := strings.ReplaceAll(p, "\"", "\"\"")
+		out = append(out, "\""+s+"\"")
+	}
+	return strings.Join(out, ",")
+}
+
 func readSnapshotFile(path string) (snapshotPayload, error) {
 	path = strings.TrimSpace(path)
 	if path == "" {
@@ -2161,6 +2371,53 @@ func (a *App) normalizePath(path string, fallback string) string {
 		path = fallback
 	}
 	return filepath.Clean(path)
+}
+
+func normalizePathKey(path string) string {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return ""
+	}
+	return strings.ToLower(filepath.Clean(path))
+}
+
+func (a *App) markNewHeavy(root string, items []HeavyItem) []HeavyItem {
+	if len(items) == 0 {
+		return items
+	}
+	rootKey := normalizePathKey(root)
+	if rootKey == "" {
+		return items
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.heavySeenByRoot == nil {
+		a.heavySeenByRoot = map[string]map[string]struct{}{}
+	}
+	seen := a.heavySeenByRoot[rootKey]
+	if seen == nil {
+		seen = map[string]struct{}{}
+		for _, it := range items {
+			seen[normalizePathKey(it.Path)] = struct{}{}
+		}
+		a.heavySeenByRoot[rootKey] = seen
+		return items
+	}
+	if len(seen) > 500000 {
+		seen = map[string]struct{}{}
+	}
+	for i := range items {
+		key := normalizePathKey(items[i].Path)
+		if key == "" {
+			continue
+		}
+		if _, ok := seen[key]; !ok {
+			items[i].New = true
+		}
+		seen[key] = struct{}{}
+	}
+	a.heavySeenByRoot[rootKey] = seen
+	return items
 }
 
 func (a *App) pushMove(from, to string) {
@@ -2326,7 +2583,7 @@ func detectUserFolders() userFolders {
 		if err != nil || strings.TrimSpace(v) == "" {
 			return fallback
 		}
-		v = os.ExpandEnv(v)
+		v = expandWindowsEnv(v)
 		if strings.TrimSpace(v) == "" {
 			return fallback
 		}
@@ -2336,6 +2593,23 @@ func detectUserFolders() userFolders {
 	f.Documents = read("Personal", f.Documents)
 	f.Downloads = read("{374DE290-123F-4565-9164-39C4925E467B}", f.Downloads)
 	return f
+}
+
+var winEnvPattern = regexp.MustCompile(`%([^%]+)%`)
+
+func expandWindowsEnv(in string) string {
+	out := os.ExpandEnv(in)
+	out = winEnvPattern.ReplaceAllStringFunc(out, func(m string) string {
+		key := strings.Trim(m, "%")
+		if key == "" {
+			return m
+		}
+		if v, ok := os.LookupEnv(key); ok && strings.TrimSpace(v) != "" {
+			return v
+		}
+		return m
+	})
+	return out
 }
 
 func deleteToRecycleBin(path string) error {
