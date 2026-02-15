@@ -36,6 +36,8 @@ jobs:
         run: go test ./...
       - name: Glossary QA
         run: python3 scripts/check_glossary.py
+      - name: Localization regression
+        run: python3 scripts/check_gui_localization.py
       - name: Race (core packages)
         env:
           CGO_ENABLED: 1
@@ -82,6 +84,12 @@ jobs:
           Copy-Item icicle-desktop.exe build/bin/icicle-desktop.exe -Force
           $ver = "${{ github.event.release.tag_name }}".TrimStart("v")
           makensis /DVERSION=$ver scripts/installer.nsi
+      - name: Build installer (.msi, WiX alternative)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $ver = "${{ github.event.release.tag_name }}".TrimStart("v")
+          powershell -ExecutionPolicy Bypass -File .\scripts\build_msi_wix.ps1 -Version $ver -SourceDir (Get-Location)
       - name: Sign Binaries (optional)
         if: ${{ env.SIGN_PFX_B64 != '' && env.SIGN_PFX_PASSWORD != '' }}
         shell: pwsh
@@ -96,6 +104,8 @@ jobs:
           signtool sign /sha1 $thumb /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 icicle-desktop.exe
           $installer = Get-ChildItem dist\\*-setup.exe -ErrorAction SilentlyContinue | Select-Object -First 1
           if ($installer) { signtool sign /sha1 $thumb /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $installer.FullName }
+          $msi = Get-ChildItem dist\\*-setup.msi -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($msi) { signtool sign /sha1 $thumb /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $msi.FullName }
       - name: Package + checksums
         shell: pwsh
         run: |
@@ -103,11 +113,13 @@ jobs:
           Copy-Item icicle.exe dist/icicle.exe
           Copy-Item icicle-desktop.exe dist/icicle-desktop.exe
           $installer = Get-ChildItem dist\\*-setup.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+          $msi = Get-ChildItem dist\\*-setup.msi -ErrorAction SilentlyContinue | Select-Object -First 1
           $v = "${{ github.event.release.tag_name }}"
           $zip = "dist/icicle-$v-windows-x64.zip"
           if (Test-Path $zip) { Remove-Item $zip -Force }
           $pack = @(\"dist/icicle.exe\",\"dist/icicle-desktop.exe\")
           if ($installer) { $pack += $installer.FullName }
+          if ($msi) { $pack += $msi.FullName }
           Compress-Archive -Path $pack -DestinationPath $zip
           $sha1 = (Get-FileHash dist/icicle.exe -Algorithm SHA256).Hash.ToLower()
           $sha2 = (Get-FileHash dist/icicle-desktop.exe -Algorithm SHA256).Hash.ToLower()
@@ -121,6 +133,10 @@ jobs:
             $shaSetup = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLower()
             $lines += "$shaSetup  $($installer.Name)"
           }
+          if ($msi) {
+            $shaMsi = (Get-FileHash $msi.FullName -Algorithm SHA256).Hash.ToLower()
+            $lines += "$shaMsi  $($msi.Name)"
+          }
           $lines | Set-Content dist/SHA256SUMS.txt
       - name: Upload release artifacts
         uses: softprops/action-gh-release@v2
@@ -129,5 +145,6 @@ jobs:
             dist/icicle.exe
             dist/icicle-desktop.exe
             dist/*-setup.exe
+            dist/*-setup.msi
             dist/*.zip
             dist/SHA256SUMS.txt

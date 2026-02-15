@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"icicle/internal/organize"
@@ -29,6 +30,14 @@ type RouteMatch struct {
 	RuleID  string `json:"ruleId"`
 	Rule    string `json:"rule"`
 	Target  string `json:"target"`
+}
+
+type RouteConflict struct {
+	Type    string `json:"type"`
+	RuleA   string `json:"ruleA"`
+	RuleB   string `json:"ruleB"`
+	Pattern string `json:"pattern"`
+	Note    string `json:"note"`
 }
 
 func (a *App) routeRulesPath() string {
@@ -125,6 +134,7 @@ func (a *App) SimulateRoutingSamples(raw string) ([]RouteMatch, error) {
 func (a *App) resolveAutoDestination(src string) (string, bool) {
 	rules, err := a.ListRoutingRules()
 	if err == nil {
+		sortRouteRules(rules)
 		for _, r := range rules {
 			if !r.Enabled {
 				continue
@@ -140,6 +150,110 @@ func (a *App) resolveAutoDestination(src string) (string, bool) {
 		}
 	}
 	return organize.DestinationDir(a.folders.Home, src)
+}
+
+func sortRouteRules(rules []RouteRule) {
+	sort.SliceStable(rules, func(i, j int) bool {
+		return rules[i].Priority < rules[j].Priority
+	})
+}
+
+func (a *App) DetectRoutingConflicts() ([]RouteConflict, error) {
+	rules, err := a.ListRoutingRules()
+	if err != nil {
+		return nil, err
+	}
+	out := []RouteConflict{}
+	for i := 0; i < len(rules); i++ {
+		ri := rules[i]
+		if !ri.Enabled {
+			continue
+		}
+		for j := i + 1; j < len(rules); j++ {
+			rj := rules[j]
+			if !rj.Enabled {
+				continue
+			}
+			if strings.EqualFold(ri.Kind, rj.Kind) && strings.EqualFold(strings.TrimSpace(ri.Pattern), strings.TrimSpace(rj.Pattern)) {
+				if strings.EqualFold(expandRouteTarget(ri.Target, a.folders.Home), expandRouteTarget(rj.Target, a.folders.Home)) {
+					continue
+				}
+				out = append(out, RouteConflict{
+					Type:    "overlap",
+					RuleA:   ri.Name,
+					RuleB:   rj.Name,
+					Pattern: ri.Pattern,
+					Note:    "same matcher routes to different targets",
+				})
+				continue
+			}
+			if strings.EqualFold(ri.Kind, "ext") && strings.EqualFold(rj.Kind, "ext") {
+				ei := strings.TrimPrefix(strings.ToLower(strings.TrimSpace(ri.Pattern)), ".")
+				ej := strings.TrimPrefix(strings.ToLower(strings.TrimSpace(rj.Pattern)), ".")
+				if ei == ej {
+					out = append(out, RouteConflict{
+						Type:    "duplicate-ext",
+						RuleA:   ri.Name,
+						RuleB:   rj.Name,
+						Pattern: "." + ei,
+						Note:    "duplicate extension matcher",
+					})
+				}
+			}
+			if strings.EqualFold(ri.Kind, "contains") && strings.EqualFold(rj.Kind, "contains") {
+				pi := strings.ToLower(strings.TrimSpace(ri.Pattern))
+				pj := strings.ToLower(strings.TrimSpace(rj.Pattern))
+				if pi != "" && pj != "" && (strings.Contains(pi, pj) || strings.Contains(pj, pi)) {
+					out = append(out, RouteConflict{
+						Type:    "shadowing",
+						RuleA:   ri.Name,
+						RuleB:   rj.Name,
+						Pattern: ri.Pattern + " <> " + rj.Pattern,
+						Note:    "one contains pattern may shadow another",
+					})
+				}
+			}
+		}
+	}
+	return out, nil
+}
+
+func (a *App) AutoResolveRoutingPriorities() ([]RouteRule, error) {
+	rules, err := a.ListRoutingRules()
+	if err != nil {
+		return nil, err
+	}
+	score := func(r RouteRule) int {
+		k := strings.ToLower(strings.TrimSpace(r.Kind))
+		p := strings.TrimSpace(r.Pattern)
+		switch k {
+		case "ext":
+			return 500 + len(p)
+		case "regex":
+			return 400 + len(p)
+		case "prefix":
+			return 300 + len(p)
+		case "contains":
+			return 200 + len(p)
+		default:
+			return 100 + len(p)
+		}
+	}
+	sort.SliceStable(rules, func(i, j int) bool {
+		si := score(rules[i])
+		sj := score(rules[j])
+		if si == sj {
+			return strings.ToLower(rules[i].Name) < strings.ToLower(rules[j].Name)
+		}
+		return si > sj
+	})
+	for i := range rules {
+		rules[i].Priority = i
+	}
+	if err := a.SaveRoutingRules(rules); err != nil {
+		return nil, err
+	}
+	return rules, nil
 }
 
 func normalizeRouteRules(in []RouteRule) []RouteRule {

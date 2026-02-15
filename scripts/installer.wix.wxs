@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="icicle" Manufacturer="Eugeneofficial" Version="$(var.Version)" UpgradeCode="3e56a74f-6eb1-4b84-9efa-7f83235aaf2f" Scope="perMachine">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of icicle is already installed." />
+    <MediaTemplate />
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="icicle">
+        <Component Id="MainExeComponent" Guid="*">
+          <File Id="MainExe" Source="$(var.SourceDir)\\icicle-desktop.exe" KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+    <Feature Id="MainFeature" Title="icicle" Level="1">
+      <ComponentRef Id="MainExeComponent" />
+    </Feature>
+  </Package>
+</Wix>

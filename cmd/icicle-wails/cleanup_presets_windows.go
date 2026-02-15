@@ -9,6 +9,9 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
+
+	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type DiskCleanupPreset struct {
@@ -146,4 +149,115 @@ func (a *App) LoadCleanupPresetForDrive(drive string) (DiskCleanupPreset, error)
 	p = normalizeDiskCleanupPreset(p)
 	p.Drive = drive
 	return p, nil
+}
+
+type TeamPresetPack struct {
+	Version        int                          `json:"version"`
+	ExportedAt     int64                        `json:"exportedAt"`
+	Name           string                       `json:"name"`
+	CleanupByDrive map[string]DiskCleanupPreset `json:"cleanupByDrive"`
+	RouteRules     []RouteRule                  `json:"routeRules"`
+	SavedFolders   []string                     `json:"savedFolders"`
+}
+
+func (a *App) ExportTeamPresetPack(name string) (string, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		name = "team-pack"
+	}
+	cleanup, err := a.readCleanupPresets()
+	if err != nil {
+		return "", err
+	}
+	rules, err := a.ListRoutingRules()
+	if err != nil {
+		return "", err
+	}
+	a.mu.Lock()
+	saved := make([]string, len(a.saved))
+	copy(saved, a.saved)
+	a.mu.Unlock()
+	pack := TeamPresetPack{
+		Version:        1,
+		ExportedAt:     time.Now().Unix(),
+		Name:           name,
+		CleanupByDrive: cleanup,
+		RouteRules:     rules,
+		SavedFolders:   saved,
+	}
+	body, err := json.MarshalIndent(pack, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	target, err := wailsruntime.SaveFileDialog(a.ctx, wailsruntime.SaveDialogOptions{
+		Title:           "Export team preset pack",
+		DefaultFilename: "icicle-" + strings.ReplaceAll(name, " ", "-") + ".pack.json",
+		Filters:         []wailsruntime.FileFilter{{DisplayName: "JSON", Pattern: "*.json"}},
+	})
+	if err != nil || strings.TrimSpace(target) == "" {
+		return "", err
+	}
+	if err := os.WriteFile(target, body, 0o644); err != nil {
+		return "", err
+	}
+	a.appendLog("[team-pack] exported: " + target)
+	return target, nil
+}
+
+func (a *App) ImportTeamPresetPack(mode string) (string, error) {
+	mode = strings.ToLower(strings.TrimSpace(mode))
+	if mode == "" {
+		mode = "merge"
+	}
+	source, err := wailsruntime.OpenFileDialog(a.ctx, wailsruntime.OpenDialogOptions{
+		Title:   "Import team preset pack",
+		Filters: []wailsruntime.FileFilter{{DisplayName: "JSON", Pattern: "*.json"}},
+	})
+	if err != nil || strings.TrimSpace(source) == "" {
+		return "", err
+	}
+	data, err := os.ReadFile(source)
+	if err != nil {
+		return "", err
+	}
+	var pack TeamPresetPack
+	if err := json.Unmarshal(data, &pack); err != nil {
+		return "", err
+	}
+	existing, _ := a.readCleanupPresets()
+	if mode == "overwrite" {
+		existing = map[string]DiskCleanupPreset{}
+	}
+	for k, v := range pack.CleanupByDrive {
+		d := normalizeDrive(k)
+		if d == "" {
+			continue
+		}
+		v.Drive = d
+		existing[d] = normalizeDiskCleanupPreset(v)
+	}
+	if err := a.writeCleanupPresets(existing); err != nil {
+		return "", err
+	}
+	currentRules, _ := a.ListRoutingRules()
+	rules := normalizeRouteRules(pack.RouteRules)
+	if mode != "overwrite" {
+		rules = mergeRouteRules(currentRules, rules)
+	}
+	if err := a.SaveRoutingRules(rules); err != nil {
+		return "", err
+	}
+	a.mu.Lock()
+	if mode == "overwrite" {
+		a.saved = dedupePaths(pack.SavedFolders)
+	} else {
+		a.saved = dedupePaths(append(a.saved, pack.SavedFolders...))
+	}
+	err = a.saveSavedLocked()
+	a.mu.Unlock()
+	if err != nil {
+		return "", err
+	}
+	a.appendLog(fmt.Sprintf("[team-pack] imported (%s): %s", mode, source))
+	return source, nil
 }

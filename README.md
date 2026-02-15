@@ -1,7 +1,7 @@
 # icicle
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Eugeneofficial/icicle/main/docs/hero-v5.svg" alt="icicle hero" width="100%" />
+  <img src="docs/hero-v6.svg" alt="icicle hero" width="100%" />
 </p>
 
 <p align="center">
@@ -24,6 +24,7 @@
 - Fast `tree` / `heavy` / `extensions` scans on large disks
 - Interactive `WizMap` treemap with drill-down, breadcrumbs, and keyboard navigation
 - Hover details panel for `WizMap` (path + extension + size heat)
+- Snapshot treemap compare mode (delta between two snapshots)
 - Scheduled scans and scheduled cleanup from GUI
 - Cleanup calendar mode: `interval` / `daily` / `weekly`
 - Cleanup schedule presets per disk (`C:`, `D:`, `E:`...)
@@ -31,9 +32,11 @@
 - Include/ignore filters for scan pipelines
 - Plugin-style routing rules (`ext`, `contains`, `prefix`, `regex`)
 - Visual routing rules editor (no raw JSON required)
+- Routing conflict detector + automatic priority solver
 - Route tester panel with sample file simulation
 - Encrypted profile export/import for portable setups
 - Profile import conflict resolver: `merge` or `overwrite`
+- Team preset pack import/export (shared profile bundles)
 - Release pipeline uploads signed binaries/installer artifacts (when signing secrets are configured)
 
 ## RU

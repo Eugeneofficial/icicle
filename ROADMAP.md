@@ -46,13 +46,21 @@
 - [x] Signed installer artifact (.msi/.exe) in release pipeline
 - [x] Multi-language glossary QA automation
 
-## Next (v2.7)
+### v2.7 (Delivered)
 
-- [ ] Treemap compare mode between snapshots
-- [ ] Preset import/export packs per team
-- [ ] Routing rule conflict detector and priority solver
-- [ ] Native MSI pipeline alternative (WiX)
-- [ ] Localization regression tests on GUI strings
+- [x] Treemap compare mode between snapshots
+- [x] Preset import/export packs per team
+- [x] Routing rule conflict detector and priority solver
+- [x] Native MSI pipeline alternative (WiX)
+- [x] Localization regression tests on GUI strings
+
+## Next (v2.8)
+
+- [ ] Delta heat overlay directly in live WizMap
+- [ ] Team preset registry (remote URL import)
+- [ ] Rule simulation against full scan result set
+- [ ] MSI + EXE notarization/report in release summary
+- [ ] Snapshot compare export (CSV/JSON/MD)
 
 ## Community Track
 

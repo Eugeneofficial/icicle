@@ -236,6 +236,23 @@ type SnapshotDiffResult struct {
 	CreatedAt int64              `json:"createdAt"`
 }
 
+type SnapshotTreemapItem struct {
+	Path    string `json:"path"`
+	Name    string `json:"name"`
+	Delta   int64  `json:"delta"`
+	Human   string `json:"human"`
+	Status  string `json:"status"`
+	AbsSize int64  `json:"absSize"`
+}
+
+type SnapshotTreemapCompare struct {
+	Left       string                `json:"left"`
+	Right      string                `json:"right"`
+	TotalAbs   int64                 `json:"totalAbs"`
+	TotalHuman string                `json:"totalHuman"`
+	Items      []SnapshotTreemapItem `json:"items"`
+}
+
 type DuplicateActionResult struct {
 	Rule      string      `json:"rule"`
 	KeptPath  string      `json:"keptPath"`
@@ -2043,6 +2060,82 @@ func (a *App) SnapshotDiff(leftFile string, rightFile string, top int) (Snapshot
 		items = items[:top]
 	}
 	out.Top = items
+	return out, nil
+}
+
+func (a *App) SnapshotTreemapDiff(leftFile string, rightFile string, top int) (SnapshotTreemapCompare, error) {
+	if top <= 0 {
+		top = 120
+	}
+	left, err := readSnapshotFile(leftFile)
+	if err != nil {
+		return SnapshotTreemapCompare{}, err
+	}
+	right, err := readSnapshotFile(rightFile)
+	if err != nil {
+		return SnapshotTreemapCompare{}, err
+	}
+	leftMap := make(map[string]int64, len(left.Items))
+	rightMap := make(map[string]int64, len(right.Items))
+	for _, it := range left.Items {
+		leftMap[strings.ToLower(it.Path)] = it.Size
+	}
+	for _, it := range right.Items {
+		rightMap[strings.ToLower(it.Path)] = it.Size
+	}
+	out := SnapshotTreemapCompare{Left: leftFile, Right: rightFile}
+	items := make([]SnapshotTreemapItem, 0, len(leftMap)+len(rightMap))
+	for p, rv := range rightMap {
+		lv := leftMap[p]
+		if rv == lv {
+			continue
+		}
+		delta := rv - lv
+		status := "changed"
+		if lv == 0 {
+			status = "added"
+		}
+		abs := delta
+		if abs < 0 {
+			abs = -abs
+		}
+		h := ui.HumanBytes(delta)
+		if delta > 0 {
+			h = "+" + h
+		}
+		items = append(items, SnapshotTreemapItem{
+			Path:    p,
+			Name:    filepath.Base(p),
+			Delta:   delta,
+			Human:   h,
+			Status:  status,
+			AbsSize: abs,
+		})
+	}
+	for p, lv := range leftMap {
+		if _, ok := rightMap[p]; ok {
+			continue
+		}
+		items = append(items, SnapshotTreemapItem{
+			Path:    p,
+			Name:    filepath.Base(p),
+			Delta:   -lv,
+			Human:   "-" + ui.HumanBytes(lv),
+			Status:  "removed",
+			AbsSize: lv,
+		})
+	}
+	sort.Slice(items, func(i, j int) bool { return items[i].AbsSize > items[j].AbsSize })
+	if len(items) > top {
+		items = items[:top]
+	}
+	totalAbs := int64(0)
+	for _, it := range items {
+		totalAbs += it.AbsSize
+	}
+	out.TotalAbs = totalAbs
+	out.TotalHuman = ui.HumanBytes(totalAbs)
+	out.Items = items
 	return out, nil
 }
 

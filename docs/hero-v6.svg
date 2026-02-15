@@ -1,0 +1,51 @@
+<svg width="1280" height="520" viewBox="0 0 1280 520" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1280" y2="520" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0A1424"/>
+      <stop offset="1" stop-color="#0F223D"/>
+    </linearGradient>
+    <linearGradient id="cta" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#4FA8FF"/>
+      <stop offset="1" stop-color="#1E6DEB"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="520" fill="url(#bg)"/>
+
+  <rect x="48" y="54" width="560" height="412" rx="20" fill="#111F34" stroke="#2A4468"/>
+  <rect x="70" y="84" width="516" height="42" rx="10" fill="#0A162B" stroke="#284261"/>
+  <rect x="84" y="98" width="150" height="14" rx="7" fill="#223D61"/>
+  <rect x="242" y="98" width="126" height="14" rx="7" fill="#1A4E86"/>
+  <rect x="376" y="98" width="124" height="14" rx="7" fill="#223D61"/>
+
+  <rect x="70" y="144" width="360" height="300" rx="12" fill="#091327" stroke="#25415F"/>
+  <rect x="82" y="156" width="218" height="138" fill="#2B668F"/>
+  <rect x="302" y="156" width="116" height="80" fill="#7B2B7A"/>
+  <rect x="302" y="238" width="116" height="56" fill="#4B3CAF"/>
+  <rect x="82" y="296" width="170" height="136" fill="#2D6F88"/>
+  <rect x="254" y="296" width="164" height="136" fill="#432A8A"/>
+
+  <rect x="444" y="144" width="142" height="144" rx="12" fill="#0A162B" stroke="#274062"/>
+  <rect x="444" y="300" width="142" height="144" rx="12" fill="#0A162B" stroke="#274062"/>
+  <rect x="458" y="160" width="114" height="10" rx="5" fill="#2D4D73"/>
+  <rect x="458" y="180" width="98" height="10" rx="5" fill="#274463"/>
+  <rect x="458" y="200" width="106" height="10" rx="5" fill="#243E5A"/>
+  <rect x="458" y="316" width="114" height="10" rx="5" fill="#2D4D73"/>
+  <rect x="458" y="336" width="94" height="10" rx="5" fill="#274463"/>
+  <rect x="458" y="356" width="102" height="10" rx="5" fill="#243E5A"/>
+
+  <text x="652" y="154" fill="#EAF3FF" font-family="Segoe UI, Arial" font-size="72" font-weight="700">icicle</text>
+  <text x="652" y="198" fill="#A8C3E8" font-family="Segoe UI, Arial" font-size="26">Desktop + CLI for Windows disk intelligence</text>
+
+  <rect x="652" y="224" width="580" height="58" rx="12" fill="#0C182C" stroke="#2C486D"/>
+  <text x="676" y="260" fill="#DFECFF" font-family="Consolas, monospace" font-size="20">WizMap  •  Heavy Scan  •  Scheduler  •  Safe Cleanup</text>
+
+  <rect x="652" y="304" width="270" height="68" rx="14" fill="url(#cta)"/>
+  <text x="688" y="347" fill="#FFFFFF" font-family="Segoe UI, Arial" font-size="36" font-weight="700">EN / RU</text>
+
+  <rect x="940" y="304" width="292" height="68" rx="14" fill="#142541" stroke="#34598A"/>
+  <text x="968" y="347" fill="#DCEAFF" font-family="Segoe UI, Arial" font-size="36" font-weight="700">v2.7 Build</text>
+
+  <text x="652" y="420" fill="#B9D1EE" font-family="Segoe UI, Arial" font-size="24">Fast scans  •  Team presets  •  Routing conflict solver</text>
+  <text x="652" y="452" fill="#B9D1EE" font-family="Segoe UI, Arial" font-size="24">Wails desktop  •  Signed release pipeline</text>
+</svg>

@@ -44,7 +44,7 @@
     .wizHoverPath{font-family:Consolas,monospace;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .heatBar{height:8px;background:#293247;border-radius:99px;overflow:hidden;margin-top:6px}
     .heatFill{height:100%;background:linear-gradient(90deg,#3fa7ff,#f2cc60,#f14c4c)}
-    .routeGrid{display:grid;grid-template-columns:120px 100px 150px 1fr 30px;gap:6px;align-items:center}
+    .routeGrid{display:grid;grid-template-columns:90px 120px 100px 90px 130px 1fr 30px;gap:6px;align-items:center}
     .routeGrid input,.routeGrid select{padding:6px 8px}
     #loader{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9999}#loader.show{display:flex}.spin{width:62px;height:62px;border:4px solid rgba(255,255,255,.2);border-top-color:#7ab5ff;border-radius:50%;animation:rot 1s linear infinite}.loadText{margin-top:10px;text-align:center;color:#d9e7ff}@keyframes rot{to{transform:rotate(360deg)}}
   </style>
@@ -79,6 +79,7 @@
       <div class="row"><button id="undoBtn">Undo Move</button><button id="cleanBtn">Empty folders</button><button id="clearLogBtn">Clear Log</button></div>
       <div class="row"><button id="expCsvBtn">Export CSV</button><button id="expJsonBtn">JSON</button><button id="expMdBtn">MD</button></div>
       <div class="row"><button id="profileExportBtn">Export profile</button><button id="profileImportBtn">Import profile</button></div>
+      <div class="row"><button id="teamPackExportBtn">Export team pack</button><button id="teamPackImportBtn">Import team pack</button></div>
       <div class="row"><button id="routesBtn">Routing rules</button><button id="routeTestBtn">Test route</button></div>
       <div class="row"><button id="updCheckBtn">Check update</button><button id="updApplyBtn">Apply update</button></div>
       <div class="row"><input id="quickDest" placeholder="Move destination (optional)"></div>
@@ -117,8 +118,9 @@
             <div id="driveHistoryGrid" style="display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:8px;margin-top:6px"></div>
           </div>
           <div id="snapshotPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)">
-            <div class="row"><select id="snapA"></select><select id="snapB"></select><button id="snapDiffBtn">Diff</button><button id="snapCloseBtn">x</button></div>
+            <div class="row"><select id="snapA"></select><select id="snapB"></select><button id="snapDiffBtn">Diff</button><button id="snapMapBtn">Treemap Compare</button><button id="snapCloseBtn">x</button></div>
             <pre id="snapDiffOut" style="max-height:160px;overflow:auto;margin:8px 0 0"></pre>
+            <div id="snapMap" class="wizMap" style="height:220px;min-height:220px;margin-top:8px;display:none"></div>
           </div>
           <div id="dupPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)">
             <div class="row"><select id="dupGroupSel"></select><button id="dupKeepNewestBtn">Keep newest</button><button id="dupKeepOldestBtn">Keep oldest</button><button id="dupCloseBtn">x</button></div>
@@ -141,6 +143,8 @@
           <div id="routeEditorPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)">
             <div class="row" style="justify-content:space-between"><b>Routing Rules Editor</b><button id="routeEditorCloseBtn">x</button></div>
             <div class="row" style="margin-top:6px"><button id="routeAddBtn">Add Rule</button><button id="routeReloadBtn">Reload</button><button id="routeSaveBtn">Save Rules</button></div>
+            <div class="row" style="margin-top:6px"><button id="routeConflictBtn">Detect Conflicts</button><button id="routeSolveBtn">Auto Priority</button></div>
+            <pre id="routeConflictOut" style="max-height:120px;overflow:auto;margin:8px 0 0"></pre>
             <div id="routeRulesBody" style="margin-top:8px;display:grid;gap:6px"></div>
           </div>
           <div class="heavyTools">
@@ -209,6 +213,8 @@ function applyLang(){
   el('dupKeepNewestBtn').textContent=tr('dupNewest'); el('dupKeepOldestBtn').textContent=tr('dupOldest');
   el('profileExportBtn').textContent=s.lang==='ru'?'Экспорт профиля':'Export profile';
   el('profileImportBtn').textContent=s.lang==='ru'?'Импорт профиля':'Import profile';
+  el('teamPackExportBtn').textContent=s.lang==='ru'?'Экспорт команды':'Export team pack';
+  el('teamPackImportBtn').textContent=s.lang==='ru'?'Импорт команды':'Import team pack';
   el('routesBtn').textContent=s.lang==='ru'?'Правила маршрута':'Routing rules';
   el('routeTestBtn').textContent=s.lang==='ru'?'Проверить маршрут':'Test route';
   el('routeTitle').textContent=s.lang==='ru'?'Тестер маршрутов':'Route tester';
@@ -216,6 +222,8 @@ function applyLang(){
   el('routeAddBtn').textContent=s.lang==='ru'?'Добавить':'Add Rule';
   el('routeReloadBtn').textContent=s.lang==='ru'?'Обновить':'Reload';
   el('routeSaveBtn').textContent=s.lang==='ru'?'Сохранить':'Save Rules';
+  el('routeConflictBtn').textContent=s.lang==='ru'?'Конфликты':'Detect Conflicts';
+  el('routeSolveBtn').textContent=s.lang==='ru'?'Авто приоритет':'Auto Priority';
   el('wizBtn').textContent=tr('wiz'); el('wizTitle').textContent=tr('spaceMap'); el('wizExtTitle').textContent=tr('extTable');
   el('wizBackBtn').textContent=tr('back'); el('wizHomeBtn').textContent=tr('home'); el('wizFitBtn').textContent=tr('fit');
   el('wizToggleSideBtn').textContent=s.wizSide?tr('hideExt'):tr('showExt');
@@ -431,6 +439,27 @@ function renderDriveHistory(rows){ const wrap=el('driveHistoryGrid'); wrap.inner
 async function showDriveHistory(){try{const rows=await window.go.main.App.DriveHistory(); if(!rows||rows.length===0){setStatus(s.lang==='ru'?'\u0418\u0441\u0442\u043e\u0440\u0438\u044f \u043f\u0443\u0441\u0442\u0430':'History is empty'); return;} renderDriveHistory(rows); el('driveHistoryPanel').style.display='block';}catch(e){showErr(e)}}
 async function listSnapshots(){try{const rows=await window.go.main.App.ListReportSnapshots(40); const a=el('snapA'),b=el('snapB'); a.innerHTML=''; b.innerHTML=''; for(const it of rows||[]){const o=document.createElement('option'); o.value=it.file; o.textContent=it.file.split(/[\\\\/]/).pop(); a.appendChild(o); const o2=o.cloneNode(true); b.appendChild(o2);} if(b.options.length>1) b.selectedIndex=1; el('snapshotPanel').style.display='block';}catch(e){showErr(e)}}
 async function diffSnapshots(){try{const left=el('snapA').value,right=el('snapB').value; if(!left||!right){setStatus('select snapshots');return;} const res=await withLoader(()=>window.go.main.App.SnapshotDiff(left,right,40),tr('loading')); el('snapDiffOut').textContent=JSON.stringify(res,null,2);}catch(e){showErr(e)}}
+function renderSnapshotTreemap(items,totalAbs){
+  const map=el('snapMap');
+  map.style.display='block';
+  map.innerHTML='';
+  const w=map.clientWidth||640; const h=map.clientHeight||220;
+  const rects=(items||[]).map((it)=>({name:(it.name||it.path),path:it.path,kind:it.status,size:Math.max(1,Number(it.absSize||0)),human:it.human,delta:it.delta,status:it.status}));
+  const layout=buildTreemap(rects,w,h);
+  const color=(st)=>st==='added'?'#0E8F4D':(st==='removed'?'#B13B3B':'#5F73C9');
+  for(const r of layout){
+    if(r.w<8||r.h<8) continue;
+    const d=document.createElement('div');
+    d.className='wizRect';
+    d.style.left=r.x+'px'; d.style.top=r.y+'px'; d.style.width=r.w+'px'; d.style.height=r.h+'px';
+    d.style.background=color(r.item.status);
+    d.title=`${r.item.name} | ${r.item.human}`;
+    if(r.w>95&&r.h>20){ d.textContent=`${r.item.name} (${r.item.human})`; }
+    d.onclick=()=>setStatus(`${r.item.status}: ${r.item.name} ${r.item.human}`);
+    map.appendChild(d);
+  }
+}
+async function compareSnapshotsTreemap(){try{const left=el('snapA').value,right=el('snapB').value; if(!left||!right){setStatus('select snapshots');return;} const res=await withLoader(()=>window.go.main.App.SnapshotTreemapDiff(left,right,120),tr('loading')); el('snapDiffOut').textContent=JSON.stringify({left:res.left,right:res.right,totalHuman:res.totalHuman,count:(res.items||[]).length},null,2); renderSnapshotTreemap(res.items||[],res.totalAbs||0);}catch(e){showErr(e)}}
 async function startSchedule(){try{const sec=parseInt(el('scheduleSec').value||'300',10); const n=parseInt(el('topN').value||'20',10); const maxFiles=parseInt(el('maxFiles').value||'220000',10); const workers=parseInt(el('workers').value||'24',10); await window.go.main.App.StartScheduledScan(el('path').value,sec,n,maxFiles,workers); setStatus(s.lang==='ru'?'\u0420\u0430\u0441\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u0437\u0430\u043f\u0443\u0449\u0435\u043d\u043e':'Schedule started');}catch(e){showErr(e)}}
 async function stopSchedule(){try{await window.go.main.App.StopScheduledScan(); setStatus(s.lang==='ru'?'\u0420\u0430\u0441\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u043e\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u043e':'Schedule stopped');}catch(e){showErr(e)}}
 async function runScheduleNow(){try{const n=parseInt(el('topN').value||'20',10); const maxFiles=parseInt(el('maxFiles').value||'220000',10); const workers=parseInt(el('workers').value||'24',10); const snap=await withLoader(()=>window.go.main.App.RunScheduledScanOnce(el('path').value,n,maxFiles,workers),tr('loading')); setStatus((s.lang==='ru'?'\u0421\u043d\u0438\u043c\u043e\u043a: ':'Snapshot: ')+snap);}catch(e){showErr(e)}}
@@ -472,7 +501,9 @@ async function loadDiskPresetFor(drive){
 async function exportProfile(){try{const pass=prompt(s.lang==='ru'?'Пароль для экспорта профиля':'Passphrase for profile export'); if(!pass)return; const file=await window.go.main.App.ExportProfileEncrypted(pass); if(file) setStatus((s.lang==='ru'?'Экспортировано: ':'Exported: ')+file);}catch(e){showErr(e)}}
 async function importProfile(){try{const pass=prompt(s.lang==='ru'?'Пароль профиля':'Profile passphrase'); if(!pass)return; const merge=confirm(s.lang==='ru'?'OK = merge, Cancel = overwrite':'OK = merge, Cancel = overwrite'); const mode=merge?'merge':'overwrite'; const file=await window.go.main.App.ImportProfileEncryptedWithMode(pass,mode); if(file){await loadSaved(); setStatus((s.lang==='ru'?'Импортировано: ':'Imported: ')+file+' ['+mode+']');}}catch(e){showErr(e)}}
 function routeRow(rule){
-  return `<div class=\"routeGrid\" data-rule-id=\"${rule.id||''}\"><input data-k=\"name\" placeholder=\"name\" value=\"${rule.name||''}\"><select data-k=\"kind\"><option value=\"ext\" ${rule.kind==='ext'?'selected':''}>ext</option><option value=\"contains\" ${rule.kind==='contains'?'selected':''}>contains</option><option value=\"prefix\" ${rule.kind==='prefix'?'selected':''}>prefix</option><option value=\"regex\" ${rule.kind==='regex'?'selected':''}>regex</option></select><input data-k=\"pattern\" placeholder=\"pattern\" value=\"${rule.pattern||''}\"><input data-k=\"target\" placeholder=\"target folder\" value=\"${rule.target||''}\"><button data-act=\"del\">x</button></div>`;
+  const en = rule.enabled===undefined?true:!!rule.enabled;
+  const pr = Number(rule.priority||0);
+  return `<div class=\"routeGrid\" data-rule-id=\"${rule.id||''}\"><label class=\"tiny\"><input data-k=\"enabled\" type=\"checkbox\" ${en?'checked':''}> on</label><input data-k=\"name\" placeholder=\"name\" value=\"${rule.name||''}\"><select data-k=\"kind\"><option value=\"ext\" ${rule.kind==='ext'?'selected':''}>ext</option><option value=\"contains\" ${rule.kind==='contains'?'selected':''}>contains</option><option value=\"prefix\" ${rule.kind==='prefix'?'selected':''}>prefix</option><option value=\"regex\" ${rule.kind==='regex'?'selected':''}>regex</option></select><input data-k=\"priority\" type=\"number\" placeholder=\"priority\" value=\"${pr}\"><input data-k=\"pattern\" placeholder=\"pattern\" value=\"${rule.pattern||''}\"><input data-k=\"target\" placeholder=\"target folder\" value=\"${rule.target||''}\"><button data-act=\"del\">x</button></div>`;
 }
 function renderRouteEditor(){
   const body=el('routeRulesBody');
@@ -487,14 +518,22 @@ function collectRouteRules(){
     const get=(k)=>{const n=row.querySelector(`[data-k=\"${k}\"]`); return n?String(n.value||'').trim():'';};
     const id=String(row.getAttribute('data-rule-id')||'').trim();
     const name=get('name'); const kind=get('kind'); const pattern=get('pattern'); const target=get('target');
+    const enabledNode=row.querySelector('[data-k=\"enabled\"]');
+    const enabled=enabledNode ? !!enabledNode.checked : true;
+    const prNode=row.querySelector('[data-k=\"priority\"]');
+    const priority=prNode ? parseInt(prNode.value||'0',10) : 0;
     if(!pattern || !target) continue;
-    out.push({id:id||`rule-${out.length+1}`,name:name||`Rule ${out.length+1}`,enabled:true,kind,pattern,target,priority:out.length});
+    out.push({id:id||`rule-${out.length+1}`,name:name||`Rule ${out.length+1}`,enabled,kind,pattern,target,priority:isNaN(priority)?out.length:priority});
   }
   return out;
 }
 async function saveRouteRules(){ try{ const payload=collectRouteRules(); await window.go.main.App.SaveRoutingRules(payload); setStatus(s.lang==='ru'?'Правила сохранены':'Rules saved'); }catch(e){showErr(e)} }
 async function testRoute(){try{let p=''; if(s.selected.size>0){p=Array.from(s.selected)[0];} if(!p){p=prompt(s.lang==='ru'?'Путь файла для проверки маршрута':'File path for route test',el('path').value||'');} if(!p)return; const r=await window.go.main.App.TestRouting(p); el('log').textContent+='\n[route-test]\n'+JSON.stringify(r,null,2)+'\n'; el('log').scrollTop=el('log').scrollHeight; el('routePanel').style.display='block'; el('routeSamples').value=p;}catch(e){showErr(e)}}
 async function runRouteSamples(){try{const raw=el('routeSamples').value||''; const out=await window.go.main.App.SimulateRoutingSamples(raw); el('routeOut').textContent=JSON.stringify(out,null,2);}catch(e){showErr(e)}}
+async function detectRouteConflicts(){try{const out=await window.go.main.App.DetectRoutingConflicts(); el('routeConflictOut').textContent=JSON.stringify(out,null,2);}catch(e){showErr(e)}}
+async function autoSolveRoutePriority(){try{const out=await window.go.main.App.AutoResolveRoutingPriorities(); s.routeRules=out||[]; renderRouteEditor(); setStatus(s.lang==='ru'?'Приоритеты пересчитаны':'Priorities recalculated');}catch(e){showErr(e)}}
+async function exportTeamPack(){try{const name=prompt(s.lang==='ru'?'Имя пакета команды':'Team pack name','team-pack'); if(name===null)return; const file=await window.go.main.App.ExportTeamPresetPack(name); if(file){setStatus((s.lang==='ru'?'Экспорт: ':'Export: ')+file);}}catch(e){showErr(e)}}
+async function importTeamPack(){try{const merge=confirm(s.lang==='ru'?'OK = merge, Cancel = overwrite':'OK = merge, Cancel = overwrite'); const mode=merge?'merge':'overwrite'; const file=await window.go.main.App.ImportTeamPresetPack(mode); if(file){await loadSaved(); setStatus((s.lang==='ru'?'Импорт: ':'Import: ')+file+' ['+mode+']');}}catch(e){showErr(e)}}
 function renderPresetPreview(res){ const panel=el('presetPanel'),sum=el('presetSummary'),list=el('presetList'); panel.style.display='block'; sum.textContent=`${res.count} | low:${res.riskLow} medium:${res.riskMedium} high:${res.riskHigh} | ${res.totalHuman}`; list.innerHTML=''; for(const c of (res.candidates||[]).slice(0,80)){ const row=document.createElement('div'); row.className='row'; const color=c.risk==='high'?'#f14c4c':(c.risk==='medium'?'#f2cc60':'#4ec9b0'); row.innerHTML=`<span style="display:inline-block;width:8px;height:8px;border-radius:99px;background:${color}"></span><span class="tiny">${c.human}</span><span class="tiny">${c.risk}</span><span title="${c.path}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.path}</span>`; list.appendChild(row);} }
 async function scanPreset(){try{const preset=el('cleanupPreset').value||'dev-cache'; const res=await withLoader(()=>window.go.main.App.ScanCleanupPreset(el('path').value,preset,120,parseInt(el('maxFiles').value||'220000',10)),tr('loading')); s.presetCandidates=(res&&res.candidates)||[]; renderPresetPreview(res); setStatus((s.lang==='ru'?'\u041a\u0430\u043d\u0434\u0438\u0434\u0430\u0442\u043e\u0432: ':'Candidates: ')+s.presetCandidates.length);}catch(e){showErr(e)}}
 async function applyPreset(){try{if(!s.presetCandidates||s.presetCandidates.length===0){setStatus(s.lang==='ru'?'\u041d\u0435\u0442 \u043a\u0430\u043d\u0434\u0438\u0434\u0430\u0442\u043e\u0432':'No preset candidates');return;} const safe=confirm(s.lang==='ru'?'\u0423\u0434\u0430\u043b\u044f\u0442\u044c \u0432 \u043a\u043e\u0440\u0437\u0438\u043d\u0443?':'Use recycle bin?'); const paths=s.presetCandidates.map(x=>x.path); const res=await withLoader(()=>window.go.main.App.ApplyPresetCleanup(paths,safe),tr('loading')); el('log').textContent+='\n[preset-apply]\n'+JSON.stringify(res,null,2)+'\n'; el('log').scrollTop=el('log').scrollHeight; s.presetCandidates=[]; await runHeavy();}catch(e){showErr(e)}}
@@ -556,10 +595,12 @@ el('cleanupSchedStartBtn').onclick=startCleanupSchedule; el('cleanupSchedStopBtn
 el('snapshotsBtn').onclick=listSnapshots; el('historyBtn').onclick=showDriveHistory;
 el('presetScanBtn').onclick=scanPreset; el('presetApplyBtn').onclick=applyPreset;
 el('profileExportBtn').onclick=exportProfile; el('profileImportBtn').onclick=importProfile; el('routesBtn').onclick=openRouteEditor; el('routeTestBtn').onclick=testRoute;
+el('teamPackExportBtn').onclick=exportTeamPack; el('teamPackImportBtn').onclick=importTeamPack;
 el('saveDiskPresetBtn').onclick=()=>saveDiskPresetFor(''); el('loadDiskPresetBtn').onclick=()=>loadDiskPresetFor('');
 el('routeRunBtn').onclick=runRouteSamples; el('routeCloseBtn').onclick=()=>el('routePanel').style.display='none';
-el('routeEditorCloseBtn').onclick=()=>el('routeEditorPanel').style.display='none'; el('routeAddBtn').onclick=()=>{s.routeRules.push({id:'',name:'',enabled:true,kind:'ext',pattern:'',target:''}); renderRouteEditor();}; el('routeReloadBtn').onclick=openRouteEditor; el('routeSaveBtn').onclick=saveRouteRules;
+el('routeEditorCloseBtn').onclick=()=>el('routeEditorPanel').style.display='none'; el('routeAddBtn').onclick=()=>{s.routeRules.push({id:'',name:'',enabled:true,kind:'ext',pattern:'',target:''}); renderRouteEditor();}; el('routeReloadBtn').onclick=openRouteEditor; el('routeSaveBtn').onclick=saveRouteRules; el('routeConflictBtn').onclick=detectRouteConflicts; el('routeSolveBtn').onclick=autoSolveRoutePriority;
 el('snapDiffBtn').onclick=diffSnapshots;
+el('snapMapBtn').onclick=compareSnapshotsTreemap;
 el('dupKeepNewestBtn').onclick=()=>duplicateKeep('newest'); el('dupKeepOldestBtn').onclick=()=>duplicateKeep('oldest');
 el('diagBtn').onclick=watchDiagnostics;
 el('wizExtFilter').addEventListener('input',()=>{ if(s.wiz) renderWiz(s.wiz); });
