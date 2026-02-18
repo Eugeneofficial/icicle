@@ -72,6 +72,8 @@
     .logWrap,.heavyWrap{padding:12px}.heavyWrap{max-height:650px;overflow:auto}
     .heavyMeta{display:flex;align-items:center;gap:8px;margin:0 0 8px 0;flex-wrap:wrap}
     .heavyMeta .spacer{flex:1}
+    .quickExt{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px 0}
+    .quickExt button{padding:3px 8px;font-size:12px}
     .log{height:130px;min-height:120px;max-height:220px;resize:vertical;border:1px solid var(--line);background:#070c16;color:#dbe4f4;border-radius:12px;padding:10px;overflow:auto;white-space:pre-wrap;font:12px/1.38 Consolas,monospace}
     table{width:100%;border-collapse:collapse;table-layout:fixed} th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
     th{position:sticky;top:0;background:color-mix(in oklab,var(--surface2),#000 4%);color:var(--muted)}
@@ -178,7 +180,9 @@
                 </div>
                 <div class="row" style="margin:0 0 8px 0"><input id="heavySearch" placeholder="filter by name/path"><input id="heavyMinSize" placeholder="min size MB"><select id="heavySort"><option value="size-desc">size desc</option><option value="size-asc">size asc</option><option value="path-asc">path asc</option><option value="new-first">new first</option></select><button id="heavyClearFiltersBtn">Clear</button><button id="heavyRefreshBtn">Refresh</button></div>
                 <div class="row" style="margin:0 0 8px 0"><button id="selTop10Btn">Select top 10</button><button id="selTop50Btn">Select top 50</button><button id="selInvertBtn">Invert</button><button id="copySelBtn">Copy selected paths</button></div>
-                <div class="heavyMeta"><span class="pill" id="heavyStats">0 rows</span><div class="spacer"></div><button id="heavyMoreBtn" style="display:none">Load more</button></div>
+                <div class="heavyMeta"><span class="pill" id="heavyStats">0 rows</span><button id="favOnlyBtn">Fav: off</button><label class="tiny"><input id="heavyAutoRefresh" type="checkbox"> <span id="heavyAutoTxt">auto heavy</span></label><input id="heavyAutoSec" value="30" style="max-width:88px" placeholder="sec"><button id="copySelTxtBtn">Export sel TXT</button><div class="spacer"></div><button id="heavyMoreBtn" style="display:none">Load more</button></div>
+                <div class="row" style="margin:0 0 8px 0"><select id="scanHistorySel" style="min-width:320px"></select><button id="scanHistoryRunBtn">Run saved</button><button id="scanHistoryClearBtn">Clear history</button></div>
+                <div id="heavyExtQuick" class="quickExt"></div>
                 <div id="emptyPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)"><div class="row" style="justify-content:space-between"><b id="emptyTitle">Empty folders</b><label><input id="emptyAll" type="checkbox"> <span id="emptyAllTxt">select all</span></label></div><div id="emptyList" style="max-height:150px;overflow:auto;margin-top:6px"></div></div>
                 <table><colgroup><col style="width:30px"><col style="width:90px"><col><col style="width:230px"></colgroup><thead><tr><th><input id="chkAll" type="checkbox"></th><th id="thSize">Size</th><th id="thFile">File</th><th id="thAct">Actions</th></tr></thead><tbody id="heavyBody"></tbody></table>
               </section>
@@ -248,7 +252,7 @@
 
 <script>
 const el=(id)=>document.getElementById(id);
-const s={lang:'en',theme:'dark',heavy:[],heavyFiltered:[],heavyVersion:0,heavyFilterCache:null,heavyRenderLimit:200,heavyRenderToken:0,queue:[],selected:new Set(),fullPoll:null,emptyDirs:[],emptySelected:new Set(),presetCandidates:[],dupGroups:[],wiz:null,wizPath:'',wizRoot:'',wizStack:[],wizSide:true,busy:false,wizRects:[],wizSel:-1,wizTotal:0,routeRules:[],autoRefresh:null,queuePresets:[],quickDestSaved:[],perfMode:'balanced',metrics:{treeMs:0,heavyMs:0,wizMs:0,last:'-',err:'-'},defaults:null,defaultsAt:0,hintSeq:0,lastStatusText:'',lastStatusAt:0,lastLogHash:'',pollTimer:null,pollMs:1200,lastDriveRefresh:0,renderChunk:180,wizCache:new Map(),heavyRunCache:new Map(),treeRunCache:new Map(),lastScanKey:'',lastScanAt:0};
+const s={lang:'en',theme:'dark',heavy:[],heavyFiltered:[],heavyVersion:0,heavyFilterCache:null,heavyRenderLimit:200,heavyRenderToken:0,queue:[],selected:new Set(),fullPoll:null,emptyDirs:[],emptySelected:new Set(),presetCandidates:[],dupGroups:[],wiz:null,wizPath:'',wizRoot:'',wizStack:[],wizSide:true,busy:false,wizRects:[],wizSel:-1,wizTotal:0,routeRules:[],autoRefresh:null,queuePresets:[],quickDestSaved:[],perfMode:'balanced',metrics:{treeMs:0,heavyMs:0,wizMs:0,last:'-',err:'-'},defaults:null,defaultsAt:0,hintSeq:0,lastStatusText:'',lastStatusAt:0,lastLogHash:'',pollTimer:null,pollMs:1200,lastDriveRefresh:0,renderChunk:180,wizCache:new Map(),heavyRunCache:new Map(),treeRunCache:new Map(),lastScanKey:'',lastScanAt:0,favoritePaths:new Set(),favOnly:false,scanHistory:[],heavyAutoTimer:null};
 const i18n={
   en:{subtitle:'Desktop App',save:'Save',use:'Use',remove:'Remove',tree:'Tree',heavy:'Heavy',start:'Start Watch',stop:'Stop',dry:'dry-run',fast:'fast mode',full:'Full scan (bg)',cancel:'Stop scan',undo:'Undo Move',clean:'Empty folders',clear:'Clear Log',csv:'Export CSV',updCheck:'Check update',updApply:'Apply update',drives:'System storage',refresh:'Refresh',types:'Extensions',dups:'Duplicates',size:'Size',file:'File',act:'Actions',hint:'Folder type',ready:'ready',running:'watch running',open:'Open',reveal:'Reveal',autoMove:'Auto Move',moveTo:'Move To',del:'Delete',loading:'Scanning...',qMove:'Queue: move',qDel:'Queue: delete',qRun:'Run queue',qClear:'Clear queue',findEmpty:'Find empty folders',delEmpty:'Delete selected empty',emptyTitle:'Empty folders',selectAll:'select all',pathPlaceholder:'Move destination (optional)',schedStart:'Start schedule',schedStop:'Stop schedule',schedNow:'Run schedule now',snapshots:'Snapshots',history:'Drive history',presetScan:'Scan preset',presetApply:'Apply preset',diag:'Watch diagnostics',presetPreview:'Preset preview',risk:'risk',dupNewest:'Keep newest',dupOldest:'Keep oldest',wiz:'WizMap',spaceMap:'Space Map',extTable:'Extensions',ext:'Ext',files:'Files',back:'Back',home:'Home',fit:'Fit',hideExt:'Hide Ext',showExt:'Show Ext'},
   ru:{subtitle:'\u0420\u0430\u0431\u043e\u0447\u0435\u0435 \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435',save:'\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c',use:'\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c',remove:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c',tree:'\u0414\u0435\u0440\u0435\u0432\u043e',heavy:'\u0422\u044f\u0436\u0451\u043b\u044b\u0435',start:'\u0421\u0442\u0430\u0440\u0442 \u0441\u043b\u0435\u0436\u0435\u043d\u0438\u044f',stop:'\u0421\u0442\u043e\u043f',dry:'\u0442\u0435\u0441\u0442\u043e\u0432\u044b\u0439 \u0440\u0435\u0436\u0438\u043c',fast:'\u0431\u044b\u0441\u0442\u0440\u044b\u0439 \u0440\u0435\u0436\u0438\u043c',full:'\u041f\u043e\u043b\u043d\u044b\u0439 \u0441\u043a\u0430\u043d (\u0444\u043e\u043d)',cancel:'\u0421\u0442\u043e\u043f \u0441\u043a\u0430\u043d',undo:'\u041e\u0442\u043c\u0435\u043d\u0438\u0442\u044c \u043f\u0435\u0440\u0435\u043d\u043e\u0441',clean:'\u041f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',clear:'\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u043b\u043e\u0433',csv:'\u042d\u043a\u0441\u043f\u043e\u0440\u0442 CSV',updCheck:'\u041f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c update',updApply:'\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c',drives:'\u041c\u0435\u0441\u0442\u043e \u043d\u0430 \u0434\u0438\u0441\u043a\u0430\u0445',refresh:'\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c',types:'\u0422\u0438\u043f\u044b',dups:'\u0414\u0443\u0431\u043b\u0438\u043a\u0430\u0442\u044b',size:'\u0420\u0430\u0437\u043c\u0435\u0440',file:'\u0424\u0430\u0439\u043b',act:'\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u044f',hint:'\u0422\u0438\u043f \u043f\u0430\u043f\u043a\u0438',ready:'\u0433\u043e\u0442\u043e\u0432\u043e',running:'\u0441\u043b\u0435\u0436\u0435\u043d\u0438\u0435 \u0430\u043a\u0442\u0438\u0432\u043d\u043e',open:'\u041e\u0442\u043a\u0440\u044b\u0442\u044c',reveal:'\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c',autoMove:'\u0410\u0432\u0442\u043e \u043f\u0435\u0440\u0435\u043d\u043e\u0441',moveTo:'\u041f\u0435\u0440\u0435\u043d\u0435\u0441\u0442\u0438',del:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c',loading:'\u0421\u043a\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435...',qMove:'\u0412 \u043e\u0447\u0435\u0440\u0435\u0434\u044c: \u043f\u0435\u0440\u0435\u043d\u043e\u0441',qDel:'\u0412 \u043e\u0447\u0435\u0440\u0435\u0434\u044c: \u0443\u0434\u0430\u043b\u0435\u043d\u0438\u0435',qRun:'\u0412\u044b\u043f\u043e\u043b\u043d\u0438\u0442\u044c \u043e\u0447\u0435\u0440\u0435\u0434\u044c',qClear:'\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u043e\u0447\u0435\u0440\u0435\u0434\u044c',findEmpty:'\u041d\u0430\u0439\u0442\u0438 \u043f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',delEmpty:'\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u044b\u0435 \u043f\u0443\u0441\u0442\u044b\u0435',emptyTitle:'\u041f\u0443\u0441\u0442\u044b\u0435 \u043f\u0430\u043f\u043a\u0438',selectAll:'\u0432\u044b\u0431\u0440\u0430\u0442\u044c \u0432\u0441\u0435',pathPlaceholder:'\u041f\u0430\u043f\u043a\u0430 \u0434\u043b\u044f \u043f\u0435\u0440\u0435\u043d\u043e\u0441\u0430 (\u043e\u043f\u0446\u0438\u043e\u043d\u0430\u043b\u044c\u043d\u043e)',schedStart:'\u0421\u0442\u0430\u0440\u0442 \u0440\u0430\u0441\u043f\u0438\u0441\u0430\u043d\u0438\u044f',schedStop:'\u0421\u0442\u043e\u043f \u0440\u0430\u0441\u043f\u0438\u0441\u0430\u043d\u0438\u044f',schedNow:'\u0417\u0430\u043f\u0443\u0441\u0442\u0438\u0442\u044c \u0441\u0435\u0439\u0447\u0430\u0441',snapshots:'\u0421\u043d\u0438\u043c\u043a\u0438',history:'\u0418\u0441\u0442\u043e\u0440\u0438\u044f \u0434\u0438\u0441\u043a\u043e\u0432',presetScan:'\u0421\u043a\u0430\u043d \u043f\u0440\u0435\u0441\u0435\u0442\u0430',presetApply:'\u041f\u0440\u0438\u043c\u0435\u043d\u0438\u0442\u044c \u043f\u0440\u0435\u0441\u0435\u0442',diag:'\u0414\u0438\u0430\u0433\u043d\u043e\u0441\u0442\u0438\u043a\u0430 watch',presetPreview:'\u041f\u0440\u0435\u0432\u044c\u044e \u043f\u0440\u0435\u0441\u0435\u0442\u0430',risk:'\u0440\u0438\u0441\u043a',dupNewest:'\u041e\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u043d\u043e\u0432\u044b\u0439',dupOldest:'\u041e\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u0441\u0442\u0430\u0440\u044b\u0439',wiz:'\u041a\u0430\u0440\u0442\u0430',spaceMap:'\u041a\u0430\u0440\u0442\u0430 \u043c\u0435\u0441\u0442\u0430',extTable:'\u0420\u0430\u0441\u0448\u0438\u0440\u0435\u043d\u0438\u044f',ext:'\u0420\u0430\u0441\u0448\u0438\u0440.',files:'\u0424\u0430\u0439\u043b\u043e\u0432',back:'\u041d\u0430\u0437\u0430\u0434',home:'\u0414\u043e\u043c\u043e\u0439',fit:'\u041f\u043e\u0434\u0433\u043e\u043d\u043a\u0430',hideExt:'\u0421\u043a\u0440\u044b\u0442\u044c ext',showExt:'\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c ext'}
@@ -394,6 +398,11 @@ function loadClientState(){
   s.perfMode=jLoad('icicle.perfMode','balanced');
   s.theme=jLoad('icicle.theme','dark');
   s.lang=jLoad('icicle.lang','en');
+  s.favOnly=!!jLoad('icicle.favOnly',false);
+  s.favoritePaths=new Set(jLoad('icicle.favoritePaths',[]));
+  s.scanHistory=jLoad('icicle.scanHistory',[]);
+  el('heavyAutoRefresh').checked=!!jLoad('icicle.heavyAutoRefresh',false);
+  el('heavyAutoSec').value=String(jLoad('icicle.heavyAutoSec',30));
   s.renderChunk=jLoad('icicle.renderChunk',180);
   document.body.classList.toggle('light',s.theme==='light');
   el('themeBtn').textContent=s.theme==='dark'?'Light':'Dark';
@@ -407,7 +416,61 @@ function loadClientState(){
   el('perfMode').value=s.perfMode;
   syncPerfUI();
   renderQuickDestSaved();
+  renderScanHistory();
   updateTopChips();
+}
+function saveFavorites(){ jSave('icicle.favoritePaths',Array.from(s.favoritePaths)); }
+function toggleFavorite(path){
+  if(!path) return;
+  if(s.favoritePaths.has(path)) s.favoritePaths.delete(path); else s.favoritePaths.add(path);
+  saveFavorites();
+}
+function pushScanHistory(kind,path,params=''){
+  const row={kind,path,params,at:Date.now()};
+  s.scanHistory=[row,...(s.scanHistory||[]).filter((x)=>!(x.kind===kind&&x.path===path&&x.params===params))].slice(0,24);
+  jSave('icicle.scanHistory',s.scanHistory);
+  renderScanHistory();
+}
+function renderScanHistory(){
+  const sel=el('scanHistorySel');
+  if(!sel) return;
+  sel.innerHTML='';
+  const d=document.createElement('option');
+  d.value='';
+  d.textContent=s.lang==='ru'?'История сканов':'Scan history';
+  sel.appendChild(d);
+  for(const it of s.scanHistory||[]){
+    const o=document.createElement('option');
+    o.value=JSON.stringify(it);
+    const dt=new Date(it.at||Date.now());
+    o.textContent=`${it.kind} ${shortPath(it.path||'',36)} ${it.params||''} [${dt.toLocaleTimeString()}]`;
+    sel.appendChild(o);
+  }
+}
+function toggleFavOnly(){
+  s.favOnly=!s.favOnly;
+  jSave('icicle.favOnly',s.favOnly);
+  const b=el('favOnlyBtn');
+  if(b) b.textContent=(s.lang==='ru'?'Избр: ':'Fav: ')+(s.favOnly?(s.lang==='ru'?'вкл':'on'):(s.lang==='ru'?'выкл':'off'));
+  s.heavyRenderLimit=200;
+  renderHeavy();
+}
+function renderHeavyExtQuick(rows){
+  const wrap=el('heavyExtQuick');
+  if(!wrap) return;
+  wrap.innerHTML='';
+  const map=new Map();
+  for(const it of (rows||[]).slice(0,300)){
+    const ext=pathExt(it.path||'');
+    map.set(ext,(map.get(ext)||0)+1);
+  }
+  const top=[...map.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
+  for(const [ext,cnt] of top){
+    const b=document.createElement('button');
+    b.textContent=`${ext} (${cnt})`;
+    b.onclick=()=>{ el('heavySearch').value=ext; debouncedRenderHeavy(); };
+    wrap.appendChild(b);
+  }
 }
 function saveScanInputs(){
   jSave('icicle.topN',intInput('topN',20,1,500));
@@ -466,6 +529,11 @@ function applyLang(){
   el('selTop50Btn').textContent=s.lang==='ru'?'Выбрать топ 50':'Select top 50';
   el('selInvertBtn').textContent=s.lang==='ru'?'Инвертировать':'Invert';
   el('copySelBtn').textContent=s.lang==='ru'?'Копировать выбранные':'Copy selected paths';
+  el('copySelTxtBtn').textContent=s.lang==='ru'?'Экспорт TXT':'Export sel TXT';
+  el('heavyAutoTxt').textContent=s.lang==='ru'?'авто heavy':'auto heavy';
+  el('scanHistoryRunBtn').textContent=s.lang==='ru'?'Запустить':'Run saved';
+  el('scanHistoryClearBtn').textContent=s.lang==='ru'?'Очистить':'Clear history';
+  el('heavyAutoSec').placeholder=s.lang==='ru'?'сек':'sec';
   el('heavyClearFiltersBtn').textContent=s.lang==='ru'?'Сброс':'Clear';
   el('heavyRefreshBtn').textContent=s.lang==='ru'?'Обновить':'Refresh';
   el('heavyMoreBtn').textContent=s.lang==='ru'?'Показать ещё':'Load more';
@@ -492,6 +560,9 @@ function applyLang(){
   el('heavySearch').placeholder=s.lang==='ru'?'фильтр по имени/пути':'filter by name/path';
   el('heavyMinSize').placeholder=s.lang==='ru'?'мин размер MB':'min size MB';
   el('quickDest').placeholder=tr('pathPlaceholder');
+  const favBtn=el('favOnlyBtn');
+  if(favBtn) favBtn.textContent=(s.lang==='ru'?'Избр: ':'Fav: ')+(s.favOnly?(s.lang==='ru'?'вкл':'on'):(s.lang==='ru'?'выкл':'off'));
+  renderScanHistory();
   setStatus(tr('ready')); updateHintDebounced(); renderHeavy(); renderEmptyDirs(); updateSelCount(); renderQuickDestSaved(); updateTopChips();
 }
 
@@ -563,6 +634,7 @@ async function runTree(){return withLoader(async()=>{
   const maxFiles=fast?intInput('maxFiles',220000,0,900000):0;
   const workers=fast?intInput('workers',24,1,128):0;
   const filters=scanFilters();
+  pushScanHistory('tree',path,`max=${maxFiles};w=${workers}`);
   const key=treeCacheKey(path,maxFiles,workers,filters);
   const cached=readShortCache(s.treeRunCache,key,9000);
   const res=cached || await callApp('RunTreeFastFiltered',[path,5,22,maxFiles,workers,filters]);
@@ -581,6 +653,7 @@ async function runHeavy(){return withLoader(async()=>{
   const maxFiles=fast?intInput('maxFiles',220000,0,900000):0;
   const workers=fast?intInput('workers',24,1,128):0;
   const filters=scanFilters();
+  pushScanHistory('heavy',path,`n=${n};max=${maxFiles};w=${workers}`);
   const key=heavyCacheKey(path,n,maxFiles,workers,filters);
   const cached=readShortCache(s.heavyRunCache,key,9000);
   const res=cached || await callApp('RunHeavyFastFiltered',[path,n,maxFiles,workers,filters]);
@@ -780,6 +853,7 @@ async function runWiz(pathOverride,pushHistory=true){
     const workers=fast?parseInt(el('workers').value||'24',10):0;
     const turbo=!!el('wizTurbo').checked;
     const path=pathOverride||el('path').value;
+    if(pushHistory){ pushScanHistory('wiz',path,`max=${maxFiles};w=${workers};turbo=${turbo?1:0}`); }
     if(pushHistory && s.wizPath && path!==s.wizPath){
       s.wizStack.push(s.wizPath);
     }
@@ -961,6 +1035,7 @@ function computeHeavyRows(){
   const minBytes=isNaN(minMb)?0:Math.max(0,Math.floor(minMb*1024*1024));
   const sortBy=el('heavySort').value||'size-desc';
   let rows=(s.heavy||[]).filter((it)=>{
+    if(s.favOnly && !s.favoritePaths.has(it.path)) return false;
     if((it.size||0)<minBytes) return false;
     if(!q) return true;
     const p=String(it.path||'').toLowerCase();
@@ -980,13 +1055,15 @@ function rowMarkup(it){
   const safePath=escapeHtml(full);
   const safeShort=escapeHtml(p);
   const safeHuman=escapeHtml(it.human||'');
-  return `<td><input type="checkbox" data-sel="${safePath}" ${checked}></td><td>${safeHuman}${it.new?'<span class="newTag">NEW</span>':''}</td><td class="pathCell" title="${safePath}">${safeShort}</td><td><div class="actions"><button data-openf="${safePath}">${tr('open')}</button><button data-reveal="${safePath}">${tr('reveal')}</button><select data-action-path="${safePath}"><option value="">${tr('act')}</option><option value="amove">${tr('autoMove')}</option><option value="move">${tr('moveTo')}</option><option value="del">${tr('del')}</option></select></div></td>`;
+  const fav=s.favoritePaths.has(it.path);
+  return `<td><input type="checkbox" data-sel="${safePath}" ${checked}></td><td>${safeHuman}${it.new?'<span class="newTag">NEW</span>':''}${fav?'<span class="newTag" style="background:#f59e0b">FAV</span>':''}</td><td class="pathCell" title="${safePath}">${safeShort}</td><td><div class="actions"><button data-openf="${safePath}">${tr('open')}</button><button data-reveal="${safePath}">${tr('reveal')}</button><button data-fav="${safePath}">${fav?'★':'☆'}</button><select data-action-path="${safePath}"><option value="">${tr('act')}</option><option value="copy">Copy path</option><option value="amove">${tr('autoMove')}</option><option value="move">${tr('moveTo')}</option><option value="del">${tr('del')}</option></select></div></td>`;
 }
 function renderHeavy(){
   const token=++s.heavyRenderToken;
   const body=el('heavyBody');
   body.innerHTML='';
   const rows=computeHeavyRows();
+  renderHeavyExtQuick(rows);
   s.heavyFiltered=rows;
   const max=Math.min(rows.length,Math.max(40,s.heavyRenderLimit||200));
   const heavyStats=el('heavyStats');
@@ -1125,6 +1202,47 @@ async function copySelectedPaths(){
     setStatus((s.lang==='ru'?'Выведено в лог: ':'Printed to log: ')+paths.length);
   }
 }
+async function exportSelectedPathsTxt(){
+  const paths=selectedPaths();
+  if(paths.length===0){ setStatus(s.lang==='ru'?'Ничего не выбрано':'Nothing selected'); return; }
+  const blob=new Blob([paths.join('\r\n')],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const ts=new Date().toISOString().replace(/[:.]/g,'-');
+  a.href=url;
+  a.download=`icicle-selected-${ts}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  setStatus((s.lang==='ru'?'Экспортировано: ':'Exported: ')+paths.length);
+}
+async function runHistoryItem(){
+  const raw=el('scanHistorySel').value||'';
+  if(!raw) return;
+  try{
+    const it=JSON.parse(raw);
+    if(it.path){ el('path').value=it.path; el('pathQuick').value=it.path; updateHintDebounced(); }
+    if(it.kind==='tree') return runTree();
+    if(it.kind==='heavy') return runHeavy();
+    if(it.kind==='wiz') return runWiz();
+  }catch(e){ showErr(e); }
+}
+function clearScanHistory(){
+  s.scanHistory=[];
+  jSave('icicle.scanHistory',[]);
+  renderScanHistory();
+  setStatus(s.lang==='ru'?'История очищена':'History cleared');
+}
+function updateHeavyAuto(){
+  if(s.heavyAutoTimer){ clearInterval(s.heavyAutoTimer); s.heavyAutoTimer=null; }
+  jSave('icicle.heavyAutoRefresh',!!el('heavyAutoRefresh').checked);
+  if(!el('heavyAutoRefresh').checked) return;
+  const sec=Math.max(5,parseInt(el('heavyAutoSec').value||'30',10)||30);
+  el('heavyAutoSec').value=String(sec);
+  jSave('icicle.heavyAutoSec',sec);
+  s.heavyAutoTimer=setInterval(()=>{ if(!s.busy && document.getElementById('viewAnalyze')?.classList.contains('active')) runHeavy(); },sec*1000);
+}
 function saveQueuePreset(){
   const name=prompt(s.lang==='ru'?'Имя пресета очереди':'Queue preset name','default');
   if(!name) return;
@@ -1246,6 +1364,12 @@ el('teamPackImportUrlBtn').onclick=importTeamPackFromURL;
 el('saveDiskPresetBtn').onclick=()=>saveDiskPresetFor(''); el('loadDiskPresetBtn').onclick=()=>loadDiskPresetFor('');
 el('saveQuickDestBtn').onclick=saveQuickDestination; el('quickDestSaved').onchange=()=>{ if(el('quickDestSaved').value) el('quickDest').value=el('quickDestSaved').value; };
 el('applyPerfBtn').onclick=syncPerfUI; el('perfMode').onchange=syncPerfUI;
+el('copySelTxtBtn').onclick=exportSelectedPathsTxt;
+el('favOnlyBtn').onclick=toggleFavOnly;
+el('scanHistoryRunBtn').onclick=runHistoryItem;
+el('scanHistoryClearBtn').onclick=clearScanHistory;
+el('heavyAutoRefresh').addEventListener('change',updateHeavyAuto);
+el('heavyAutoSec').addEventListener('change',updateHeavyAuto);
 el('heavyClearFiltersBtn').onclick=()=>{el('heavySearch').value=''; el('heavyMinSize').value=''; el('heavySort').value='size-desc'; localStorage.removeItem('icicle.heavySearch'); localStorage.removeItem('icicle.heavyMinSize'); localStorage.setItem('icicle.heavySort','size-desc'); s.heavyRenderLimit=200; renderHeavy();};
 el('heavyRefreshBtn').onclick=runHeavy;
 el('routeRunBtn').onclick=runRouteSamples; el('routeFullRunBtn').onclick=runRouteFullSimulation; el('routeCloseBtn').onclick=()=>el('routePanel').style.display='none';
@@ -1285,11 +1409,13 @@ el('heavyBody').addEventListener('change',async(e)=>{
     const act=t.value;
     t.value='';
     if(!act||!p)return;
+    if(act==='copy'){ try{await navigator.clipboard.writeText(p); setStatus(s.lang==='ru'?'Путь скопирован':'Path copied');}catch{ setStatus(s.lang==='ru'?'Не удалось скопировать':'Copy failed'); } }
     if(act==='amove') await moveFile(p,true);
     if(act==='move') await moveFile(p,false);
     if(act==='del') await deleteFile(p);
   }
 });
+el('heavyBody').addEventListener('click',(e)=>{const t=e.target; if(!(t instanceof HTMLElement))return; if(t.dataset.fav){ toggleFavorite(t.dataset.fav); renderHeavy(); }});
 el('emptyList').addEventListener('change',(e)=>{const t=e.target; if(!(t instanceof HTMLElement))return; if(t.dataset.edir){if(t.checked)s.emptySelected.add(t.dataset.edir); else s.emptySelected.delete(t.dataset.edir); el('emptyAll').checked=s.emptyDirs.length>0&&s.emptyDirs.every(p=>s.emptySelected.has(p));}});
 el('heavySearch').addEventListener('input',()=>{try{localStorage.setItem('icicle.heavySearch',el('heavySearch').value||'');}catch{} debouncedRenderHeavy();});
 el('heavyMinSize').addEventListener('input',()=>{try{localStorage.setItem('icicle.heavyMinSize',el('heavyMinSize').value||'');}catch{} debouncedRenderHeavy();});
@@ -1330,7 +1456,7 @@ document.addEventListener('keydown',async(e)=>{
   if(e.key==='Backspace'){ e.preventDefault(); if(s.wizStack.length>0){ const p=s.wizStack.pop(); await runWiz(p,false);} return; }
 });
 
-(async()=>{try{const d=await getDefaultsCached(true); el('path').value=d.downloads||d.home||''; el('pathQuick').value=el('path').value; el('verPill').textContent=d.version||'-'; loadClientState(); el('heavySearch').value=localStorage.getItem('icicle.heavySearch')||''; el('heavyMinSize').value=localStorage.getItem('icicle.heavyMinSize')||''; el('heavySort').value=localStorage.getItem('icicle.heavySort')||'size-desc'; await loadSaved(); await loadDrives(true); await listSnapshots(false); applyLang(); const v=localStorage.getItem('icicle.view')||'analyze'; setView(v); pollLog(); setTimeout(()=>runWiz(),250);}catch(e){showErr(e)}})();
+(async()=>{try{const d=await getDefaultsCached(true); el('path').value=d.downloads||d.home||''; el('pathQuick').value=el('path').value; el('verPill').textContent=d.version||'-'; loadClientState(); el('heavySearch').value=localStorage.getItem('icicle.heavySearch')||''; el('heavyMinSize').value=localStorage.getItem('icicle.heavyMinSize')||''; el('heavySort').value=localStorage.getItem('icicle.heavySort')||'size-desc'; await loadSaved(); await loadDrives(true); await listSnapshots(false); applyLang(); updateHeavyAuto(); const v=localStorage.getItem('icicle.view')||'analyze'; setView(v); pollLog(); setTimeout(()=>runWiz(),250);}catch(e){showErr(e)}})();
 window.addEventListener('resize',()=>{ if(s.wiz) renderWiz(s.wiz); });
 </script>
 </body>

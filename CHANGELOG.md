@@ -1,5 +1,12 @@
 ﻿# Changelog
 
+## 3.1.1 - 2026-02-18
+- Added favorite files workflow in heavy list (`☆/★`) with persisted favorites and `Fav only` mode.
+- Added heavy extension quick chips for one-click filtering by dominant extensions.
+- Added scan history dropdown with one-click rerun (`tree` / `heavy` / `wiz`).
+- Added heavy auto-refresh mode with configurable interval.
+- Added `Export selected TXT` for selected heavy paths.
+
 ## 3.1.0 - 2026-02-15
 - Completed v3.0 release prep checklist (RU/EN wording pass + final visual QA targets).
 - Added high-performance heavy table pipeline:
@@ -50,3 +57,4 @@
 - GUI auto-update via GitHub Releases (check/install/restart).
 - Konami easter egg.
 - Release hardening for access-denied paths.
+
