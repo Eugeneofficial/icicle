@@ -1,7 +1,7 @@
-﻿# icicle ❄️
+# icicle
 
-**Windows-first disk cleanup & intelligence toolkit (CLI + native GUI).**  
-Fast scans, interactive WizMap treemap, safe cleanup flows, automation, and routing rules in one Go/Wails project with 70+ practical capabilities.
+**Windows-first disk intelligence and cleanup cockpit.**  
+`icicle` combines a fast Go scan core, a native Wails desktop app, and a practical CLI for finding storage pressure, understanding disk layout, and executing safer cleanup workflows.
 
 <p align="left">
   <a href="https://github.com/Eugeneofficial/icicle/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/Eugeneofficial/icicle?style=flat-square"></a>
@@ -15,252 +15,406 @@ Fast scans, interactive WizMap treemap, safe cleanup flows, automation, and rout
 
 ![icicle in action](docs/hero-v7.svg)
 
-> Optional media placeholders (recommended for release):
-> - `docs/screenshots/wizmap.svg`
-> - `docs/screenshots/dashboard.svg`
-> - `docs/screenshots/routing-editor.svg`
-> - `docs/screenshots/cli-heavy.svg`
+## Why icicle
 
-## Table of Contents
+Most disk tools fail at one of three things:
+- they scan too slowly for everyday use,
+- they show data without giving you a safe path to action,
+- or they split discovery, cleanup, and automation into different tools.
 
-- [About](#about)
-- [Features](#features)
-- [Demo & Screenshots](#demo--screenshots)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Usage (CLI)](#usage-cli)
-- [GUI Highlights](#gui-highlights)
-- [Benchmarks](#benchmarks)
-- [Roadmap](#roadmap)
-- [Contributing & Support](#contributing--support)
-- [License](#license)
-- [RU](#ru-section-русская-версия)
+`icicle` is built to keep that workflow continuous:
+1. Scan fast.
+2. See what matters.
+3. Queue safe actions.
+4. Automate repeatable cleanup.
 
-## About
+The result is a storage-operations workflow for Windows rather than just another "large files" viewer.
 
-`icicle` is built for a common Windows pain point: storage grows fast, cleanup is risky, and most tools are either too shallow or too slow for daily use.
+## What You Get
 
-The project combines a **fast Go scanning core** with a **native Wails desktop app** and a practical CLI. You can inspect big disks quickly (`tree`, `heavy`, `extensions`), then act safely (Recycle Bin, queue, undo, dry-run).
+### Fast disk intelligence
+- Large-file analysis with `heavy`
+- Directory size mapping with `tree`
+- Extension analytics and scan filters
+- Performance modes for different systems and workloads
 
-The desktop stack is now **Wails-only** (single GUI path). Legacy internal GUI code was removed to reduce maintenance overhead and avoid split behavior.
+### Native desktop workflow
+- Wails desktop app, not a browser tab
+- RU/EN localization
+- Dark/light themes
+- Tray integration, command palette, keyboard shortcuts
 
-What makes icicle different is the workflow continuity: from discovery to action. You can scan, visualize, schedule, route, and clean in one place without switching tools.
+### Visual analysis
+- Interactive WizMap treemap
+- Hover details and breadcrumbs
+- Snapshot-aware workflows and delta-oriented inspection
 
-## Features
+### Safe actions
+- Recycle Bin delete flow
+- Batch queue for move/delete
+- Undo-oriented cleanup workflow
+- Empty-folder detection and selective removal
 
-### ⚡ Fast Disk Intelligence
-- High-speed scans for `tree`, `heavy`, and `extensions`
-- Optimized for large disks and heavy I/O workloads
-- Include/ignore filters and performance modes (`eco`, `balanced`, `turbo`)
+### Automation
+- Watch mode with routing rules
+- Scheduling for scans and cleanup
+- Presets for repeated operating patterns
+- Routing editor and route simulation flows
 
-![Fast scan](docs/screenshots/cli-heavy.svg)
+### Portability and team use
+- Portable mode launcher
+- Profile export/import
+- Team preset pack flows
+- Release-ready desktop and CLI binaries
 
-### 🗺️ WizMap Treemap
-- Interactive treemap with drill-down and breadcrumbs
-- Hover details panel (path, extension, size heat)
-- Keyboard navigation + snapshot delta overlays
+## Highlights
 
-![WizMap](docs/screenshots/wizmap.svg)
+### WizMap + heavy-file queue
+`icicle` is strongest when you move from visualization to action without context switching.  
+You can inspect a path in WizMap, jump into heavy-file analysis, filter the result set, queue actions, and execute only the smallest useful batch.
 
-### 👀 Watch + Auto-Sort
-- Folder watch with file routing by extension/prefix/regex rules
-- Visual routing rule editor + tester panel
-- New file marker (`NEW`) in heavy list
+### Watch mode that behaves like an operator tool
+Watch mode is not just "move files by extension".  
+It is part of a larger routing workflow with rules, diagnostics, dry-run support, and safer handling for changing files.
 
-![Routing editor](docs/screenshots/routing-editor.svg)
+### Desktop redesign in v5
+The current desktop generation is centered on three operating surfaces:
+- `Dashboard` for overview and storage pressure
+- `Analyze` for path-level investigation and action queueing
+- `Automation` for watch, schedule, export, and routing control
 
-### 🧹 Safe Cleanup Operations
-- Safe delete to Recycle Bin
-- Batch queue (move/delete), presets, undo flow
-- Empty folder discovery with selective removal
-
-![Cleanup queue](docs/screenshots/cleanup-queue.svg)
-
-### ⏱️ Automation & Scheduling
-- Scheduled scans + report snapshots
-- Scheduled cleanup with calendar modes (`interval`, `daily`, `weekly`)
-- Per-disk cleanup presets (`C:`, `D:`, `E:`)
-
-![Scheduler](docs/screenshots/scheduler.svg)
-
-### 🔐 Portable Profiles
-- Encrypted profile export/import
-- Import conflict mode: `merge` or `overwrite`
-- Team preset pack import/export and URL registry import
-
-## Demo & Screenshots
+## Screenshots
 
 | Dashboard | WizMap |
 |---|---|
 | ![Dashboard](docs/screenshots/dashboard.svg) | ![WizMap](docs/screenshots/wizmap.svg) |
 
-| Routing Rules | CLI Heavy |
+| Routing Rules | Heavy CLI |
 |---|---|
 | ![Routing](docs/screenshots/routing-editor.svg) | ![CLI](docs/screenshots/cli-heavy.svg) |
 
-| Snapshot Diff | Queue Ops |
+| Scheduler | Cleanup Queue |
 |---|---|
-| ![Snapshots](docs/screenshots/snapshots.svg) | ![Queue](docs/screenshots/cleanup-queue.svg) |
+| ![Scheduler](docs/screenshots/scheduler.svg) | ![Queue](docs/screenshots/cleanup-queue.svg) |
 
 ## Installation
 
-### 1) Portable (recommended)
+### Portable
 
 ```powershell
-# from repository root
 .\icicle-portable.bat
-# or
+```
+
+### Update existing repo checkout
+
+```powershell
 .\update.bat
 ```
 
-### 2) Build from source (CLI)
+### Build CLI
 
 ```powershell
 git clone https://github.com/Eugeneofficial/icicle.git
 cd icicle
-go build -o icicle.exe ./cmd/icicle
+go build -trimpath -buildvcs=false -ldflags "-s -w -buildid=" -o icicle.exe ./cmd/icicle
 .\icicle.exe
 ```
 
-### 3) Build native GUI (Wails)
+### Build desktop app
 
 ```powershell
-.\scripts\build_wails.bat
+go build -trimpath -buildvcs=false -ldflags "-s -w -buildid=" -tags "wails,production" -o icicle-desktop.exe ./cmd/icicle-wails
 .\icicle-desktop.exe
 ```
 
-### 4) Installer path (PowerShell / NSIS / WiX)
+### Installer-related scripts
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
-# optional pipelines:
 powershell -ExecutionPolicy Bypass -File .\scripts\build_installer.ps1
 powershell -ExecutionPolicy Bypass -File .\scripts\build_msi_wix.ps1
-```
-
-### 5) Winget (planned/templated)
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\package_winget.ps1 -Version 3.0.0
 ```
 
 ## Quick Start
 
 ```powershell
-# Fast top files on Downloads
+# Top largest files in Downloads
 .\icicle.exe heavy --n 20 "%USERPROFILE%\Downloads"
 
-# Size tree on C:
-.\icicle.exe tree C:\
+# Tree view on a target path
+.\icicle.exe tree "%USERPROFILE%\Documents"
 
-# Watch folder and auto-sort incoming files
+# Watch Downloads with auto-sort rules
 .\icicle.exe watch "%USERPROFILE%\Downloads"
 ```
 
-## Usage (CLI)
+## CLI
 
 ```powershell
-# Top 50 largest files
 icicle heavy --n 50 C:\
-
-# Tree with your target path
-icicle tree "%USERPROFILE%\Documents"
-
-# Watch mode (auto-sort based on rules)
+icicle tree C:\
 icicle watch "%USERPROFILE%\Downloads"
 ```
 
-> Note: advanced include/ignore filtering is available in GUI scan pipelines.
+Current main commands:
+- `heavy`
+- `tree`
+- `watch`
+- `version`
 
-## GUI Highlights
+## Desktop App
 
-- Native desktop app via Wails (not browser tab)
-- Single maintained GUI runtime (legacy internal GUI removed)
-- Dark/light themes, RU/EN localization, tray behavior
-- Command palette (`Ctrl+K`)
-- Quick navigation:
-  - `Alt+1` Dashboard
-  - `Alt+2` Analyze
-  - `Alt+3` Operations
-  - `Ctrl+Shift+H` Run Heavy
-  - `Ctrl+Shift+T` Run Tree
-  - `Ctrl+Shift+W` Run WizMap
+Desktop UX includes:
+- command palette (`Ctrl+K`)
+- quick navigation across core views
+- heavy-file filtering, sorting, selection, and queue actions
+- WizMap navigation and extension view
+- watch diagnostics and route tooling
+- theme and language switching
 
-## Benchmarks
+## Quality and Testing
 
-Source: [`BENCHMARKS.md`](BENCHMARKS.md)
+Recommended local checks:
 
-| Scenario | Mode | Result |
-|---|---|---|
-| `heavy C:\` | fast (`maxFiles=220000`) | ~0.7-0.9s |
-| `heavy C:\` | full | depends on full tree size |
-| `tree C:\` | full | several seconds on large systems |
+```powershell
+go test ./...
+go build -trimpath -buildvcs=false -ldflags "-s -w -buildid=" -o icicle.exe ./cmd/icicle
+go build -trimpath -buildvcs=false -ldflags "-s -w -buildid=" -tags "wails,production" -o icicle-desktop.exe ./cmd/icicle-wails
+```
 
-Reference environment:
-- Windows 11 x64
-- SSD/NVMe
-- Production build (`go build -tags "wails,production"`)
+More detail:
+- [`TESTING.md`](TESTING.md)
+- [`BENCHMARKS.md`](BENCHMARKS.md)
 
-## Roadmap
+## Project Docs
 
-Source: [`ROADMAP.md`](ROADMAP.md)
+- [`CHANGELOG.md`](CHANGELOG.md)
+- [`ROADMAP.md`](ROADMAP.md)
+- [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- [`SECURITY.md`](SECURITY.md)
+- [`RELEASE_NOTES_v5.0.0.md`](RELEASE_NOTES_v5.0.0.md)
 
-- v2.1-v2.8 delivered (scan pipeline, queue ops, snapshot diff/export, routing editor, signed release flow)
-- v3.0 release prep completed (UX polish, wording QA, visual QA)
-- v3.1 delivered (performance/rendering pipeline, scan caches, adaptive polling, queue optimization)
-- v3.2 next (parallel reducers, streaming updates, benchmark pack)
+## Contributing
 
-## Contributing & Support
+Pull requests are welcome, especially in these areas:
+- scanner performance
+- desktop UX and interaction quality
+- Windows reliability
+- localization quality
+- packaging and release tooling
 
-- Read [`CONTRIBUTING.md`](CONTRIBUTING.md)
-- Check [`SECURITY.md`](SECURITY.md) for responsible disclosure
-- Open issues for bugs, performance reports, and feature requests
-- PRs are welcome for scanner performance, UX polish, and localization quality
+Start here:
+- [`CONTRIBUTING.md`](CONTRIBUTING.md)
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE).
+MIT. See [`LICENSE`](LICENSE).
 
 ---
 
-## RU 
+# icicle на русском
 
-### О проекте
+**Windows-first cockpit для анализа дисков и безопасной очистки.**  
+`icicle` объединяет быстрый Go-движок сканирования, нативный desktop GUI на Wails и практичный CLI, чтобы находить, что съедает место, понимать структуру диска и безопасно выполнять cleanup-задачи.
 
-`icicle` — это Windows-first инструмент для анализа дисков и безопасной очистки.  
-Он объединяет быстрый Go-движок сканирования, CLI и нативный GUI на Wails.
+## Зачем нужен icicle
 
-Подходит для повседневной работы: быстро найти, что занимает место, визуально проверить структуру, безопасно удалить лишнее в корзину и автоматизировать регулярные задачи.
+Большинство disk cleanup tools ломаются в одном из трёх мест:
+- слишком медленно работают для повседневного сценария,
+- показывают данные, но не дают безопасного пути к действию,
+- или разрывают анализ, очистку и автоматизацию по разным инструментам.
 
-### Основные возможности
+`icicle` построен как единый рабочий цикл:
+1. Быстро просканировать.
+2. Увидеть, что реально важно.
+3. Собрать безопасные действия в очередь.
+4. Автоматизировать повторяющиеся сценарии.
 
-- ⚡ Быстрые сканы: `tree`, `heavy`, `extensions`
-- 🗺️ Интерактивная карта WizMap (drill-down, breadcrumbs, hover heat panel, hotkeys)
-- 👀 Watch + авто-сортировка новых файлов по правилам
-- ⏱️ Планировщик сканов и очистки (interval/daily/weekly)
-- 🧹 Безопасное удаление в корзину + очередь + undo
-- 🧩 Визуальный редактор routing rules (`ext` / `prefix` / `regex`) + тестер
-- 🔐 Шифрованные portable-профили (export/import, merge/overwrite)
-- 🖥️ Нативный GUI (темы, трей, RU/EN)
-- 🧰 CLI + GUI в одном проекте
+Это не просто "поиск больших файлов", а более цельный storage-operations workflow под Windows.
 
-### Быстрый старт (RU)
+## Что умеет
+
+### Быстрый анализ диска
+- Поиск тяжёлых файлов через `heavy`
+- Карта размеров директорий через `tree`
+- Аналитика по расширениям
+- Фильтры и performance modes
+
+### Нативный desktop workflow
+- Настоящее desktop-приложение на Wails
+- RU/EN интерфейс
+- Светлая и тёмная темы
+- Трей, command palette, горячие клавиши
+
+### Визуальный анализ
+- Интерактивная treemap-карта WizMap
+- Hover details и breadcrumbs
+- Сценарии со snapshot/delta-анализом
+
+### Безопасные действия
+- Удаление в корзину
+- Batch queue для move/delete
+- Undo-ориентированный cleanup flow
+- Поиск пустых папок и выборочное удаление
+
+### Автоматизация
+- Watch mode с routing rules
+- Планировщик сканов и очистки
+- Presets для повторяющихся сценариев
+- Редактор правил и route simulation
+
+### Portable и командное использование
+- Portable launcher
+- Export/import профилей
+- Team preset pack flows
+- Готовые desktop и CLI binaries
+
+## Ключевые сильные стороны
+
+### WizMap + heavy-file queue
+Сильная сторона `icicle` в том, что он не обрывает контекст между анализом и действием.  
+Можно открыть путь в WizMap, перейти в heavy-анализ, отфильтровать выдачу, собрать очередь действий и выполнить только тот batch, который реально меняет ситуацию на диске.
+
+### Watch mode как операторский инструмент
+Здесь watch mode - это не просто "перенести файл по расширению".  
+Это часть более широкого routing workflow: с правилами, диагностикой, dry-run и более безопасным поведением при изменяющихся файлах.
+
+### Desktop redesign в v5
+Текущее поколение desktop-интерфейса построено вокруг трёх рабочих поверхностей:
+- `Dashboard` для обзора и pressure-сигналов
+- `Analyze` для расследования по пути и action queue
+- `Automation` для watch, schedule, export и routing-контроля
+
+## Скриншоты
+
+| Dashboard | WizMap |
+|---|---|
+| ![Dashboard](docs/screenshots/dashboard.svg) | ![WizMap](docs/screenshots/wizmap.svg) |
+
+| Routing Rules | Heavy CLI |
+|---|---|
+| ![Routing](docs/screenshots/routing-editor.svg) | ![CLI](docs/screenshots/cli-heavy.svg) |
+
+| Scheduler | Cleanup Queue |
+|---|---|
+| ![Scheduler](docs/screenshots/scheduler.svg) | ![Queue](docs/screenshots/cleanup-queue.svg) |
+
+## Установка
+
+### Portable
+
+```powershell
+.\icicle-portable.bat
+```
+
+### Обновление существующего checkout
+
+```powershell
+.\update.bat
+```
+
+### Сборка CLI
 
 ```powershell
 git clone https://github.com/Eugeneofficial/icicle.git
 cd icicle
-.\scripts\build_wails.bat
+go build -trimpath -buildvcs=false -ldflags "-s -w -buildid=" -o icicle.exe ./cmd/icicle
+.\icicle.exe
+```
+
+### Сборка desktop app
+
+```powershell
+go build -trimpath -buildvcs=false -ldflags "-s -w -buildid=" -tags "wails,production" -o icicle-desktop.exe ./cmd/icicle-wails
 .\icicle-desktop.exe
 ```
 
-### Статус релиза
+### Скрипты для installer pipeline
 
-Текущая версия: **v3**.
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\build_installer.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\build_msi_wix.ps1
+```
+
+## Быстрый старт
+
+```powershell
+# Найти самые тяжёлые файлы в Downloads
+.\icicle.exe heavy --n 20 "%USERPROFILE%\Downloads"
+
+# Посмотреть дерево размеров
+.\icicle.exe tree "%USERPROFILE%\Documents"
+
+# Запустить watch mode на Downloads
+.\icicle.exe watch "%USERPROFILE%\Downloads"
+```
+
+## CLI
+
+```powershell
+icicle heavy --n 50 C:\
+icicle tree C:\
+icicle watch "%USERPROFILE%\Downloads"
+```
+
+Основные команды:
+- `heavy`
+- `tree`
+- `watch`
+- `version`
+
+## Desktop App
+
+Что есть в desktop UX:
+- command palette (`Ctrl+K`)
+- быстрая навигация между основными экранами
+- heavy-file filtering, sorting, selection и queue actions
+- WizMap navigation и extension view
+- watch diagnostics и route tooling
+- переключение темы и языка
+
+## Качество и тестирование
+
+Базовые локальные проверки:
+
+```powershell
+go test ./...
+go build -trimpath -buildvcs=false -ldflags "-s -w -buildid=" -o icicle.exe ./cmd/icicle
+go build -trimpath -buildvcs=false -ldflags "-s -w -buildid=" -tags "wails,production" -o icicle-desktop.exe ./cmd/icicle-wails
+```
+
+Подробности:
+- [`TESTING.md`](TESTING.md)
+- [`BENCHMARKS.md`](BENCHMARKS.md)
+
+## Документация проекта
+
+- [`CHANGELOG.md`](CHANGELOG.md)
+- [`ROADMAP.md`](ROADMAP.md)
+- [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- [`SECURITY.md`](SECURITY.md)
+- [`RELEASE_NOTES_v5.0.0.md`](RELEASE_NOTES_v5.0.0.md)
+
+## Контрибьютинг
+
+Особенно полезны PR в следующих направлениях:
+- производительность scanner core
+- качество desktop UX
+- Windows reliability
+- локализация и текстовая консистентность
+- packaging и release tooling
+
+Стартовая точка:
+- [`CONTRIBUTING.md`](CONTRIBUTING.md)
+
+## Лицензия
+
+MIT. См. [`LICENSE`](LICENSE).
 
 ---
 
 <p align="center">
   Built with Go + Wails • MIT • Maintained by <a href="https://github.com/Eugeneofficial">Eugeneofficial</a><br/>
-  Last README update: <strong>2026-02-15</strong>
+  README refreshed for <strong>v5.0.0</strong> on <strong>2026-03-06</strong>
 </p>
-
