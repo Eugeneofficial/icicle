@@ -4,98 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>icicle desktop</title>
-  <style>
-
-    :root{--bg:#0a0c12;--bg2:#0f1420;--surface:#141a27;--surface2:#101521;--line:#273146;--text:#e7ecf6;--muted:#97a3ba;--accent:#4ea1ff;--accent2:#2f6df0;--ok:#23c369;--warn:#f59e0b;--danger:#f0556b;--radius:14px;color-scheme:dark}
-    body.light{--bg:#edf1f8;--bg2:#e3e9f5;--surface:#ffffff;--surface2:#f5f8fe;--line:#d4ddec;--text:#192236;--muted:#62708a;--accent:#2f6df0;--accent2:#1f4fb6;color-scheme:light}
-    *{box-sizing:border-box}
-    body{margin:0;color:var(--text);font:14px/1.4 "Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
-      background:
-      radial-gradient(1000px 420px at -10% -120px,#234278 0%,transparent 58%),
-      radial-gradient(780px 320px at 105% -110px,#51243f 0%,transparent 54%),
-      linear-gradient(180deg,var(--bg2),var(--bg));}
-    button,input,select,textarea{font:inherit}
-    .app{min-height:100vh;display:grid;grid-template-rows:64px 1fr}
-    .appTop{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(8,12,20,.96),rgba(8,12,20,.78));backdrop-filter:blur(10px);position:sticky;top:0;z-index:25}
-    .brandRow{display:flex;align-items:center;gap:12px}.brand{font-size:30px;font-weight:900;letter-spacing:.2px}.verPill{font-size:12px;padding:4px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
-    .chipStrip{display:flex;gap:8px;flex-wrap:wrap}.chip{font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:4px 8px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted)}
-    .topActions{display:flex;gap:8px;align-items:center}
-    .appBody{display:grid;grid-template-columns:230px 1fr;gap:14px;padding:14px}
-    .rail{border:1px solid var(--line);border-radius:16px;background:linear-gradient(170deg,#0f2948,#0f1e35 45%,#12253f);padding:12px;display:grid;gap:10px;align-content:start}
-    .railTitle{font-size:12px;text-transform:uppercase;letter-spacing:.7px;color:#9ac5ff;margin:4px 2px}
-    .railBtn{height:42px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.02);color:var(--text);cursor:pointer;font-size:14px;display:flex;align-items:center;gap:8px;padding:0 10px}
-    .railBtn.active{background:linear-gradient(180deg,var(--accent),var(--accent2));border-color:transparent;color:#fff}
-    .railMini{font-size:12px;color:#b6d2f7;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.03)}
-    body.light .appTop{background:linear-gradient(180deg,rgba(245,248,253,.98),rgba(239,244,251,.94))}
-    body.light .rail{background:linear-gradient(170deg,#eaf0fb,#e3ebf8 45%,#dfe8f7)}
-    body.light .railTitle{color:#275c9b}
-    body.light .railMini{color:#2f4f76;background:rgba(255,255,255,.7)}
-    body.light .railBtn{background:rgba(255,255,255,.72)}
-    .workspace{display:grid;min-width:0}
-    .view{display:none;gap:12px;min-width:0}
-    .view.active{display:grid}
-    .panel{border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(165deg,var(--surface),var(--surface2));box-shadow:0 14px 34px rgba(0,0,0,.22)}
-    .panelHead{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
-    .tiny{font-size:12px;color:var(--muted)}
-    input,select,textarea,button{border:1px solid var(--line);background:rgba(255,255,255,.02);color:var(--text);border-radius:10px;padding:9px 11px}
-    select,select option,select optgroup{background:var(--surface);color:var(--text)}
-    input::placeholder,textarea::placeholder{color:var(--muted)}
-    button{cursor:pointer;transition:all .16s ease}
-    button:hover{transform:translateY(-1px);border-color:color-mix(in oklab,var(--line),#fff 28%)}
-    .primary{border-color:transparent;background:linear-gradient(180deg,var(--accent),var(--accent2));color:#fff}
-    .danger{border-color:transparent;background:linear-gradient(180deg,#f0657c,#df3452);color:#fff}
-    .row{display:flex;gap:8px;align-items:center}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    .opsGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .opsCard{padding:12px;display:grid;gap:8px}
-    .opsCard h4{margin:0 0 2px 0;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#84b3ff}
-    .driveBoard .toolbar{padding:10px 12px;display:grid;grid-template-columns:1fr repeat(5,auto);gap:8px;align-items:center;border-bottom:1px solid var(--line)}
-    .drives{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:8px;padding:10px 12px 12px}
-    .drive{border:1px solid var(--line);border-radius:10px;padding:8px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.005))}
-    .bar{height:8px;background:#2a3248;border-radius:999px;overflow:hidden;margin-top:7px}.fill{height:100%;background:linear-gradient(90deg,var(--accent),#7eb3ff)}
-    .analyzeGrid{display:grid;grid-template-columns:minmax(0,1fr) 560px;gap:12px;min-height:0}
-    .leftCol,.rightCol{display:grid;gap:12px;min-height:0}
-    .wizWrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:10px;padding:10px}
-    .wizMap{height:320px;min-height:260px;border:1px solid var(--line);border-radius:10px;position:relative;overflow:hidden;background:#090f1b}
-    .wizRect{position:absolute;overflow:hidden;border:1px solid rgba(255,255,255,.18);font-size:11px;padding:4px;cursor:pointer;white-space:nowrap;text-overflow:ellipsis}
-    .wizRect.dir{background:linear-gradient(180deg,#1d3d66,#122944)} .wizRect.file{background:linear-gradient(180deg,#4b2b5a,#2f173b)}
-    .wizRect.deltaUp{box-shadow:inset 0 0 0 1px rgba(77,204,121,.55)} .wizRect.deltaDown{box-shadow:inset 0 0 0 1px rgba(241,76,76,.55)} .wizRect.deltaNew{box-shadow:inset 0 0 0 2px rgba(127,199,255,.8)}
-    .wizRect.active{outline:2px solid #9fcbff;outline-offset:-2px}
-    .wizTop{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:6px}
-    .wizPath{font-family:Consolas,monospace;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .wizCrumbs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.wizCrumbs button{padding:4px 8px;font-size:12px}
-    .wizHover{border:1px solid var(--line);border-radius:10px;padding:8px;margin:6px 0;background:rgba(255,255,255,.02)}
-    .wizHoverPath{font-family:Consolas,monospace;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .heatBar{height:8px;background:#293247;border-radius:99px;overflow:hidden;margin-top:6px}.heatFill{height:100%;background:linear-gradient(90deg,#3fa7ff,#f2cc60,#f14c4c)}
-    .wizLegend{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}.wizTag{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:2px 8px}
-    .wizExt{border:1px solid var(--line);border-radius:10px;overflow:auto;max-height:280px}.wizExt table{font-size:12px}
-    .logWrap,.heavyWrap{padding:12px}.heavyWrap{max-height:650px;overflow:auto}
-    .heavyMeta{display:flex;align-items:center;gap:8px;margin:0 0 8px 0;flex-wrap:wrap}
-    .heavyMeta .spacer{flex:1}
-    .quickExt{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px 0}
-    .quickExt button{padding:3px 8px;font-size:12px}
-    .log{height:130px;min-height:120px;max-height:220px;resize:vertical;border:1px solid var(--line);background:#070c16;color:#dbe4f4;border-radius:12px;padding:10px;overflow:auto;white-space:pre-wrap;font:12px/1.38 Consolas,monospace}
-    table{width:100%;border-collapse:collapse;table-layout:fixed} th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-    th{position:sticky;top:0;background:color-mix(in oklab,var(--surface2),#000 4%);color:var(--muted)}
-    td.pathCell{font-family:Consolas,monospace;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .actions{display:flex;flex-wrap:nowrap;gap:4px;align-items:center}.actions button{padding:4px 7px;font-size:12px;min-width:58px}.actions select{width:auto;min-width:126px;padding:4px 6px;font-size:12px}
-    .pill{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:var(--muted)}.newTag{font-size:10px;border-radius:999px;padding:1px 6px;background:#27a0ff;color:#fff;margin-left:6px}
-    .heavyTools{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px}
-    .routeGrid{display:grid;grid-template-columns:90px 120px 100px 90px 130px 1fr 30px;gap:6px;align-items:center}.routeGrid input,.routeGrid select{padding:6px 8px}
-    #loader{position:fixed;inset:0;background:rgba(0,0,0,.48);display:none;align-items:center;justify-content:center;z-index:9999}#loader.show{display:flex}
-    .spin{width:62px;height:62px;border:4px solid rgba(255,255,255,.2);border-top-color:#7ab5ff;border-radius:50%;animation:rot 1s linear infinite}.loadText{margin-top:10px;text-align:center;color:#d9e7ff}@keyframes rot{to{transform:rotate(360deg)}}
-    .overlay{position:fixed;inset:0;background:rgba(3,8,16,.65);display:none;align-items:flex-start;justify-content:center;z-index:9998;padding-top:90px}.overlay.show{display:flex}
-    .palette{width:min(780px,94vw);background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}.palette input{border:none;border-bottom:1px solid var(--line);border-radius:0;padding:12px}
-    .paletteList{max-height:300px;overflow:auto}.paletteItem{padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer}.paletteItem:hover{background:rgba(255,255,255,.04)}
-    .toastWrap{position:fixed;right:14px;bottom:14px;display:grid;gap:8px;z-index:10020}
-    .toast{min-width:240px;max-width:420px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:linear-gradient(160deg,var(--surface),var(--surface2));box-shadow:0 10px 28px rgba(0,0,0,.25)}
-    .toast.ok{border-color:color-mix(in oklab,var(--ok),var(--line) 65%)}
-    .toast.err{border-color:color-mix(in oklab,var(--danger),var(--line) 65%)}
-    :focus-visible{outline:2px solid color-mix(in oklab,var(--accent),#fff 20%);outline-offset:1px}
-    @media (max-width:1320px){.drives{grid-template-columns:repeat(3,minmax(160px,1fr))}.analyzeGrid{grid-template-columns:1fr}.wizWrap{grid-template-columns:1fr}}
-    @media (max-width:1024px){.appBody{grid-template-columns:1fr}.rail{display:flex;flex-wrap:wrap;flex-direction:row}.railBtn{flex:1;min-width:140px}.opsGrid{grid-template-columns:1fr}.driveBoard .toolbar{grid-template-columns:1fr 1fr 1fr}.drives{grid-template-columns:repeat(2,minmax(150px,1fr))}}
-
-  </style>
+    <link rel="stylesheet" href="./app.css">
 </head>
 <body>
   <div id="loader"><div><div class="spin"></div><div class="loadText" id="loaderText">Scanning...</div></div></div>
@@ -103,7 +12,11 @@
   <div class="app">
     <header class="appTop">
       <div class="brandRow">
-        <div class="brand">icicle</div>
+        <div class="brandMark">I</div>
+        <div class="brandBlock">
+          <div class="brand">icicle</div>
+          <div class="brandSub">storage orchestration cockpit</div>
+        </div>
         <span class="verPill" id="verPill">v-</span>
         <div class="chipStrip">
           <span class="chip" id="chipMode">mode: balanced</span>
@@ -132,20 +45,89 @@
         <button class="railBtn" id="railDesktop"><span>&#x1F5C1;</span><span>Desktop</span></button>
         <button class="railBtn" id="railDocuments"><span>&#x1F4C4;</span><span>Documents</span></button>
         <div class="railMini" id="railHint">Ready</div>
+        <div class="subpanel">
+          <div class="subpanelHeader">
+            <h4>Workflow</h4>
+            <p>Fastest path through the app.</p>
+          </div>
+          <div class="signalList">
+            <div class="signalRow"><b>1</b><span>Pick a path, then open `Analyze` for treemap and heavy-file triage.</span></div>
+            <div class="signalRow"><b>2</b><span>Promote repeated actions into presets and schedules in `Automation`.</span></div>
+            <div class="signalRow"><b>3</b><span>Use `Dashboard` to spot drive pressure before it becomes cleanup debt.</span></div>
+          </div>
+        </div>
       </aside>
 
       <main class="workspace">
         <section id="viewDashboard" class="view active">
-          <section class="panel driveBoard">
-            <div class="toolbar"><div class="tiny" id="drivesTitle">System storage</div><button id="drivesRefresh">Refresh</button><button id="extBtn">Extensions</button><select id="dupMode"><option value="quick-name">dup: quick</option><option value="hash">dup: hash</option></select><button id="dupBtn">Duplicates</button><button id="wizBtn">WizMap</button></div>
-            <div class="drives" id="drives"></div>
+          <section class="panel heroPanel">
+            <div class="heroTop">
+              <div class="heroTitle">
+                <div class="heroEyebrow">Dashboard</div>
+                <h3>See pressure points before storage becomes operational debt.</h3>
+                <p>Track drive saturation, duplicates, extension hotspots and watch activity from one surface without dropping into ad hoc scripts.</p>
+              </div>
+              <div class="heroMeta">
+                <div class="heroStat"><b>Mode</b><span id="heroMode">Balanced</span></div>
+                <div class="heroStat"><b>Focus Path</b><span id="heroPath">Home</span></div>
+                <div class="heroStat"><b>Status</b><span id="heroStatus">Ready</span></div>
+              </div>
+            </div>
           </section>
-          <section class="panel logWrap"><pre class="log" id="log"></pre></section>
+          <section class="dashboardGrid">
+            <section class="panel driveBoard">
+              <div class="toolbar"><div class="tiny" id="drivesTitle">System storage</div><button id="drivesRefresh">Refresh</button><button id="extBtn">Extensions</button><select id="dupMode"><option value="quick-name">dup: quick</option><option value="hash">dup: hash</option></select><button id="dupBtn">Duplicates</button><button id="wizBtn">WizMap</button></div>
+              <div class="drives" id="drives"></div>
+            </section>
+            <div class="auxStack">
+              <section class="panel infoCard">
+                <h4>Operating posture</h4>
+                <div class="signalList">
+                  <div class="signalRow"><b>Pressure</b><span>Watch disks nearing capacity, then jump straight into the same drive for heavy-file analysis.</span></div>
+                  <div class="signalRow"><b>Dupes</b><span>Use quick-name to scout and hash mode when you are ready to make deletion calls.</span></div>
+                  <div class="signalRow"><b>Maps</b><span>Switch to WizMap when a drive card looks suspicious instead of reading raw tables first.</span></div>
+                </div>
+              </section>
+              <section class="panel logWrap"><div class="panelLabel">Activity Log</div><pre class="log" id="log"></pre></section>
+            </div>
+          </section>
         </section>
 
         <section id="viewAnalyze" class="view">
-          <section class="panel" style="padding:10px 12px">
-            <div class="row"><input id="pathQuick" placeholder="Path"><button id="pathQuickBrowse">...</button><button id="pathQuickUse">Use</button><button id="pathQuickTree">Tree</button><button id="pathQuickHeavy">Heavy</button><button id="pathQuickWiz">WizMap</button></div>
+          <section class="panel heroPanel">
+            <div class="heroTop">
+              <div class="heroTitle">
+                <div class="heroEyebrow">Analyze</div>
+                <h3>Move from path selection to visual triage in one pass.</h3>
+                <p>Use the quick launcher for tree, heavy-file and treemap workflows, then work the right pane as a surgical queue instead of a dump of rows.</p>
+              </div>
+              <div class="heroMeta">
+                <div class="heroStat"><b>Treemap</b><span>WizMap</span></div>
+                <div class="heroStat"><b>Heavy Files</b><span>Queue-ready</span></div>
+                <div class="heroStat"><b>History</b><span>Snapshot-aware</span></div>
+              </div>
+            </div>
+          </section>
+          <section class="panel controlStrip">
+            <div class="controlStripTop">
+              <div class="controlStripTitle">
+                <h4>Quick launcher</h4>
+                <p>Set the working path once, then branch into tree, heavy-file or treemap diagnostics without losing context.</p>
+              </div>
+              <div class="controlStripActions">
+                <span class="pill">tree</span>
+                <span class="pill">heavy</span>
+                <span class="pill">wizmap</span>
+              </div>
+            </div>
+            <div class="fieldGrid">
+              <input id="pathQuick" placeholder="Path">
+              <button id="pathQuickBrowse">...</button>
+              <button id="pathQuickUse">Use</button>
+              <button id="pathQuickTree">Tree</button>
+              <button id="pathQuickHeavy">Heavy</button>
+              <button id="pathQuickWiz">WizMap</button>
+            </div>
           </section>
           <section class="analyzeGrid">
             <div class="leftCol">
@@ -165,6 +147,15 @@
 
             <div class="rightCol">
               <section class="panel heavyWrap">
+                <div class="heavyHeader">
+                  <div class="heavyHeaderTop">
+                    <div>
+                      <h4>Heavy-file action queue</h4>
+                      <p>Filter aggressively, build a queue with intent, then execute the smallest safe batch that actually changes the drive.</p>
+                    </div>
+                    <span class="pill">selection-driven</span>
+                  </div>
+                </div>
                 <div id="driveHistoryPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)"><div class="row" style="justify-content:space-between"><b id="historyTitle">Drive history</b><button id="historyCloseBtn">x</button></div><div id="driveHistoryGrid" style="display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:8px;margin-top:6px"></div></div>
                 <div id="snapshotPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)"><div class="row"><select id="snapA"></select><select id="snapB"></select><button id="snapDiffBtn">Diff</button><button id="snapMapBtn">Treemap Compare</button><button id="snapCloseBtn">x</button></div><div class="row" style="margin-top:6px"><button id="snapExpCsvBtn">Export CSV</button><button id="snapExpJsonBtn">Export JSON</button><button id="snapExpMdBtn">Export MD</button></div><pre id="snapDiffOut" style="max-height:160px;overflow:auto;margin:8px 0 0"></pre><div id="snapMap" class="wizMap" style="height:220px;min-height:220px;margin-top:8px;display:none"></div></div>
                 <div id="dupPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)"><div class="row"><select id="dupGroupSel"></select><button id="dupKeepNewestBtn">Keep newest</button><button id="dupKeepOldestBtn">Keep oldest</button><button id="dupCloseBtn">x</button></div></div>
@@ -178,8 +169,10 @@
                   <div class="row"><button id="queueSavePresetBtn">Save Queue Preset</button><button id="queueLoadPresetBtn">Load Queue Preset</button></div>
                   <div class="row"><button id="findEmptyBtn">Find empty folders</button><button id="deleteEmptyBtn">Delete selected empty</button><span class="pill" id="selCount">selected: 0</span></div>
                 </div>
-                <div class="row" style="margin:0 0 8px 0"><input id="heavySearch" placeholder="filter by name/path"><input id="heavyMinSize" placeholder="min size MB"><select id="heavySort"><option value="size-desc">size desc</option><option value="size-asc">size asc</option><option value="path-asc">path asc</option><option value="new-first">new first</option></select><button id="heavyClearFiltersBtn">Clear</button><button id="heavyRefreshBtn">Refresh</button></div>
-                <div class="row" style="margin:0 0 8px 0"><button id="selTop10Btn">Select top 10</button><button id="selTop50Btn">Select top 50</button><button id="selInvertBtn">Invert</button><button id="copySelBtn">Copy selected paths</button></div>
+                <div class="utilityBar">
+                  <div class="fieldGrid tight"><input id="heavySearch" placeholder="filter by name/path"><input id="heavyMinSize" placeholder="min size MB"><select id="heavySort"><option value="size-desc">size desc</option><option value="size-asc">size asc</option><option value="path-asc">path asc</option><option value="new-first">new first</option></select><button id="heavyClearFiltersBtn">Clear</button><button id="heavyRefreshBtn">Refresh</button></div>
+                  <div class="row" style="margin:0 0 8px 0"><button id="selTop10Btn">Select top 10</button><button id="selTop50Btn">Select top 50</button><button id="selInvertBtn">Invert</button><button id="copySelBtn">Copy selected paths</button></div>
+                </div>
                 <div class="heavyMeta"><span class="pill" id="heavyStats">0 rows</span><button id="favOnlyBtn">Fav: off</button><label class="tiny"><input id="heavyAutoRefresh" type="checkbox"> <span id="heavyAutoTxt">auto heavy</span></label><input id="heavyAutoSec" value="30" style="max-width:88px" placeholder="sec"><button id="copySelTxtBtn">Export sel TXT</button><div class="spacer"></div><button id="heavyMoreBtn" style="display:none">Load more</button></div>
                 <div class="row" style="margin:0 0 8px 0"><select id="scanHistorySel" style="min-width:320px"></select><button id="scanHistoryRunBtn">Run saved</button><button id="scanHistoryClearBtn">Clear history</button></div>
                 <div id="heavyExtQuick" class="quickExt"></div>
@@ -191,55 +184,89 @@
         </section>
 
         <section id="viewOps" class="view">
+          <section class="panel heroPanel">
+            <div class="heroTop">
+              <div class="heroTitle">
+                <div class="heroEyebrow">Automation</div>
+                <h3>Turn cleanup routines into repeatable operations.</h3>
+                <p>Scheduling, routing, exports and update actions stay in one control room, with health telemetry visible instead of buried in logs.</p>
+              </div>
+              <div class="heroMeta">
+                <div class="heroStat"><b>Watch</b><span>Managed</span></div>
+                <div class="heroStat"><b>Schedules</b><span>Configurable</span></div>
+                <div class="heroStat"><b>Exports</b><span>Ready</span></div>
+              </div>
+            </div>
+          </section>
           <section class="opsGrid">
             <div class="panel opsCard">
-              <h4 id="subtitle">Desktop App</h4>
+              <div class="opsCardLead">
+                <h4 id="subtitle">Desktop App</h4>
+                <p>Pick the path, tune scan intensity and decide whether this run is diagnostic, operational or long-running.</p>
+              </div>
               <div class="tiny" id="folderHint">-</div>
-              <div class="row"><input id="path" placeholder="Path"><button id="browseBtn">...</button></div>
-              <div class="row"><select id="saved"></select></div>
-              <div class="row"><button id="saveBtn">Save</button><button id="useBtn">Use</button><button class="danger" id="removeBtn">Remove</button></div>
-              <div class="row"><input id="topN" value="20"><button class="primary" id="treeBtn">Tree</button><button class="primary" id="heavyBtn">Heavy</button></div>
-              <div class="row"><select id="perfMode"><option value="balanced">balanced</option><option value="turbo">turbo</option><option value="eco">eco</option></select><button id="applyPerfBtn">Apply Mode</button></div>
-              <div class="row"><button class="primary" id="watchStartBtn">Start Watch</button><button class="danger" id="watchStopBtn">Stop</button></div>
-              <div class="row"><label><input type="checkbox" id="dryRun"> <span id="dryTxt">dry-run</span></label><label><input type="checkbox" id="fastMode" checked> <span id="fastModeTxt">fast mode</span></label></div>
-              <div class="row"><button id="fullScanBtn">Full scan (bg)</button><button id="fullScanCancelBtn">Stop scan</button></div>
-              <div class="row"><input id="maxFiles" value="220000" placeholder="Max files"><input id="workers" value="24" placeholder="Workers"></div>
+              <div class="opsRows">
+                <div class="row"><input id="path" placeholder="Path"><button id="browseBtn">...</button></div>
+                <div class="row"><select id="saved"></select></div>
+                <div class="row"><button id="saveBtn">Save</button><button id="useBtn">Use</button><button class="danger" id="removeBtn">Remove</button></div>
+                <div class="row"><input id="topN" value="20"><button class="primary" id="treeBtn">Tree</button><button class="primary" id="heavyBtn">Heavy</button></div>
+                <div class="row"><select id="perfMode"><option value="balanced">balanced</option><option value="turbo">turbo</option><option value="eco">eco</option></select><button id="applyPerfBtn">Apply Mode</button></div>
+                <div class="row"><button class="primary" id="watchStartBtn">Start Watch</button><button class="danger" id="watchStopBtn">Stop</button></div>
+                <div class="row"><label><input type="checkbox" id="dryRun"> <span id="dryTxt">dry-run</span></label><label><input type="checkbox" id="fastMode" checked> <span id="fastModeTxt">fast mode</span></label></div>
+                <div class="row"><button id="fullScanBtn">Full scan (bg)</button><button id="fullScanCancelBtn">Stop scan</button></div>
+                <div class="row"><input id="maxFiles" value="220000" placeholder="Max files"><input id="workers" value="24" placeholder="Workers"></div>
+              </div>
             </div>
 
             <div class="panel opsCard">
-              <h4>Filters + Scheduling</h4>
-              <div class="row"><input id="includePath" placeholder="include path: cache,temp"><input id="ignorePath" placeholder="ignore path: node_modules,.git"></div>
-              <div class="row"><input id="includeExt" placeholder="include ext: .mp4,.zip"><input id="ignoreExt" placeholder="ignore ext: .tmp,.log"></div>
-              <div class="row"><input id="scheduleSec" value="300" placeholder="Schedule sec"><button id="scheduleStartBtn">Start schedule</button><button id="scheduleStopBtn">Stop schedule</button></div>
-              <div class="row"><button id="scheduleNowBtn">Run schedule now</button><button id="snapshotsBtn">Snapshots</button><button id="historyBtn">Drive history</button></div>
-              <div class="row"><input id="cleanupSec" value="900" placeholder="Cleanup sec"><select id="cleanupMode"><option value="dev-cache">dev-cache</option><option value="games">games</option><option value="media">media</option></select></div>
-              <div class="row"><select id="cleanupCalendarMode"><option value="interval">interval</option><option value="daily">daily</option><option value="weekly">weekly</option></select><input id="cleanupTime" value="02:30" placeholder="HH:MM"></div>
-              <div class="row"><input id="cleanupWeekday" value="1" placeholder="weekday 0-6"></div>
-              <div class="row"><button id="saveDiskPresetBtn">Save disk preset</button><button id="loadDiskPresetBtn">Load disk preset</button></div>
-              <div class="row"><button id="cleanupSchedStartBtn">Start cleanup schedule</button><button id="cleanupSchedStopBtn">Stop cleanup</button><button id="cleanupRunNowBtn">Cleanup now</button></div>
-              <div class="row"><button id="diagBtn">Watch diagnostics</button><select id="cleanupPreset"><option value="dev-cache">preset: dev-cache</option><option value="games">preset: games</option><option value="media">preset: media</option></select><button id="presetScanBtn">Scan preset</button><button id="presetApplyBtn">Apply preset</button></div>
+              <div class="opsCardLead">
+                <h4>Filters + Scheduling</h4>
+                <p>Shape what counts, then decide whether the routine is manual, interval-based or calendar-based.</p>
+              </div>
+              <div class="opsRows">
+                <div class="row"><input id="includePath" placeholder="include path: cache,temp"><input id="ignorePath" placeholder="ignore path: node_modules,.git"></div>
+                <div class="row"><input id="includeExt" placeholder="include ext: .mp4,.zip"><input id="ignoreExt" placeholder="ignore ext: .tmp,.log"></div>
+                <div class="row"><input id="scheduleSec" value="300" placeholder="Schedule sec"><button id="scheduleStartBtn">Start schedule</button><button id="scheduleStopBtn">Stop schedule</button></div>
+                <div class="row"><button id="scheduleNowBtn">Run schedule now</button><button id="snapshotsBtn">Snapshots</button><button id="historyBtn">Drive history</button></div>
+                <div class="row"><input id="cleanupSec" value="900" placeholder="Cleanup sec"><select id="cleanupMode"><option value="dev-cache">dev-cache</option><option value="games">games</option><option value="media">media</option></select></div>
+                <div class="row"><select id="cleanupCalendarMode"><option value="interval">interval</option><option value="daily">daily</option><option value="weekly">weekly</option></select><input id="cleanupTime" value="02:30" placeholder="HH:MM"></div>
+                <div class="row"><input id="cleanupWeekday" value="1" placeholder="weekday 0-6"></div>
+                <div class="row"><button id="saveDiskPresetBtn">Save disk preset</button><button id="loadDiskPresetBtn">Load disk preset</button></div>
+                <div class="row"><button id="cleanupSchedStartBtn">Start cleanup schedule</button><button id="cleanupSchedStopBtn">Stop cleanup</button><button id="cleanupRunNowBtn">Cleanup now</button></div>
+                <div class="row"><button id="diagBtn">Watch diagnostics</button><select id="cleanupPreset"><option value="dev-cache">preset: dev-cache</option><option value="games">preset: games</option><option value="media">preset: media</option></select><button id="presetScanBtn">Scan preset</button><button id="presetApplyBtn">Apply preset</button></div>
+              </div>
             </div>
 
             <div class="panel opsCard">
-              <h4>Export + Routing + Updates</h4>
-              <div class="row"><button id="undoBtn">Undo Move</button><button id="cleanBtn">Empty folders</button><button id="clearLogBtn">Clear Log</button></div>
-              <div class="row"><button id="expCsvBtn">Export CSV</button><button id="expJsonBtn">JSON</button><button id="expMdBtn">MD</button></div>
-              <div class="row"><button id="profileExportBtn">Export profile</button><button id="profileImportBtn">Import profile</button></div>
-              <div class="row"><button id="teamPackExportBtn">Export team pack</button><button id="teamPackImportBtn">Import team pack</button></div>
-              <div class="row"><input id="teamRegistryUrl" placeholder="Team preset registry URL"></div>
-              <div class="row"><button id="teamPackImportUrlBtn">Import from URL</button><button id="routesBtn">Routing rules</button><button id="routeTestBtn">Test route</button></div>
-              <div class="row"><button id="updCheckBtn">Check update</button><button id="updApplyBtn">Apply update</button></div>
-              <div class="row"><input id="quickDest" placeholder="Move destination (optional)"></div>
-              <div class="row"><select id="quickDestSaved"></select><button id="saveQuickDestBtn">Save Dest</button></div>
+              <div class="opsCardLead">
+                <h4>Export + Routing + Updates</h4>
+                <p>Everything that leaves the workstation or changes routing policy lives here, separated from scan control.</p>
+              </div>
+              <div class="opsRows">
+                <div class="row"><button id="undoBtn">Undo Move</button><button id="cleanBtn">Empty folders</button><button id="clearLogBtn">Clear Log</button></div>
+                <div class="row"><button id="expCsvBtn">Export CSV</button><button id="expJsonBtn">JSON</button><button id="expMdBtn">MD</button></div>
+                <div class="row"><button id="profileExportBtn">Export profile</button><button id="profileImportBtn">Import profile</button></div>
+                <div class="row"><button id="teamPackExportBtn">Export team pack</button><button id="teamPackImportBtn">Import team pack</button></div>
+                <div class="row"><input id="teamRegistryUrl" placeholder="Team preset registry URL"></div>
+                <div class="row"><button id="teamPackImportUrlBtn">Import from URL</button><button id="routesBtn">Routing rules</button><button id="routeTestBtn">Test route</button></div>
+                <div class="row"><button id="updCheckBtn">Check update</button><button id="updApplyBtn">Apply update</button></div>
+                <div class="row"><input id="quickDest" placeholder="Move destination (optional)"></div>
+                <div class="row"><select id="quickDestSaved"></select><button id="saveQuickDestBtn">Save Dest</button></div>
+              </div>
             </div>
           </section>
           <section class="panel opsCard">
-            <h4>Health</h4>
-            <div class="tiny" id="healthLast">last: -</div>
-            <div class="tiny" id="healthTree">tree ms: -</div>
-            <div class="tiny" id="healthHeavy">heavy ms: -</div>
-            <div class="tiny" id="healthWiz">wiz ms: -</div>
-            <div class="tiny" id="healthErr">error: -</div>
+            <div class="opsCardLead">
+              <h4>Health</h4>
+              <p>Keep scan timings and error state visible instead of buried in the footer.</p>
+            </div>
+            <div class="healthGrid">
+              <div class="healthCell"><b>Last</b><span class="tiny" id="healthLast">last: -</span></div>
+              <div class="healthCell"><b>Tree</b><span class="tiny" id="healthTree">tree ms: -</span></div>
+              <div class="healthCell"><b>Heavy</b><span class="tiny" id="healthHeavy">heavy ms: -</span></div>
+              <div class="healthCell"><b>Wiz</b><span class="tiny" id="healthWiz">wiz ms: -</span></div>
+              <div class="healthCell"><b>Error</b><span class="tiny" id="healthErr">error: -</span></div>
+            </div>
           </section>
           <section class="panel" style="padding:10px 12px"><div class="tiny" id="statusLine">ready</div></section>
         </section>
@@ -278,6 +305,8 @@ const setStatus=(t)=>{
   el('statusLine').textContent=msg;
   const cs=el('chipStatus');
   if(cs) cs.textContent=shortPath(msg,44);
+  const hs=el('heroStatus');
+  if(hs) hs.textContent=shortPath(msg||'Ready',28);
 };
 const updateSelCount=()=>{ const n=s.selected.size; if(el('selCount')) el('selCount').textContent=(s.lang==='ru'?'\u0432\u044b\u0431\u0440\u0430\u043d\u043e: ':'selected: ')+n; };
 const shortPath=(p,max=78)=>{ if(!p) return ''; if(p.length<=max) return p; const part=Math.max(20,Math.floor((max-3)/2)); return p.slice(0,part)+'...'+p.slice(-part); };
@@ -365,6 +394,8 @@ function updateTopChips(){
   el('chipMode').textContent='mode: '+(s.perfMode||'balanced');
   el('chipPath').textContent='path: '+shortPath(el('path').value||'-',34);
   el('chipCount').textContent='files: '+String((s.heavy||[]).length);
+  if(el('heroMode')) el('heroMode').textContent=(s.perfMode||'balanced').replace(/^./,(m)=>m.toUpperCase());
+  if(el('heroPath')) el('heroPath').textContent=shortPath(el('path').value||'-',24);
   if(el('pathQuick')) el('pathQuick').value=el('path').value||'';
 }
 
@@ -1461,3 +1492,4 @@ window.addEventListener('resize',()=>{ if(s.wiz) renderWiz(s.wiz); });
 </script>
 </body>
 </html>
+

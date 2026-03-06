@@ -25,6 +25,18 @@ func runTree(args []string) int {
 		fmt.Fprintln(os.Stderr, "usage: icicle tree [--n 20] [--w 24] [--top 5] [--no-color] [--no-emoji] [path]")
 		return 2
 	}
+	if *limit < 0 {
+		fmt.Fprintln(os.Stderr, "flag error: --n must be >= 0")
+		return 2
+	}
+	if *width < 0 {
+		fmt.Fprintln(os.Stderr, "flag error: --w must be >= 0")
+		return 2
+	}
+	if *top < 0 {
+		fmt.Fprintln(os.Stderr, "flag error: --top must be >= 0")
+		return 2
+	}
 	applyCommonFlags(common)
 
 	folders := detectUserFolders()

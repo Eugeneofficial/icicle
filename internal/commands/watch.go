@@ -184,7 +184,7 @@ func shouldSkipEvent(path string, cooldown map[string]time.Time) bool {
 }
 
 func maybeMoveFile(home, srcPath string, dryRun bool) (bool, string) {
-	info, err := os.Stat(srcPath)
+	info, err := waitForStableFile(srcPath)
 	if err != nil || info.IsDir() {
 		return false, ""
 	}
@@ -225,6 +225,38 @@ func maybeMoveFile(home, srcPath string, dryRun bool) (bool, string) {
 		return true, fmt.Sprintf("moved %s -> %s  [black-ice payload]", srcAbs, dstUnique)
 	}
 	return true, fmt.Sprintf("moved %s -> %s", srcAbs, dstUnique)
+}
+
+func waitForStableFile(path string) (os.FileInfo, error) {
+	const attempts = 6
+	const delay = 200 * time.Millisecond
+	const settleFor = 700 * time.Millisecond
+
+	var prevSize int64 = -1
+	var prevMod time.Time
+
+	for i := 0; i < attempts; i++ {
+		info, err := os.Stat(path)
+		if err != nil {
+			return nil, err
+		}
+		if info.IsDir() {
+			return info, nil
+		}
+		if info.Size() == prevSize && info.ModTime() == prevMod {
+			if time.Since(info.ModTime()) >= settleFor {
+				return info, nil
+			}
+		} else {
+			prevSize = info.Size()
+			prevMod = info.ModTime()
+		}
+		if i < attempts-1 {
+			time.Sleep(delay)
+		}
+	}
+
+	return nil, fmt.Errorf("file is still changing")
 }
 
 func moveFileWithRetry(src, dst string) error {

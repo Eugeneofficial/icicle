@@ -1,4 +1,26 @@
-﻿# Changelog
+# Changelog
+
+## 5.0.0 - 2026-03-06
+- Major desktop redesign across the Wails UI:
+  - new design system and visual hierarchy,
+  - rebuilt Dashboard / Analyze / Automation scenes,
+  - stronger navigation, action grouping, and health surfaces,
+  - improved responsive behavior for narrower windows.
+- Frontend structure improved by extracting desktop CSS into `cmd/icicle-wails/frontend/app.css`.
+- Heavy-file workspace upgraded into a clearer action-queue workflow with a dedicated control strip and stronger filtering layout.
+- Dashboard upgraded into a two-zone operational view with drive intelligence and an adjacent diagnostic stack.
+- Automation view reorganized by operating domain instead of a flat block of controls.
+- Watcher safety improved:
+  - waits for files to stabilize before auto-moving,
+  - reduces risk of moving still-downloading files.
+- Limited scan behavior hardened:
+  - max-file limits are now enforced more strictly under concurrent scanning,
+  - added regression coverage for limited heavy scans.
+- CLI consistency pass:
+  - `heavy` now rejects negative `-n`,
+  - progress bar output is fixed-width and predictable.
+- Expanded test coverage for watcher stability, heavy flag validation, UI bar rendering, tree flags, single-instance address generation, and scan-limit behavior.
+- Build artifacts refreshed for the new desktop release (`icicle.exe`, `icicle-desktop.exe`).
 
 ## 3.1.1 - 2026-02-18
 - Added favorite files workflow in heavy list (`☆/★`) with persisted favorites and `Fav only` mode.
@@ -57,4 +79,3 @@
 - GUI auto-update via GitHub Releases (check/install/restart).
 - Konami easter egg.
 - Release hardening for access-denied paths.
-

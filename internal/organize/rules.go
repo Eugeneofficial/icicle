@@ -1,10 +1,13 @@
 package organize
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 )
 
 var byExtension = map[string]string{
@@ -75,5 +78,68 @@ func MoveFile(srcPath, dstPath string) error {
 	if err := os.MkdirAll(filepath.Dir(dstPath), 0o755); err != nil {
 		return err
 	}
-	return os.Rename(srcPath, dstPath)
+	if err := os.Rename(srcPath, dstPath); err == nil {
+		return nil
+	} else if !isCrossDeviceRename(err) {
+		return err
+	}
+	return copyThenDelete(srcPath, dstPath)
+}
+
+func isCrossDeviceRename(err error) bool {
+	if errors.Is(err, syscall.EXDEV) {
+		return true
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "cross-device link") ||
+		strings.Contains(msg, "not same device") ||
+		strings.Contains(msg, "different disk drive")
+}
+
+func copyThenDelete(srcPath, dstPath string) error {
+	src, err := os.Open(srcPath)
+	if err != nil {
+		return err
+	}
+
+	srcInfo, err := src.Stat()
+	if err != nil {
+		_ = src.Close()
+		return err
+	}
+
+	dst, err := os.OpenFile(dstPath, os.O_CREATE|os.O_WRONLY|os.O_EXCL, srcInfo.Mode().Perm())
+	if err != nil {
+		_ = src.Close()
+		return err
+	}
+	copyErr := func() error {
+		if _, err := io.Copy(dst, src); err != nil {
+			return err
+		}
+		if err := dst.Sync(); err != nil {
+			return err
+		}
+		return nil
+	}()
+	closeErr := dst.Close()
+	if copyErr != nil {
+		_ = src.Close()
+		_ = os.Remove(dstPath)
+		return copyErr
+	}
+	if closeErr != nil {
+		_ = src.Close()
+		_ = os.Remove(dstPath)
+		return closeErr
+	}
+	if err := src.Close(); err != nil {
+		_ = os.Remove(dstPath)
+		return err
+	}
+	if err := os.Remove(srcPath); err != nil {
+		_ = os.Remove(dstPath)
+		return err
+	}
+	return nil
 }

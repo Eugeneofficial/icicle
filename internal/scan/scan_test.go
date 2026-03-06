@@ -82,3 +82,28 @@ func TestFirstPathSegment(t *testing.T) {
 		}
 	}
 }
+
+func TestScanTopFilesLimitedRespectsMaxFiles(t *testing.T) {
+	t.Setenv("ICICLE_SCAN_WORKERS", "16")
+
+	root := t.TempDir()
+	for dir := 0; dir < 8; dir++ {
+		for file := 0; file < 8; file++ {
+			mustWriteSized(t, filepath.Join(root, "d", string(rune('a'+dir)), "f"+string(rune('a'+file))+".bin"), 1)
+		}
+	}
+
+	stats, seen, limited, err := ScanTopFilesLimited(root, 10, 5)
+	if err != nil {
+		t.Fatalf("ScanTopFilesLimited error: %v", err)
+	}
+	if !limited {
+		t.Fatalf("expected limited=true")
+	}
+	if seen != 5 {
+		t.Fatalf("seen=%d want 5", seen)
+	}
+	if len(stats.TopFiles) > 5 {
+		t.Fatalf("top files len=%d want <= 5", len(stats.TopFiles))
+	}
+}

@@ -287,9 +287,24 @@ func walkFilesConcurrent(root string, maxFiles int, onFile func(path string, siz
 				}
 				continue
 			}
+			if maxFiles > 0 {
+				for {
+					cur := seen.Load()
+					if int(cur) >= maxFiles {
+						stop.Store(true)
+						return
+					}
+					if seen.CompareAndSwap(cur, cur+1) {
+						break
+					}
+				}
+			}
 			onFile(full, info.Size())
-			n := int(seen.Add(1))
-			if maxFiles > 0 && n >= maxFiles {
+			if maxFiles <= 0 {
+				seen.Add(1)
+				continue
+			}
+			if int(seen.Load()) >= maxFiles {
 				stop.Store(true)
 				return
 			}

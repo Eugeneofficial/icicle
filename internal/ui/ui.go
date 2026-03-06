@@ -21,6 +21,9 @@ func (t Theme) Emoji(s string) string {
 }
 
 func (t Theme) Bar(ratio float64, width int) string {
+	if width < 0 {
+		width = 0
+	}
 	if ratio < 0 {
 		ratio = 0
 	}
@@ -31,7 +34,10 @@ func (t Theme) Bar(ratio float64, width int) string {
 	if count < 1 && ratio > 0 {
 		count = 1
 	}
-	bar := strings.Repeat("█", count)
+	if count > width {
+		count = width
+	}
+	bar := strings.Repeat("#", count)
 	pad := strings.Repeat(" ", width-count)
 
 	if t.NoColor {

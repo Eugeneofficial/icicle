@@ -1,7 +1,7 @@
 ﻿# icicle ❄️
 
 **Windows-first disk cleanup & intelligence toolkit (CLI + native GUI).**  
-Fast scans, interactive WizMap treemap, safe cleanup flows, automation, and routing rules in one Go/Wails project with 50+ practical capabilities.
+Fast scans, interactive WizMap treemap, safe cleanup flows, automation, and routing rules in one Go/Wails project with 70+ practical capabilities.
 
 <p align="left">
   <a href="https://github.com/Eugeneofficial/icicle/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/Eugeneofficial/icicle?style=flat-square"></a>

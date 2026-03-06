@@ -21,7 +21,7 @@ if "%~1"=="" (
   if not errorlevel 1 (
     pushd "%ROOT%" >nul
     echo [icicle] desktop binary not found, building icicle-desktop.exe...
-    go build -tags "wails,production" -o icicle-desktop.exe ./cmd/icicle-wails
+    go build -trimpath -buildvcs=false -ldflags "-s -w -buildid=" -tags "wails,production" -o icicle-desktop.exe ./cmd/icicle-wails
     set "CODE=%errorlevel%"
     popd >nul
     if "%CODE%"=="0" (
@@ -88,7 +88,7 @@ if errorlevel 1 (
 )
 
 pushd "%ROOT%" >nul
-go build -o icicle.exe ./cmd/icicle
+go build -trimpath -buildvcs=false -ldflags "-s -w -buildid=" -o icicle.exe ./cmd/icicle
 if errorlevel 1 (
   set "CODE=%errorlevel%"
   popd >nul

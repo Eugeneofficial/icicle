@@ -23,6 +23,10 @@ func runHeavy(args []string) int {
 		fmt.Fprintln(os.Stderr, "usage: icicle heavy [--n 20] [--no-color] [--no-emoji] [path]")
 		return 2
 	}
+	if *limit < 0 {
+		fmt.Fprintln(os.Stderr, "flag error: --n must be >= 0")
+		return 2
+	}
 	applyCommonFlags(common)
 
 	folders := detectUserFolders()
