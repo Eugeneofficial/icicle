@@ -13,7 +13,7 @@ Fast scans, interactive WizMap treemap, safe cleanup flows, automation, and rout
   <a href="https://github.com/Eugeneofficial/icicle/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/Eugeneofficial/icicle/total?style=flat-square"></a>
 </p>
 
-![icicle in action](docs/hero-v6.svg)
+![icicle in action](docs/hero-v7.svg)
 
 > Optional media placeholders (recommended for release):
 > - `docs/screenshots/wizmap.svg`

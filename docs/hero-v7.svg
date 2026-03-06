@@ -1,0 +1,126 @@
+<svg width="1440" height="720" viewBox="0 0 1440 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="80" y1="40" x2="1320" y2="680" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#06101A"/>
+      <stop offset="0.52" stop-color="#0B1824"/>
+      <stop offset="1" stop-color="#13283B"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(248 96) rotate(34.2) scale(512 320)">
+      <stop stop-color="#47C8FF" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#47C8FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1180 136) rotate(142) scale(388 244)">
+      <stop stop-color="#2C7BFF" stop-opacity="0.24"/>
+      <stop offset="1" stop-color="#2C7BFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#122131"/>
+      <stop offset="1" stop-color="#0D1824"/>
+    </linearGradient>
+    <linearGradient id="panelSoft" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#172A3D"/>
+      <stop offset="1" stop-color="#102030"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#85E0FF"/>
+      <stop offset="0.55" stop-color="#35A8ED"/>
+      <stop offset="1" stop-color="#1566C8"/>
+    </linearGradient>
+    <linearGradient id="accentSoft" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#234664"/>
+      <stop offset="1" stop-color="#18324A"/>
+    </linearGradient>
+    <filter id="shadow" x="-40" y="-40" width="1520" height="800" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="24"/>
+      <feGaussianBlur stdDeviation="26"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.00784314 0 0 0 0 0.0627451 0 0 0 0 0.113725 0 0 0 0.42 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_hero"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_hero" result="shape"/>
+    </filter>
+  </defs>
+
+  <rect width="1440" height="720" fill="url(#bg)"/>
+  <rect width="1440" height="720" fill="url(#glowA)"/>
+  <rect width="1440" height="720" fill="url(#glowB)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="54" y="46" width="1332" height="628" rx="30" fill="#0A131D" fill-opacity="0.72" stroke="#203547"/>
+
+    <rect x="90" y="82" width="1260" height="86" rx="24" fill="url(#panelSoft)" stroke="#26465F"/>
+    <rect x="118" y="104" width="54" height="44" rx="14" fill="url(#accent)"/>
+    <text x="134" y="134" fill="#06131C" font-family="Segoe UI, Arial" font-size="28" font-weight="700">I</text>
+    <text x="198" y="124" fill="#EDF7FF" font-family="Segoe UI, Arial" font-size="40" font-weight="700">icicle</text>
+    <text x="198" y="147" fill="#8FB5D3" font-family="Segoe UI, Arial" font-size="14" letter-spacing="2">STORAGE ORCHESTRATION COCKPIT</text>
+
+    <rect x="476" y="105" width="136" height="34" rx="17" fill="#12273A" stroke="#274865"/>
+    <text x="502" y="127" fill="#A7C7E4" font-family="Segoe UI, Arial" font-size="13" letter-spacing="1">MODE: TURBO</text>
+    <rect x="624" y="105" width="198" height="34" rx="17" fill="#12273A" stroke="#274865"/>
+    <text x="648" y="127" fill="#A7C7E4" font-family="Segoe UI, Arial" font-size="13" letter-spacing="1">PATH: D:\ARCHIVE</text>
+    <rect x="834" y="105" width="128" height="34" rx="17" fill="#12273A" stroke="#274865"/>
+    <text x="860" y="127" fill="#A7C7E4" font-family="Segoe UI, Arial" font-size="13" letter-spacing="1">FILES: 182K</text>
+
+    <rect x="1100" y="103" width="102" height="40" rx="18" fill="url(#accent)" />
+    <text x="1125" y="129" fill="#FFFFFF" font-family="Segoe UI, Arial" font-size="16" font-weight="700">Scan</text>
+    <rect x="1214" y="103" width="110" height="40" rx="18" fill="#142639" stroke="#2B4B66"/>
+    <text x="1243" y="129" fill="#DCEBFA" font-family="Segoe UI, Arial" font-size="16" font-weight="700">Palette</text>
+
+    <rect x="90" y="188" width="226" height="448" rx="28" fill="url(#panel)" stroke="#23425A"/>
+    <text x="120" y="228" fill="#6EAED5" font-family="Segoe UI, Arial" font-size="13" letter-spacing="2">VIEWS</text>
+    <rect x="114" y="246" width="178" height="52" rx="18" fill="url(#accent)"/>
+    <text x="146" y="279" fill="#FFFFFF" font-family="Segoe UI, Arial" font-size="18" font-weight="700">Dashboard</text>
+    <rect x="114" y="308" width="178" height="52" rx="18" fill="#13273A" stroke="#264862"/>
+    <text x="146" y="341" fill="#D2E5F8" font-family="Segoe UI, Arial" font-size="18" font-weight="700">Analyze</text>
+    <rect x="114" y="370" width="178" height="52" rx="18" fill="#13273A" stroke="#264862"/>
+    <text x="146" y="403" fill="#D2E5F8" font-family="Segoe UI, Arial" font-size="18" font-weight="700">Automation</text>
+
+    <text x="120" y="468" fill="#6EAED5" font-family="Segoe UI, Arial" font-size="13" letter-spacing="2">WORKFLOW</text>
+    <rect x="114" y="486" width="178" height="126" rx="20" fill="#112131" stroke="#23425A"/>
+    <text x="132" y="519" fill="#A7C7E4" font-family="Segoe UI, Arial" font-size="14">1  Scan for pressure points</text>
+    <text x="132" y="548" fill="#A7C7E4" font-family="Segoe UI, Arial" font-size="14">2  Queue targeted actions</text>
+    <text x="132" y="577" fill="#A7C7E4" font-family="Segoe UI, Arial" font-size="14">3  Promote into schedules</text>
+
+    <rect x="344" y="188" width="714" height="176" rx="28" fill="url(#panel)" stroke="#24445D"/>
+    <text x="386" y="240" fill="#72B7E1" font-family="Segoe UI, Arial" font-size="13" letter-spacing="2">RELEASE 5.0</text>
+    <text x="386" y="292" fill="#F0F8FF" font-family="Segoe UI, Arial" font-size="46" font-weight="700">Desktop redesign for storage operations.</text>
+    <text x="386" y="333" fill="#9CBAD4" font-family="Segoe UI, Arial" font-size="22">WizMap, queue-based cleanup, automation control, and safer watch mode in one unified cockpit.</text>
+
+    <rect x="1084" y="188" width="266" height="176" rx="28" fill="url(#panelSoft)" stroke="#284964"/>
+    <text x="1112" y="232" fill="#71B5E0" font-family="Segoe UI, Arial" font-size="13" letter-spacing="2">HEALTH</text>
+    <rect x="1112" y="248" width="210" height="32" rx="12" fill="#12273A"/>
+    <text x="1130" y="269" fill="#DDF0FF" font-family="Segoe UI, Arial" font-size="14">Tree: 148 ms</text>
+    <rect x="1112" y="290" width="210" height="32" rx="12" fill="#12273A"/>
+    <text x="1130" y="311" fill="#DDF0FF" font-family="Segoe UI, Arial" font-size="14">Heavy: 264 ms</text>
+    <rect x="1112" y="332" width="210" height="32" rx="12" fill="#12273A"/>
+    <text x="1130" y="353" fill="#DDF0FF" font-family="Segoe UI, Arial" font-size="14">Watch: stable</text>
+
+    <rect x="344" y="386" width="508" height="250" rx="28" fill="url(#panel)" stroke="#24445D"/>
+    <text x="376" y="428" fill="#71B5E0" font-family="Segoe UI, Arial" font-size="13" letter-spacing="2">ANALYZE</text>
+    <rect x="376" y="448" width="444" height="36" rx="16" fill="#112334" stroke="#25455F"/>
+    <text x="396" y="471" fill="#A4C5E0" font-family="Consolas, monospace" font-size="15">D:\archive\projects\release-candidates</text>
+
+    <rect x="376" y="502" width="290" height="100" rx="18" fill="#0A1420" stroke="#284964"/>
+    <rect x="388" y="514" width="172" height="44" fill="#316D8F"/>
+    <rect x="564" y="514" width="90" height="44" fill="#5E2E7D"/>
+    <rect x="388" y="562" width="116" height="28" fill="#2F7D94"/>
+    <rect x="508" y="562" width="146" height="28" fill="#3B4AC6"/>
+
+    <rect x="686" y="502" width="134" height="100" rx="18" fill="#122334" stroke="#26465E"/>
+    <rect x="702" y="520" width="94" height="10" rx="5" fill="#406789"/>
+    <rect x="702" y="542" width="80" height="10" rx="5" fill="#365977"/>
+    <rect x="702" y="564" width="88" height="10" rx="5" fill="#2B4A63"/>
+    <text x="704" y="594" fill="#D6E9FA" font-family="Segoe UI, Arial" font-size="13">WizMap + ext table</text>
+
+    <rect x="876" y="386" width="474" height="250" rx="28" fill="url(#panel)" stroke="#24445D"/>
+    <text x="908" y="428" fill="#71B5E0" font-family="Segoe UI, Arial" font-size="13" letter-spacing="2">QUEUE</text>
+    <rect x="908" y="448" width="410" height="44" rx="18" fill="#112334" stroke="#25455F"/>
+    <text x="930" y="476" fill="#E9F5FF" font-family="Segoe UI, Arial" font-size="18" font-weight="700">Heavy-file action queue</text>
+    <text x="908" y="524" fill="#A3C1DB" font-family="Segoe UI, Arial" font-size="15">Filter  Select  Queue  Export  Execute</text>
+
+    <rect x="908" y="548" width="410" height="16" rx="8" fill="#132739"/>
+    <rect x="908" y="548" width="258" height="16" rx="8" fill="url(#accent)"/>
+    <text x="908" y="596" fill="#E7F4FF" font-family="Segoe UI, Arial" font-size="20" font-weight="700">182K rows indexed  43 selected  9 queued</text>
+    <text x="908" y="624" fill="#9FBBD6" font-family="Segoe UI, Arial" font-size="16">Safer watch mode  Better limits  Release-ready desktop shell</text>
+  </g>
+</svg>
