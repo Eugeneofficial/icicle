@@ -17,7 +17,7 @@ jobs:
       CGO_ENABLED: 1
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: '1.22.x'
       - uses: actions/setup-python@v5
@@ -55,7 +55,7 @@ jobs:
       GOFLAGS: -trimpath -buildvcs=false
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: '1.22.x'
       - name: Build CLI
@@ -73,7 +73,7 @@ jobs:
       SIGN_CERT_SHA1: ${{ secrets.ICICLE_SIGN_CERT_SHA1 }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: '1.22.x'
       - name: Build Release Binaries
