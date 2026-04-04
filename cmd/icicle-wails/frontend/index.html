@@ -74,15 +74,20 @@
               <div class="drives" id="drives"></div>
             </section>
             <div class="auxStack">
-              <section class="panel infoCard">
-                <h4>Operating posture</h4>
+              <details class="collapsible infoCard" open>
+                <summary><span class="panelTitle">Operating posture</span></summary>
+                <div class="panelContent">
                 <div class="signalList">
                   <div class="signalRow"><b>Pressure</b><span>Watch disks nearing capacity, then jump straight into the same drive for heavy-file analysis.</span></div>
                   <div class="signalRow"><b>Dupes</b><span>Use quick-name to scout and hash mode when you are ready to make deletion calls.</span></div>
                   <div class="signalRow"><b>Maps</b><span>Switch to WizMap when a drive card looks suspicious instead of reading raw tables first.</span></div>
                 </div>
-              </section>
-              <section class="panel logWrap"><div class="panelLabel">Activity Log</div><pre class="log" id="log"></pre></section>
+                </div>
+              </details>
+              <details class="collapsible logWrap">
+                <summary><span class="panelTitle">Activity Log</span></summary>
+                <div class="panelContent"><pre class="log" id="log"></pre></div>
+              </details>
             </div>
           </section>
         </section>
@@ -193,12 +198,9 @@
             </div>
           </section>
           <section class="opsGrid">
-            <div class="panel opsCard">
-              <div class="opsCardLead">
-                <h4 id="subtitle">Desktop App</h4>
-                <p>Pick the path, tune scan intensity and decide whether this run is diagnostic, operational or long-running.</p>
-              </div>
-              <div class="tiny" id="folderHint">-</div>
+            <details class="collapsible opsCard" open>
+              <summary><span class="panelTitle">Desktop App</span></summary>
+              <div class="panelContent">
               <div class="opsRows">
                 <div class="row"><input id="path" placeholder="Path"><button id="browseBtn">...</button></div>
                 <div class="row"><select id="saved"></select></div>
@@ -210,13 +212,12 @@
                 <div class="row"><button id="fullScanBtn">Full scan (bg)</button><button id="fullScanCancelBtn">Stop scan</button></div>
                 <div class="row"><input id="maxFiles" value="220000" placeholder="Max files"><input id="workers" value="24" placeholder="Workers"></div>
               </div>
-            </div>
-
-            <div class="panel opsCard">
-              <div class="opsCardLead">
-                <h4>Filters + Scheduling</h4>
-                <p>Shape what counts, then decide whether the routine is manual, interval-based or calendar-based.</p>
               </div>
+            </details>
+
+            <details class="collapsible opsCard">
+              <summary><span class="panelTitle">Filters + Scheduling</span></summary>
+              <div class="panelContent">
               <div class="opsRows">
                 <div class="row"><input id="includePath" placeholder="include path: cache,temp"><input id="ignorePath" placeholder="ignore path: node_modules,.git"></div>
                 <div class="row"><input id="includeExt" placeholder="include ext: .mp4,.zip"><input id="ignoreExt" placeholder="ignore ext: .tmp,.log"></div>
@@ -229,13 +230,12 @@
                 <div class="row"><button id="cleanupSchedStartBtn">Start cleanup schedule</button><button id="cleanupSchedStopBtn">Stop cleanup</button><button id="cleanupRunNowBtn">Cleanup now</button></div>
                 <div class="row"><button id="diagBtn">Watch diagnostics</button><select id="cleanupPreset"><option value="dev-cache">preset: dev-cache</option><option value="games">preset: games</option><option value="media">preset: media</option></select><button id="presetScanBtn">Scan preset</button><button id="presetApplyBtn">Apply preset</button></div>
               </div>
-            </div>
-
-            <div class="panel opsCard">
-              <div class="opsCardLead">
-                <h4>Export + Routing + Updates</h4>
-                <p>Everything that leaves the workstation or changes routing policy lives here, separated from scan control.</p>
               </div>
+            </details>
+
+            <details class="collapsible opsCard">
+              <summary><span class="panelTitle">Export + Routing + Updates</span></summary>
+              <div class="panelContent">
               <div class="opsRows">
                 <div class="row"><button id="undoBtn">Undo Move</button><button id="cleanBtn">Empty folders</button><button id="clearLogBtn">Clear Log</button></div>
                 <div class="row"><button id="expCsvBtn">Export CSV</button><button id="expJsonBtn">JSON</button><button id="expMdBtn">MD</button></div>
@@ -247,13 +247,12 @@
                 <div class="row"><input id="quickDest" placeholder="Move destination (optional)"></div>
                 <div class="row"><select id="quickDestSaved"></select><button id="saveQuickDestBtn">Save Dest</button></div>
               </div>
-            </div>
+              </div>
+            </details>
           </section>
-          <section class="panel opsCard">
-            <div class="opsCardLead">
-              <h4>Health</h4>
-              <p>Keep scan timings and error state visible instead of buried in the footer.</p>
-            </div>
+          <details class="collapsible opsCard" open>
+            <summary><span class="panelTitle">Health</span></summary>
+            <div class="panelContent">
             <div class="healthGrid">
               <div class="healthCell"><b>Last</b><span class="tiny" id="healthLast">last: -</span></div>
               <div class="healthCell"><b>Tree</b><span class="tiny" id="healthTree">tree ms: -</span></div>
@@ -261,7 +260,8 @@
               <div class="healthCell"><b>Wiz</b><span class="tiny" id="healthWiz">wiz ms: -</span></div>
               <div class="healthCell"><b>Error</b><span class="tiny" id="healthErr">error: -</span></div>
             </div>
-          </section>
+            </div>
+          </details>
           <section class="panel" style="padding:10px 12px"><div class="tiny" id="statusLine">ready</div></section>
         </section>
       </main>
