@@ -16,22 +16,21 @@
         <div class="brandMark">I</div>
         <div class="brandBlock">
           <div class="brand">icicle</div>
-          <div class="brandSub">storage orchestration cockpit</div>
         </div>
         <span class="verPill" id="verPill">v-</span>
         <div class="chipStrip">
-          <span class="chip" id="chipMode">mode: balanced</span>
-          <span class="chip" id="chipPath">path: -</span>
-          <span class="chip" id="chipCount">files: 0</span>
+          <span class="chip" id="chipMode">balanced</span>
+          <span class="chip" id="chipPath">-</span>
+          <span class="chip" id="chipCount">0 files</span>
           <span class="chip" id="chipStatus">ready</span>
         </div>
       </div>
       <div class="topActions">
-        <button id="smartScanBtn">Smart Scan</button>
-        <button id="autoRefreshBtn">Auto Refresh</button>
-        <button id="cmdPaletteBtn">Command Palette</button>
-        <button id="themeBtn">Light</button>
-        <button id="langBtn">RU</button>
+        <button id="smartScanBtn">&#x26A1; Scan</button>
+        <button id="autoRefreshBtn">Auto</button>
+        <button id="cmdPaletteBtn">&#x2318;K</button>
+        <button id="themeBtn">&#x263E;</button>
+        <button id="langBtn">EN</button>
       </div>
       <div class="scanProgress" id="scanProgress" style="display:none">
         <div class="scanProgressBar"><div class="scanProgressFill" id="scanProgressFill"></div></div>
@@ -54,36 +53,12 @@
 
       <main class="workspace" id="main-content">
         <section id="viewDashboard" class="view active">
-          <section class="panel heroPanel">
-            <div class="heroTop">
-              <div class="heroTitle">
-                <div class="heroEyebrow">Dashboard</div>
-                <h3>See pressure points before storage becomes operational debt.</h3>
-                <p>Track drive saturation, duplicates, extension hotspots and watch activity from one surface without dropping into ad hoc scripts.</p>
-              </div>
-              <div class="heroMeta">
-                <div class="heroStat"><b>Mode</b><span id="heroMode">Balanced</span></div>
-                <div class="heroStat"><b>Focus Path</b><span id="heroPath">Home</span></div>
-                <div class="heroStat"><b>Status</b><span id="heroStatus">Ready</span></div>
-              </div>
-            </div>
-          </section>
           <section class="dashboardGrid">
             <section class="panel driveBoard">
               <div class="toolbar"><div class="tiny" id="drivesTitle">System storage</div><button id="drivesRefresh">Refresh</button><button id="extBtn">Extensions</button><select id="dupMode"><option value="quick-name">dup: quick</option><option value="hash">dup: hash</option></select><button id="dupBtn">Duplicates</button><button id="wizBtn">WizMap</button></div>
               <div class="drives" id="drives"></div>
             </section>
             <div class="auxStack">
-              <details class="collapsible infoCard" open>
-                <summary><span class="panelTitle">Operating posture</span></summary>
-                <div class="panelContent">
-                <div class="signalList">
-                  <div class="signalRow"><b>Pressure</b><span>Watch disks nearing capacity, then jump straight into the same drive for heavy-file analysis.</span></div>
-                  <div class="signalRow"><b>Dupes</b><span>Use quick-name to scout and hash mode when you are ready to make deletion calls.</span></div>
-                  <div class="signalRow"><b>Maps</b><span>Switch to WizMap when a drive card looks suspicious instead of reading raw tables first.</span></div>
-                </div>
-                </div>
-              </details>
               <details class="collapsible logWrap">
                 <summary><span class="panelTitle">Activity Log</span></summary>
                 <div class="panelContent"><pre class="log" id="log"></pre></div>
@@ -93,20 +68,6 @@
         </section>
 
         <section id="viewAnalyze" class="view">
-          <section class="panel heroPanel">
-            <div class="heroTop">
-              <div class="heroTitle">
-                <div class="heroEyebrow">Analyze</div>
-                <h3>Move from path selection to visual triage in one pass.</h3>
-                <p>Use the quick launcher for tree, heavy-file and treemap workflows, then work the right pane as a surgical queue instead of a dump of rows.</p>
-              </div>
-              <div class="heroMeta">
-                <div class="heroStat"><b>Treemap</b><span>WizMap</span></div>
-                <div class="heroStat"><b>Heavy Files</b><span>Queue-ready</span></div>
-                <div class="heroStat"><b>History</b><span>Snapshot-aware</span></div>
-              </div>
-            </div>
-          </section>
           <section class="panel controlStrip">
             <div class="controlStripTop">
               <div class="controlStripTitle">
@@ -183,20 +144,6 @@
         </section>
 
         <section id="viewOps" class="view">
-          <section class="panel heroPanel">
-            <div class="heroTop">
-              <div class="heroTitle">
-                <div class="heroEyebrow">Automation</div>
-                <h3>Turn cleanup routines into repeatable operations.</h3>
-                <p>Scheduling, routing, exports and update actions stay in one control room, with health telemetry visible instead of buried in logs.</p>
-              </div>
-              <div class="heroMeta">
-                <div class="heroStat"><b>Watch</b><span>Managed</span></div>
-                <div class="heroStat"><b>Schedules</b><span>Configurable</span></div>
-                <div class="heroStat"><b>Exports</b><span>Ready</span></div>
-              </div>
-            </div>
-          </section>
           <section class="opsGrid">
             <details class="collapsible opsCard" open>
               <summary><span class="panelTitle">Desktop App</span></summary>
