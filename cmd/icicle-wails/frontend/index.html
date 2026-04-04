@@ -621,9 +621,12 @@ async function loadDrives(force=false){
     }
     for(const d of items){
       const pct=Math.max(0,Math.min(100,Math.round((d.usedRatio||0)*100)));
+      const driveLetter=d.drive.replace(/[^A-Za-z]/g,'').toUpperCase();
+      const hasPreset=s.quickDestSaved&&s.quickDestSaved.some(p=>p&&p.toUpperCase().startsWith(driveLetter));
       const card=document.createElement('div');
       card.className='drive';
-      card.innerHTML=`<div class="row" style="justify-content:space-between"><b>${escapeHtml(d.drive)}</b><span class="tiny">${pct}%</span></div><div>${escapeHtml(d.usedHuman)} / ${escapeHtml(d.totalHuman)}</div><div class="bar"><div class="fill" style="width:${pct}%"></div></div><div class="actions" style="margin-top:8px"><button data-use="${escapeHtml(d.drive)}\\">${tr('use')}</button><button data-open="${escapeHtml(d.drive)}">${tr('open')}</button><button data-tree="${escapeHtml(d.drive)}\\">${tr('tree')}</button><button data-heavy="${escapeHtml(d.drive)}\\">${tr('heavy')}</button></div><div class="actions" style="margin-top:6px"><button data-savepreset="${escapeHtml(d.drive)}">save preset</button><button data-loadpreset="${escapeHtml(d.drive)}">load preset</button></div>`;
+      card.dataset.drive=driveLetter;
+      card.innerHTML=`<div class="row" style="justify-content:space-between"><b>${escapeHtml(d.drive)}</b><span class="tiny">${hasPreset?'⭐ ':''}${pct}%</span></div><div>${escapeHtml(d.usedHuman)} / ${escapeHtml(d.totalHuman)}</div><div class="bar"><div class="fill" style="width:${pct}%"></div></div><div class="actions" style="margin-top:8px"><button data-use="${escapeHtml(d.drive)}\\">${tr('use')}</button><button data-open="${escapeHtml(d.drive)}">${tr('open')}</button><button data-tree="${escapeHtml(d.drive)}\\">${tr('tree')}</button><button data-heavy="${escapeHtml(d.drive)}\\">${tr('heavy')}</button></div><div class="actions" style="margin-top:6px"><button data-savepreset="${escapeHtml(d.drive)}">${s.lang==='ru'?'Сохранить пресет':'save preset'}</button><button data-loadpreset="${escapeHtml(d.drive)}">${s.lang==='ru'?'Загрузить пресет':'load preset'}</button></div>`;
       wrap.appendChild(card);
     }
     s.lastDriveRefresh=Date.now();
@@ -1427,8 +1430,8 @@ el('wizExtFilter').addEventListener('input',()=>{ if(s.wiz) renderWiz(s.wiz); })
 el('wizExtSort').addEventListener('change',()=>{ if(s.wiz) renderWiz(s.wiz); });
 el('historyCloseBtn').onclick=()=>el('driveHistoryPanel').style.display='none'; el('snapCloseBtn').onclick=()=>el('snapshotPanel').style.display='none';
 el('dupCloseBtn').onclick=()=>el('dupPanel').style.display='none'; el('diagCloseBtn').onclick=()=>el('diagPanel').style.display='none'; el('presetCloseBtn').onclick=()=>el('presetPanel').style.display='none';
-el('path').addEventListener('input',()=>{updateHintDebounced(); updateTopChips();});
-el('pathQuick').addEventListener('input',()=>{el('path').value=el('pathQuick').value; updateHintDebounced(); updateTopChips();});
+el('path').addEventListener('input',()=>{if(el('pathQuick').value!==el('path').value){el('pathQuick').value=el('path').value;} updateHintDebounced(); updateTopChips();});
+el('pathQuick').addEventListener('input',()=>{if(el('path').value!==el('pathQuick').value){el('path').value=el('pathQuick').value;} updateHintDebounced(); updateTopChips();});
 el('pathQuick').addEventListener('keydown',async(e)=>{if(e.key==='Enter'){e.preventDefault(); await runHeavy();}});
 el('drives').addEventListener('click',async(e)=>{const t=e.target; if(!(t instanceof HTMLElement))return; if(t.dataset.use){el('path').value=t.dataset.use; el('pathQuick').value=t.dataset.use; updateHintDebounced(); try{await loadDiskPresetFor(String(t.dataset.use).slice(0,2),true);}catch{}} if(t.dataset.open){try{await window.go.main.App.OpenDrive(t.dataset.open);}catch(err){showErr(err)}} if(t.dataset.tree){el('path').value=t.dataset.tree; el('pathQuick').value=t.dataset.tree; try{await loadDiskPresetFor(String(t.dataset.tree).slice(0,2),true);}catch{} await runTree();} if(t.dataset.heavy){el('path').value=t.dataset.heavy; el('pathQuick').value=t.dataset.heavy; try{await loadDiskPresetFor(String(t.dataset.heavy).slice(0,2),true);}catch{} await runHeavy();} if(t.dataset.savepreset){await saveDiskPresetFor(t.dataset.savepreset);} if(t.dataset.loadpreset){await loadDiskPresetFor(t.dataset.loadpreset,false);}});
 el('routeRulesBody').addEventListener('click',(e)=>{const t=e.target; if(!(t instanceof HTMLElement))return; if(t.dataset.act==='del'){const row=t.closest('.routeGrid'); if(row) row.remove();}});
