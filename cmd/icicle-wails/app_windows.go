@@ -1,5 +1,41 @@
 //go:build windows && wails
 
+// Package main is the Wails desktop application entry point.
+//
+// Code organization (2700+ lines):
+//
+//	§ Lifecycle:        startup, shutdown, Version, Defaults     (~30 lines)
+//	§ Logging:          appendLog, ClearLog, WatchLog, pipe      (~50 lines)
+//	§ Scan - Tree:      RunTree, RunTreeFast                     (~80 lines)
+//	§ Scan - Heavy:     RunHeavy, RunHeavyFast, FullScan+Cancel  (~150 lines)
+//	§ Export:           ExportHeavy                              (~70 lines)
+//	§ Watch:            StartWatch, StopWatch, Diagnostics       (~90 lines)
+//	§ Drives:           ListDrives, DriveHistory, OpenDrive      (~80 lines)
+//	§ Navigation:       OpenPath, RevealPath, PickFolder         (~50 lines)
+//	§ Saved Folders:    List/Save/Remove, load/save              (~70 lines)
+//	§ File Ops:         Move, Delete, Batch, Undo                (~130 lines)
+//	§ Empty Dirs:       Clean, Find, Delete                      (~140 lines)
+//	§ Cleanup Presets:  Scan, Apply, match helpers               (~120 lines)
+//	§ Extension Stats:  ExtensionStats, ExtensionStatsFast       (~60 lines)
+//	§ WizMap:           WizMap, WizMapTurbo, Delta               (~160 lines)
+//	§ Duplicates:       Names, FinderV2, Keep                    (~160 lines)
+//	§ Scheduled Scan:   Start/Stop, Loop, Snapshots              (~180 lines)
+//	§ Snapshots:        List, Diff, TreemapDiff, Export          (~330 lines)
+//	§ Utilities:        normalizePath, markNewHeavy, csv helpers (~120 lines)
+//
+// Other files in this package:
+//
+//	tray_windows.go           - System tray integration
+//	update_windows.go         - Auto-update logic
+//	routing_windows.go        - Routing rules engine
+//	filters_windows.go        - Filtered scan wrappers
+//	cleanup_presets_windows.go - Cleanup preset management
+//	schedule_cleanup_profile_windows.go - Scheduled cleanup + profiles
+//
+// Refactoring plan:
+// Each § section above is a candidate for extraction into its own file
+// (e.g. scan_handler.go, snapshot_handler.go, fileops_handler.go).
+// See cmd/icicle-wails/handlers/ for the foundation package.
 package main
 
 import (
@@ -298,6 +334,8 @@ func NewApp(appPath string) *App {
 	}
 }
 
+// ── § Lifecycle ────────────────────────────────────────────────────
+
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.folders = detectUserFolders()
@@ -335,6 +373,8 @@ func (a *App) Defaults() Defaults {
 		Version:   meta.Version,
 	}
 }
+
+// ── § Logging ──────────────────────────────────────────────────────
 
 const (
 	maxLogBytes  = 2 * 1024 * 1024 // 2MB max log size
@@ -387,6 +427,8 @@ func (a *App) WatchRunning() bool {
 	defer a.mu.Unlock()
 	return a.watchOn
 }
+
+// ── § Scan: Tree ───────────────────────────────────────────────────
 
 func (a *App) RunTree(path string, topN int, width int) (string, error) {
 	path = a.normalizePath(path, a.folders.Home)
@@ -503,6 +545,8 @@ func (a *App) RunTreeFast(path string, topN int, width int, maxFiles int, worker
 	a.appendLog(fmt.Sprintf("> tree %s [seen=%d limited=%v ms=%d]\n%s", path, seen, limited, res.DurationMS, out))
 	return res, nil
 }
+
+// ── § Scan: Heavy ──────────────────────────────────────────────────
 
 func (a *App) RunHeavy(path string, n int) ([]HeavyItem, error) {
 	path = a.normalizePath(path, a.folders.Home)
@@ -696,6 +740,8 @@ func (a *App) GetHeavyFullProgress() HeavyFullProgress {
 	return out
 }
 
+// ── § Export ───────────────────────────────────────────────────────
+
 func (a *App) ExportHeavy(path string, n int, format string) (string, error) {
 	path = a.normalizePath(path, a.folders.Home)
 	if n <= 0 {
@@ -766,6 +812,8 @@ func (a *App) ExportHeavy(path string, n int, format string) (string, error) {
 	a.appendLog("[export] heavy -> " + target)
 	return target, nil
 }
+
+// ── § Watch ────────────────────────────────────────────────────────
 
 func (a *App) StartWatch(path string, dryRun bool) error {
 	a.mu.Lock()
@@ -888,6 +936,8 @@ func (a *App) pipe(r io.Reader) {
 	}
 }
 
+// ── § Drives ───────────────────────────────────────────────────────
+
 func (a *App) ListDrives() ([]DriveInfo, error) {
 	volumes, err := systemStorage()
 	if err != nil {
@@ -975,6 +1025,8 @@ func (a *App) OpenDrive(drive string) error {
 	return nil
 }
 
+// ── § Navigation ───────────────────────────────────────────────────
+
 func (a *App) OpenPath(path string) error {
 	path = strings.TrimSpace(path)
 	if path == "" {
@@ -1026,6 +1078,8 @@ func (a *App) FolderHint(path string) string {
 	return detectFolderKind(path)
 }
 
+// ── § Saved Folders ────────────────────────────────────────────────
+
 func (a *App) ListSavedFolders() []string {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -1061,6 +1115,8 @@ func (a *App) RemoveSavedFolder(path string) error {
 	a.saved = next
 	return a.saveSavedLocked()
 }
+
+// ── § File Operations ──────────────────────────────────────────────
 
 func (a *App) MoveFile(src string, dstDir string) (string, error) {
 	src = strings.TrimSpace(src)
@@ -1175,6 +1231,8 @@ func (a *App) UndoMove() (string, error) {
 	a.appendLog("[undo-move] " + rec.To + " -> " + target)
 	return target, nil
 }
+
+// ── § Empty Dirs ───────────────────────────────────────────────────
 
 func (a *App) CleanEmpty(path string) (int, error) {
 	path = a.normalizePath(path, a.folders.Home)
@@ -1310,6 +1368,8 @@ func (a *App) DeleteEmptyDirsToRecycle(paths []string) BatchResult {
 	return res
 }
 
+// ── § Cleanup Presets ──────────────────────────────────────────────
+
 func (a *App) ScanCleanupPreset(path string, preset string, limit int, maxFiles int) (CleanupPresetResult, error) {
 	path = a.normalizePath(path, a.folders.Home)
 	preset = strings.ToLower(strings.TrimSpace(preset))
@@ -1428,6 +1488,8 @@ func cleanupRiskLevel(path string) string {
 	return "low"
 }
 
+// ── § Extension Stats ──────────────────────────────────────────────
+
 func (a *App) ExtensionStats(path string, limit int) ([]ExtStat, error) {
 	path = a.normalizePath(path, a.folders.Home)
 	byExt := map[string]ExtStat{}
@@ -1494,6 +1556,8 @@ func (a *App) ExtensionStatsFast(path string, limit int, maxFiles int, workers i
 	a.appendLog(fmt.Sprintf("[extensions-fast] %s seen=%d limited=%v ms=%d", path, res.Seen, res.Limited, res.DurationMS))
 	return res, nil
 }
+
+// ── § WizMap ───────────────────────────────────────────────────────
 
 func (a *App) WizMap(path string, maxFiles int, workers int, topDirs int, topFiles int, topExt int) (WizMapResult, error) {
 	path = a.normalizePath(path, a.folders.Home)
@@ -1678,6 +1742,8 @@ func (a *App) applySnapshotDeltaToWiz(res *WizMapResult, prev map[string]int64) 
 	}
 }
 
+// ── § Duplicates ───────────────────────────────────────────────────
+
 func (a *App) DuplicateNames(path string, maxFiles int, top int) ([]DupStat, error) {
 	path = a.normalizePath(path, a.folders.Home)
 	files := 0
@@ -1849,6 +1915,8 @@ func (a *App) DuplicateKeep(paths []string, rule string, safe bool) (DuplicateAc
 		GroupSize: len(paths),
 	}, nil
 }
+
+// ── § Scheduled Scan ───────────────────────────────────────────────
 
 func (a *App) StartScheduledScan(path string, intervalSec int, n int, maxFiles int, workers int) error {
 	path = a.normalizePath(path, a.folders.Downloads)
@@ -2024,6 +2092,8 @@ func (a *App) reportDir() (string, error) {
 	}
 	return dir, nil
 }
+
+// ── § Snapshots ────────────────────────────────────────────────────
 
 func (a *App) ListReportSnapshots(limit int) ([]SnapshotInfo, error) {
 	if limit <= 0 {
@@ -2352,6 +2422,8 @@ func readSnapshotFile(path string) (snapshotPayload, error) {
 	}
 	return p, nil
 }
+
+// ── § Utilities ────────────────────────────────────────────────────
 
 func (a *App) normalizePath(path string, fallback string) string {
 	path = strings.TrimSpace(path)
