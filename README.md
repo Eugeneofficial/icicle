@@ -273,13 +273,7 @@ go build -trimpath -buildvcs=false -ldflags "-s -w -buildid=" ^
 - [x] Onboarding flow for first-time users
 - [x] Code refactoring: app_windows.go split into 10 handler files
 
-### Planned (v3.2)
 
-- [ ] Parallel reducer pipeline in scanner (lower lock contention)
-- [ ] Persistent snapshot index for instant diff preloading
-- [ ] Streaming heavy/tree updates from backend workers
-- [ ] Drive-level cache invalidation strategy after file actions
-- [ ] Public benchmark dataset pack + monthly perf delta report
 
 ---
 
