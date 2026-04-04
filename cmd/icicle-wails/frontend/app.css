@@ -153,10 +153,16 @@ button,input,select,textarea{font:inherit}
 .drives{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px}
 .drive{
   border:1px solid var(--line);border-radius:var(--radius-sm);
-  padding:10px;background:var(--surface2);
-  transition:border-color .12s ease
+  padding:10px 12px;background:var(--surface2);
+  transition:all .2s cubic-bezier(.4,0,.2,1);
+  position:relative;overflow:hidden
 }
-.drive:hover{border-color:var(--accent)}
+.drive:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.drive::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--accent);transform:scaleX(0);transition:transform .2s ease;transform-origin:left
+}
+.drive:hover::before{transform:scaleX(1)}
 .bar{height:4px;background:var(--surface3);border-radius:99px;overflow:hidden;margin-top:6px}
 .fill{height:100%;background:var(--accent);border-radius:99px;transition:width .3s ease}
 .drive .actions button{font-size:10px;padding:3px 6px;border-radius:var(--radius-xs)}
@@ -225,7 +231,8 @@ button,input,select,textarea{font:inherit}
   height:120px;min-height:80px;max-height:200px;resize:vertical;
   border:1px solid var(--line);background:var(--bg);color:var(--muted);
   border-radius:var(--radius-sm);padding:10px;overflow:auto;white-space:pre-wrap;
-  font:11px/1.4 "JetBrains Mono","Cascadia Code",Consolas,monospace
+  font:11px/1.4 "JetBrains Mono","Cascadia Code",Consolas,monospace;
+  scroll-behavior:smooth
 }
 
 /* ── Tables ──────────────────────────────────── */
@@ -392,8 +399,15 @@ button.danger:hover{background:#dc2626;border-color:#dc2626}
   padding:32px 20px;text-align:center;color:var(--muted)
 }
 .emptyState .icon{font-size:40px;margin-bottom:10px;opacity:.5}
-.emptyState h4{margin:0 0 4px 0;font-size:13px;color:var(--text);font-weight:600}
-.emptyState p{margin:0;font-size:11px;line-height:1.4;max-width:280px}
+.emptyState h4{margin:0 0 6px 0;font-size:13px;color:var(--text);font-weight:600}
+.emptyState p{margin:0 0 12px 0;font-size:11px;line-height:1.4;max-width:280px}
+.emptyState .actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.emptyState .actions button{
+  font-size:11px;padding:5px 12px;border-radius:var(--radius-sm);
+  border:1px solid var(--accent);color:var(--accent);background:var(--accent-dim);
+  cursor:pointer;font-weight:600;transition:all .12s ease
+}
+.emptyState .actions button:hover{background:var(--accent);color:#000}
 
 /* ── Delta Indicators (Color Blindness) ──────── */
 .deltaUp::after{content:"↑";color:var(--ok);font-size:10px;margin-left:4px;font-weight:700}

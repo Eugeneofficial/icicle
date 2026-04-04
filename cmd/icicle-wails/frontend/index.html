@@ -223,8 +223,8 @@
         <div class="onboardingLogo">
           <div class="brandMark">I</div>
           <div>
-            <div class="onboardingTitle">Welcome to icicle</div>
-            <div class="onboardingSubtitle">Storage orchestration cockpit</div>
+            <div class="onboardingTitle">Добро пожаловать в icicle</div>
+            <div class="onboardingSubtitle">Кокпит управления хранилищем</div>
           </div>
         </div>
       </div>
@@ -232,30 +232,30 @@
         <div class="onboardingStep active" data-step="0">
           <div class="stepNum">1</div>
           <div class="stepContent">
-            <h4>Dashboard — See the big picture</h4>
-            <p>Track drive saturation, duplicates, and extension hotspots. Refresh drives to spot pressure before it becomes a problem.</p>
+            <h4>Обзор — Давление на диски</h4>
+            <p>Отслеживай заполнение дисков, дубликаты и горячие точки по расширениям. Обновляй диски, чтобы заметить проблему до того, как она станет критичной.</p>
           </div>
         </div>
         <div class="onboardingStep" data-step="1">
           <div class="stepNum">2</div>
           <div class="stepContent">
-            <h4>Analyze — Visual triage + action queue</h4>
-            <p>Enter a path, then use Tree, Heavy, or WizMap. Build a cleanup queue from the results — only execute what matters.</p>
+            <h4>Анализ — Визуализация + очередь</h4>
+            <p>Введи путь, затем используй Tree, Heavy или WizMap. Собери очередь очистки из результатов — выполняй только то, что реально нужно.</p>
           </div>
         </div>
         <div class="onboardingStep" data-step="2">
           <div class="stepNum">3</div>
           <div class="stepContent">
-            <h4>Automation — Repeatable operations</h4>
-            <p>Set up watch rules, scheduled cleanups, and routing policies. Turn manual routines into automated workflows.</p>
+            <h4>Автоматизация — Повторяемые операции</h4>
+            <p>Настрой правила watch, расписания очистки и маршрутизацию. Преврати ручные действия в автоматизированные процессы.</p>
           </div>
         </div>
       </div>
       <div class="onboardingFooter">
-        <label class="onboardingDontShow"><input type="checkbox" id="onboardingDontShowCheckbox"> Don't show again</label>
+        <label class="onboardingDontShow"><input type="checkbox" id="onboardingDontShowCheckbox"> Больше не показывать</label>
         <div class="onboardingNav">
-          <button class="onboardingBtn secondary" id="onboardingPrev" style="display:none">Previous</button>
-          <button class="onboardingBtn primary" id="onboardingNext">Next</button>
+          <button class="onboardingBtn secondary" id="onboardingPrev" style="display:none">Назад</button>
+          <button class="onboardingBtn primary" id="onboardingNext">Далее</button>
         </div>
       </div>
     </div>
@@ -535,9 +535,11 @@ function applyLang(){
   el('teamPackExportBtn').textContent=s.lang==='ru'?'Экспорт команды':'Export team pack';
   el('teamPackImportBtn').textContent=s.lang==='ru'?'Импорт команды':'Import team pack';
   el('teamPackImportUrlBtn').textContent=s.lang==='ru'?'Импорт по URL':'Import from URL';
-  el('smartScanBtn').textContent=s.lang==='ru'?'Смарт скан':'Smart Scan';
-  el('autoRefreshBtn').textContent=s.autoRefresh?(s.lang==='ru'?'Авто-обновление: ВКЛ':'Auto Refresh: ON'):(s.lang==='ru'?'Авто-обновление: ВЫКЛ':'Auto Refresh: OFF');
-  el('cmdPaletteBtn').textContent=s.lang==='ru'?'Палитра команд':'Command Palette';
+  el('smartScanBtn').textContent=s.lang==='ru'?'⚡ Скан':'⚡ Scan';
+  el('autoRefreshBtn').textContent=s.autoRefresh?(s.lang==='ru'?'Авто:ВКЛ':'Auto:ON'):(s.lang==='ru'?'Авто':'Auto');
+  el('cmdPaletteBtn').textContent='⌘K';
+  el('themeBtn').textContent=s.theme==='dark'?'☀':'☾';
+  el('langBtn').textContent=s.lang==='ru'?'EN':'RU';
   el('applyPerfBtn').textContent=s.lang==='ru'?'Применить режим':'Apply Mode';
   el('queueSavePresetBtn').textContent=s.lang==='ru'?'Сохранить очередь':'Save Queue Preset';
   el('queueLoadPresetBtn').textContent=s.lang==='ru'?'Загрузить очередь':'Load Queue Preset';
