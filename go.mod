@@ -4,7 +4,7 @@ go 1.22.0
 
 require (
 	github.com/fatih/color v1.17.0
-	github.com/fsnotify/fsnotify v1.8.0
+	github.com/fsnotify/fsnotify v1.9.0
 	github.com/getlantern/systray v1.2.2
 	github.com/wailsapp/wails/v2 v2.10.1
 	golang.org/x/sys v0.30.0
