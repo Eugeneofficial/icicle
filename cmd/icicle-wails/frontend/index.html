@@ -651,9 +651,9 @@ function writeShortCache(map,key,val,max=14){
   }
 }
 // ── Scan Progress Bar ─────────────────────────────────────────────
-function showScanProgress(){el('scanProgress').style.display='flex'; el('scanProgressFill').style.width='0%'; el('scanProgressText').textContent=s.lang==='ru'?'Сканирование...':'Scanning...';}
+function showScanProgress(){el('scanProgress').style.display='flex'; el('scanProgressFill').style.width='0%'; el('scanProgressText').textContent=s.lang==='ru'?'Сканирование...':'Scanning...'; el('chipStatus').classList.add('scanning');}
 function updateScanProgress(pct,text){el('scanProgressFill').style.width=Math.min(100,pct)+'%'; if(text) el('scanProgressText').textContent=text;}
-function hideScanProgress(){el('scanProgress').style.display='none';}
+function hideScanProgress(){el('scanProgress').style.display='none'; el('chipStatus').classList.remove('scanning');}
 // ── Scans ─────────────────────────────────────────────────────────
 async function runTree(){return withLoader(async()=>{
   showScanProgress();
@@ -1090,7 +1090,7 @@ function rowMarkup(it){
   const safeShort=escapeHtml(p);
   const safeHuman=escapeHtml(it.human||'');
   const fav=s.favoritePaths.has(it.path);
-  return `<td><input type="checkbox" data-sel="${safePath}" ${checked}></td><td>${safeHuman}${it.new?'<span class="newTag">NEW</span>':''}${fav?'<span class="newTag" style="background:#f59e0b">FAV</span>':''}</td><td class="pathCell" title="${safePath}">${safeShort}</td><td><div class="actions"><button data-openf="${safePath}">${tr('open')}</button><button data-reveal="${safePath}">${tr('reveal')}</button><button data-fav="${safePath}">${fav?'★':'☆'}</button><select data-action-path="${safePath}"><option value="">${tr('act')}</option><option value="copy">Copy path</option><option value="amove">${tr('autoMove')}</option><option value="move">${tr('moveTo')}</option><option value="del">${tr('del')}</option></select></div></td>`;
+  return `<td><input type="checkbox" data-sel="${safePath}" ${checked}></td><td>${safeHuman}${it.new?'<span class="newTag">NEW</span>':''}${fav?'<span class="newTag" style="background:#f59e0b">FAV</span>':''}</td><td class="pathCell" title="${safePath}">${safeShort}</td><td><div class="actions"><button data-openf="${safePath}" title="${s.lang==='ru'?'Открыть папку':'Open folder'}">&#x1F4C2;</button><button data-reveal="${safePath}" title="${s.lang==='ru'?'Показать в папке':'Reveal in folder'}">&#x1F4C1;</button><button data-fav="${safePath}" title="${fav?(s.lang==='ru'?'Убрать из избранного':'Remove from favorites'):(s.lang==='ru'?'В избранное':'Add to favorites')}">${fav?'&#x2605;':'&#x2606;'</button><select data-action-path="${safePath}" title="${s.lang==='ru'?'Действия':'Actions'}"><option value="">${s.lang==='ru'?'⚙ Действия':'⚙ Actions'}</option><option value="copy">${s.lang==='ru'?'Копировать путь':'Copy path'}</option><option value="amove">${s.lang==='ru'?'Авто-перенос':'Auto Move'}</option><option value="move">${s.lang==='ru'?'Перенести в..':'Move To..'}</option><option value="del">${s.lang==='ru'?'Удалить':'Delete'}</option></select></div></td>`;
 }
 function renderHeavy(){
   const token=++s.heavyRenderToken;

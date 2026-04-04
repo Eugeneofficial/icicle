@@ -75,7 +75,12 @@ button,input,select,textarea{font:inherit}
 .brand{font-size:16px;font-weight:800;letter-spacing:-.03em;line-height:1;color:var(--accent)}
 .verPill{font-size:9px;padding:2px 6px;border-radius:var(--radius-xs);color:var(--muted);background:var(--surface2);border:1px solid var(--line)}
 .chipStrip{display:flex;gap:4px;flex-wrap:wrap}
-.chip{font-size:9px;text-transform:uppercase;letter-spacing:.04em;padding:2px 6px;border-radius:var(--radius-xs);background:var(--surface2);color:var(--muted);border:1px solid var(--line);font-weight:500}
+.chip{font-size:9px;text-transform:uppercase;letter-spacing:.04em;padding:2px 6px;border-radius:var(--radius-xs);background:var(--surface2);color:var(--muted);border:1px solid var(--line);font-weight:500;transition:all .2s ease}
+.chip.scanning{border-color:var(--accent);color:var(--accent);animation:chipPulse 1.5s ease-in-out infinite}
+@keyframes chipPulse{
+  0%,100%{box-shadow:0 0 0 0 var(--accent-glow)}
+  50%{box-shadow:0 0 0 4px transparent}
+}
 .topActions{display:flex;gap:4px;align-items:center}
 .topActions button{
   font-size:12px;padding:4px 8px;border-radius:var(--radius-sm);
@@ -277,8 +282,17 @@ button.danger:hover{background:#dc2626;border-color:#dc2626}
 
 /* ── Actions row ─────────────────────────────── */
 .actions{display:flex;gap:3px;align-items:center}
-.actions button{padding:2px 6px;font-size:10px;min-width:44px;border-radius:var(--radius-xs)}
+.actions button{padding:3px 6px;font-size:13px;min-width:32px;border-radius:var(--radius-xs);background:transparent;border:1px solid transparent;cursor:pointer;transition:all .12s ease;position:relative}
+.actions button:hover{background:var(--accent-dim);border-color:var(--accent)}
 .actions select{width:auto;min-width:90px;padding:2px 4px;font-size:10px;border-radius:var(--radius-xs)}
+
+/* Tooltip for action buttons */
+.actions button[title]:hover::after{
+  content:attr(title);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
+  padding:3px 6px;border-radius:3px;background:var(--bg3);color:var(--text);
+  font-size:9px;white-space:nowrap;z-index:10;pointer-events:none;
+  margin-bottom:2px;border:1px solid var(--line)
+}
 
 /* ── Pills ───────────────────────────────────── */
 .pill{font-size:10px;border:1px solid var(--line);border-radius:var(--radius-xs);padding:2px 6px;color:var(--muted);background:var(--surface2);font-weight:500}
@@ -438,8 +452,18 @@ button.danger:hover{background:#dc2626;border-color:#dc2626}
 @media (max-width:1320px){
   .dashboardGrid,.analyzeGrid{grid-template-columns:1fr}
   .wizWrap{grid-template-columns:1fr}
-  .heroMeta{flex-wrap:wrap}
   .healthGrid{grid-template-columns:repeat(3,1fr)}
+}
+@media (max-width:900px){
+  .appTop{flex-wrap:wrap;gap:8px}
+  .brandRow{width:100%;justify-content:space-between}
+  .chipStrip{width:100%;justify-content:flex-start}
+  .topActions{width:100%;justify-content:space-between}
+  .topActions button{flex:1;max-width:80px;font-size:10px;padding:4px 6px}
+  .drives{grid-template-columns:1fr}
+  .actions button{font-size:12px;min-width:28px}
+  .actions select{min-width:80px}
+  .fieldGrid,.fieldGrid.tight{grid-template-columns:1fr}
 }
 @media (max-width:1024px){
   .app{padding:8px}
