@@ -665,6 +665,11 @@ async function loadDrives(force=false){
     const items=await callApp('ListDrives',[],{timeoutMs:18000});
     const wrap=el('drives');
     wrap.innerHTML='';
+    if(!items||items.length===0){
+      wrap.innerHTML=`<div class="emptyState" style="grid-column:1/-1"><div class="icon">&#x1F4BF;</div><h4>${s.lang==='ru'?'Нет доступных дисков':'No drives detected'}</h4><p>${s.lang==='ru'?'Проверьте подключение дисков или обновите список':'Check drive connections or refresh the list.'}</p></div>`;
+      s.lastDriveRefresh=Date.now();
+      return;
+    }
     for(const d of items){
       const pct=Math.max(0,Math.min(100,Math.round((d.usedRatio||0)*100)));
       const card=document.createElement('div');
@@ -870,7 +875,7 @@ function renderWiz(res){
   const sourceRects=(res.rects&&res.rects.length>0)?res.rects:fallbackRectsFromHeavy();
   const rects=buildTreemap(sourceRects,w,h);
   if(rects.length===0){
-    map.innerHTML='<div class="tiny" style="padding:10px">No data yet. Press WizMap.</div>';
+    map.innerHTML=`<div class="emptyState"><div class="icon">&#x1F5FA;</div><h4>${s.lang==='ru'?'Карта пуста':'No data yet'}</h4><p>${s.lang==='ru'?'Введите путь и нажмите WizMap':'Enter a path and press WizMap to visualize storage.'}</p></div>`;
     return;
   }
   rects.forEach((r,idx)=>{
@@ -1526,6 +1531,9 @@ document.addEventListener('keydown',async(e)=>{
   if(e.altKey && e.key==='1'){ e.preventDefault(); setView('dashboard'); return; }
   if(e.altKey && e.key==='2'){ e.preventDefault(); setView('analyze'); return; }
   if(e.altKey && e.key==='3'){ e.preventDefault(); setView('ops'); return; }
+  if((e.ctrlKey||e.metaKey) && e.key==='1'){ e.preventDefault(); setView('dashboard'); return; }
+  if((e.ctrlKey||e.metaKey) && e.key==='2'){ e.preventDefault(); setView('analyze'); return; }
+  if((e.ctrlKey||e.metaKey) && e.key==='3'){ e.preventDefault(); setView('ops'); return; }
   if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); openPalette(); return; }
   if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='f'){ e.preventDefault(); setView('analyze'); el('heavySearch').focus(); return; }
   if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='r'){ e.preventDefault(); runSmartScan(); return; }
