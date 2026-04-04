@@ -4,7 +4,9 @@
       "Bash(go *)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(node *)",
+      "Bash(powershell *)"
     ]
   },
   "$version": 3

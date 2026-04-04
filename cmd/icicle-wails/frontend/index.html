@@ -1430,8 +1430,8 @@ el('wizExtFilter').addEventListener('input',()=>{ if(s.wiz) renderWiz(s.wiz); })
 el('wizExtSort').addEventListener('change',()=>{ if(s.wiz) renderWiz(s.wiz); });
 el('historyCloseBtn').onclick=()=>el('driveHistoryPanel').style.display='none'; el('snapCloseBtn').onclick=()=>el('snapshotPanel').style.display='none';
 el('dupCloseBtn').onclick=()=>el('dupPanel').style.display='none'; el('diagCloseBtn').onclick=()=>el('diagPanel').style.display='none'; el('presetCloseBtn').onclick=()=>el('presetPanel').style.display='none';
-el('path').addEventListener('input',()=>{if(el('pathQuick').value!==el('path').value){el('pathQuick').value=el('path').value;} updateHintDebounced(); updateTopChips();});
-el('pathQuick').addEventListener('input',()=>{if(el('path').value!==el('pathQuick').value){el('path').value=el('pathQuick').value;} updateHintDebounced(); updateTopChips();});
+el('path').addEventListener('input',()=>{if(!window._pathSync&&el('pathQuick').value!==el('path').value){window._pathSync=true;el('pathQuick').value=el('path').value;setTimeout(()=>window._pathSync=false,10);} updateHintDebounced(); updateTopChips();});
+el('pathQuick').addEventListener('input',()=>{if(!window._pathSync&&el('path').value!==el('pathQuick').value){window._pathSync=true;el('path').value=el('pathQuick').value;setTimeout(()=>window._pathSync=false,10);} updateHintDebounced(); updateTopChips();});
 el('pathQuick').addEventListener('keydown',async(e)=>{if(e.key==='Enter'){e.preventDefault(); await runHeavy();}});
 el('drives').addEventListener('click',async(e)=>{const t=e.target; if(!(t instanceof HTMLElement))return; if(t.dataset.use){el('path').value=t.dataset.use; el('pathQuick').value=t.dataset.use; updateHintDebounced(); try{await loadDiskPresetFor(String(t.dataset.use).slice(0,2),true);}catch{}} if(t.dataset.open){try{await window.go.main.App.OpenDrive(t.dataset.open);}catch(err){showErr(err)}} if(t.dataset.tree){el('path').value=t.dataset.tree; el('pathQuick').value=t.dataset.tree; try{await loadDiskPresetFor(String(t.dataset.tree).slice(0,2),true);}catch{} await runTree();} if(t.dataset.heavy){el('path').value=t.dataset.heavy; el('pathQuick').value=t.dataset.heavy; try{await loadDiskPresetFor(String(t.dataset.heavy).slice(0,2),true);}catch{} await runHeavy();} if(t.dataset.savepreset){await saveDiskPresetFor(t.dataset.savepreset);} if(t.dataset.loadpreset){await loadDiskPresetFor(t.dataset.loadpreset,false);}});
 el('routeRulesBody').addEventListener('click',(e)=>{const t=e.target; if(!(t instanceof HTMLElement))return; if(t.dataset.act==='del'){const row=t.closest('.routeGrid'); if(row) row.remove();}});
@@ -1458,7 +1458,16 @@ el('heavyBody').addEventListener('change',async(e)=>{
     if(act==='del') await deleteFile(p);
   }
 });
-el('heavyBody').addEventListener('click',(e)=>{const t=e.target; if(!(t instanceof HTMLElement))return; if(t.dataset.fav){ toggleFavorite(t.dataset.fav); renderHeavy(); }});
+el('heavyBody').addEventListener('click',(e)=>{
+  const t=e.target;
+  if(!(t instanceof HTMLElement))return;
+  if(t.dataset.fav){ toggleFavorite(t.dataset.fav); renderHeavy(); return; }
+  if(t.dataset.openf){try{window.go.main.App.OpenPath(t.dataset.openf);}catch(err){showErr(err)}}
+  if(t.dataset.reveal){try{window.go.main.App.RevealPath(t.dataset.reveal);}catch(err){showErr(err)}}
+  if(t.dataset.amove) moveFile(t.dataset.amove,true);
+  if(t.dataset.move) moveFile(t.dataset.move,false);
+  if(t.dataset.del) deleteFile(t.dataset.del);
+});
 el('emptyList').addEventListener('change',(e)=>{const t=e.target; if(!(t instanceof HTMLElement))return; if(t.dataset.edir){if(t.checked)s.emptySelected.add(t.dataset.edir); else s.emptySelected.delete(t.dataset.edir); el('emptyAll').checked=s.emptyDirs.length>0&&s.emptyDirs.every(p=>s.emptySelected.has(p));}});
 el('heavySearch').addEventListener('input',()=>{try{localStorage.setItem('icicle.heavySearch',el('heavySearch').value||'');}catch{} debouncedRenderHeavy();});
 el('heavyMinSize').addEventListener('input',()=>{try{localStorage.setItem('icicle.heavyMinSize',el('heavyMinSize').value||'');}catch{} debouncedRenderHeavy();});
