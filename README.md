@@ -53,17 +53,20 @@ icicle tree "%USERPROFILE%\Documents"
 .\icicle-desktop.exe
 ```
 
+## 📸 Screenshots
+
 | | | |
 |---|---|---|
 | **Dashboard** | **WizMap Treemap** | **Heavy Queue** |
-| Drive pressure, duplicates, extension hotspots | Interactive space map with hover details & breadcrumbs | Filter, select, queue move/delete, execute |
+| ![Dashboard](docs/screenshots/dashboard.svg) | ![WizMap](docs/screenshots/wizmap.svg) | ![Heavy Queue](docs/screenshots/cleanup-queue.svg) |
 
 | | | |
 |---|---|---|
 | **Routing Editor** | **Scheduler** | **CLI Heavy** |
-| Auto-sort rules with dry-run | Interval & calendar-based scans | Terminal-first large file analysis |
+| ![Routing](docs/screenshots/routing-editor.svg) | ![Scheduler](docs/screenshots/scheduler.svg) | ![CLI](docs/screenshots/cli-heavy.svg) |
 
 ---
+
 
 ## 🧠 Core Capabilities
 
