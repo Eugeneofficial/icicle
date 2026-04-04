@@ -33,6 +33,10 @@
         <button id="themeBtn">Light</button>
         <button id="langBtn">RU</button>
       </div>
+      <div class="scanProgress" id="scanProgress" style="display:none">
+        <div class="scanProgressBar"><div class="scanProgressFill" id="scanProgressFill"></div></div>
+        <span class="scanProgressText" id="scanProgressText">Scanning...</span>
+      </div>
     </header>
 
     <div class="appBody">
@@ -121,7 +125,9 @@
           </section>
           <section class="analyzeGrid">
             <div class="leftCol">
-              <section class="panel wizWrap" id="wizWrap">
+              <details class="collapsible wizWrap" id="wizWrap" open>
+                <summary><span class="panelTitle">WizMap</span></summary>
+                <div class="panelContent">
                 <div>
                   <div class="wizTop"><div class="tiny" id="wizTitle">Space Map</div><div class="row"><button id="wizBackBtn">Back</button><button id="wizHomeBtn">Home</button><button id="wizFitBtn">Fit</button><button id="wizToggleSideBtn">Hide Ext</button><label class="tiny"><input id="wizTurbo" type="checkbox"> turbo</label></div></div>
                   <div class="row" style="margin-bottom:6px"><select id="wizDeltaSnapshot"><option value="">delta: off</option></select><button id="wizDeltaRefreshBtn">Load snapshots</button></div>
@@ -132,20 +138,15 @@
                   <div class="wizMap" id="wizMap"></div>
                 </div>
                 <div id="wizSide"><div class="tiny" id="wizExtTitle" style="margin-bottom:6px">Extensions</div><div class="row" style="margin-bottom:6px"><input id="wizExtFilter" placeholder="filter ext"><select id="wizExtSort"><option value="size">size</option><option value="count">count</option><option value="name">name</option></select></div><div class="wizExt"><table><thead><tr><th id="wizThExt">Ext</th><th id="wizThPct">%</th><th id="wizThSize">Size</th><th id="wizThCount">Files</th></tr></thead><tbody id="wizExtBody"></tbody></table></div></div>
-              </section>
+                </div>
+                </div>
+              </details>
             </div>
 
             <div class="rightCol">
-              <section class="panel heavyWrap">
-                <div class="heavyHeader">
-                  <div class="heavyHeaderTop">
-                    <div>
-                      <h4>Heavy-file action queue</h4>
-                      <p>Filter aggressively, build a queue with intent, then execute the smallest safe batch that actually changes the drive.</p>
-                    </div>
-                    <span class="pill">selection-driven</span>
-                  </div>
-                </div>
+              <details class="collapsible heavyWrap" open>
+                <summary><span class="panelTitle">Heavy-file action queue</span><span class="pill">selection-driven</span></summary>
+                <div class="panelContent">
                 <div id="driveHistoryPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)"><div class="row" style="justify-content:space-between"><b id="historyTitle">Drive history</b><button id="historyCloseBtn">x</button></div><div id="driveHistoryGrid" style="display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:8px;margin-top:6px"></div></div>
                 <div id="snapshotPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)"><div class="row"><select id="snapA"></select><select id="snapB"></select><button id="snapDiffBtn">Diff</button><button id="snapMapBtn">Treemap Compare</button><button id="snapCloseBtn">x</button></div><div class="row" style="margin-top:6px"><button id="snapExpCsvBtn">Export CSV</button><button id="snapExpJsonBtn">Export JSON</button><button id="snapExpMdBtn">Export MD</button></div><pre id="snapDiffOut" style="max-height:160px;overflow:auto;margin:8px 0 0"></pre><div id="snapMap" class="wizMap" style="height:220px;min-height:220px;margin-top:8px;display:none"></div></div>
                 <div id="dupPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)"><div class="row"><select id="dupGroupSel"></select><button id="dupKeepNewestBtn">Keep newest</button><button id="dupKeepOldestBtn">Keep oldest</button><button id="dupCloseBtn">x</button></div></div>
@@ -169,6 +170,9 @@
                 <div id="emptyPanel" style="display:none;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(0,0,0,.08)"><div class="row" style="justify-content:space-between"><b id="emptyTitle">Empty folders</b><label><input id="emptyAll" type="checkbox"> <span id="emptyAllTxt">select all</span></label></div><div id="emptyList" style="max-height:150px;overflow:auto;margin-top:6px"></div></div>
                 <table><colgroup><col style="width:30px"><col style="width:90px"><col><col style="width:230px"></colgroup><thead><tr><th><input id="chkAll" type="checkbox"></th><th id="thSize">Size</th><th id="thFile">File</th><th id="thAct">Actions</th></tr></thead><tbody id="heavyBody"></tbody></table>
               </section>
+            </div>
+                </div>
+              </details>
             </div>
           </section>
         </section>
@@ -692,7 +696,13 @@ function writeShortCache(map,key,val,max=14){
     if(k!==undefined) map.delete(k);
   }
 }
+// ── Scan Progress Bar ─────────────────────────────────────────────
+function showScanProgress(){el('scanProgress').style.display='flex'; el('scanProgressFill').style.width='0%'; el('scanProgressText').textContent=s.lang==='ru'?'Сканирование...':'Scanning...';}
+function updateScanProgress(pct,text){el('scanProgressFill').style.width=Math.min(100,pct)+'%'; if(text) el('scanProgressText').textContent=text;}
+function hideScanProgress(){el('scanProgress').style.display='none';}
+// ── Scans ─────────────────────────────────────────────────────────
 async function runTree(){return withLoader(async()=>{
+  showScanProgress();
   const fast=boolInput('fastMode');
   const path=normPath(el('path').value);
   el('path').value=path;
@@ -704,6 +714,8 @@ async function runTree(){return withLoader(async()=>{
   const cached=readShortCache(s.treeRunCache,key,9000);
   const res=cached || await callApp('RunTreeFastFiltered',[path,5,22,maxFiles,workers,filters]);
   if(!cached) writeShortCache(s.treeRunCache,key,res);
+  updateScanProgress(100,res.seen+' dirs');
+  setTimeout(hideScanProgress,600);
   s.metrics.treeMs=res.durationMs||0; touchHealth();
   el('log').textContent+='\n'+res.output+'\n';
   el('log').scrollTop=el('log').scrollHeight;
@@ -711,6 +723,7 @@ async function runTree(){return withLoader(async()=>{
   if(document.getElementById('viewAnalyze')?.classList.contains('active')) runWiz();
 });}
 async function runHeavy(){return withLoader(async()=>{
+  showScanProgress();
   const n=intInput('topN',20,1,500);
   const fast=boolInput('fastMode');
   const path=normPath(el('path').value);
@@ -723,6 +736,8 @@ async function runHeavy(){return withLoader(async()=>{
   const cached=readShortCache(s.heavyRunCache,key,9000);
   const res=cached || await callApp('RunHeavyFastFiltered',[path,n,maxFiles,workers,filters]);
   if(!cached) writeShortCache(s.heavyRunCache,key,res);
+  updateScanProgress(100,res.seen+' files');
+  setTimeout(hideScanProgress,600);
   s.metrics.heavyMs=res.durationMs||0; touchHealth();
   s.heavy=res.items||[];
   const keep=new Set();
@@ -1143,6 +1158,11 @@ function renderHeavy(){
     el('chkAll').checked=false;
     updateSelCount();
     updateTopChips();
+    if(s.heavy.length===0){
+      body.innerHTML=`<tr><td colspan="4"><div class="emptyState"><div class="icon">&#x1F4C2;</div><h4>${s.lang==='ru'?'Ничего не найдено':'No files scanned yet'}</h4><p>${s.lang==='ru'?'Введите путь выше и нажмите Heavy или Tree для поиска больших файлов':'Enter a path above and click Heavy or Tree to find large files.'}</p></div></td></tr>`;
+    } else {
+      body.innerHTML=`<tr><td colspan="4"><div class="emptyState"><div class="icon">&#x1F50D;</div><h4>${s.lang==='ru'?'Нет совпадений':'No matching files'}</h4><p>${s.lang==='ru'?'Попробуйте изменить фильтры или обновить скан':'Try adjusting filters or running a fresh scan.'}</p></div></td></tr>`;
+    }
     return;
   }
   const chunk=Math.max(80,Math.min(280,s.renderChunk||180));
