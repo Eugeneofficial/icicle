@@ -264,6 +264,22 @@
 
 <script>
 const el=(id)=>document.getElementById(id);
+const callApp=(method,args,opts={})=>{
+  return new Promise((resolve,reject)=>{
+    if(!window.go||!window.go.main||!window.go.main.App){
+      reject(new Error('Wails App not ready. Method: '+method));
+      return;
+    }
+    const fn=window.go.main.App[method];
+    if(typeof fn!=='function'){
+      reject(new Error('App.'+method+' is not a function'));
+      return;
+    }
+    const timeout=opts.timeoutMs||30000;
+    const timer=setTimeout(()=>reject(new Error('timeout: '+method)),timeout);
+    fn(...(args||[])).then(r=>{clearTimeout(timer);resolve(r);}).catch(e=>{clearTimeout(timer);reject(e);});
+  });
+};
 const s={lang:'ru',theme:'dark',heavy:[],heavyFiltered:[],heavyVersion:0,heavyFilterCache:null,heavyRenderLimit:200,heavyRenderToken:0,queue:[],selected:new Set(),fullPoll:null,emptyDirs:[],emptySelected:new Set(),presetCandidates:[],dupGroups:[],wiz:null,wizPath:'',wizRoot:'',wizStack:[],wizSide:true,busy:false,wizRects:[],wizSel:-1,wizTotal:0,routeRules:[],autoRefresh:null,queuePresets:[],quickDestSaved:[],perfMode:'balanced',metrics:{treeMs:0,heavyMs:0,wizMs:0,last:'-',err:'-'},defaults:null,defaultsAt:0,hintSeq:0,lastStatusText:'',lastStatusAt:0,lastLogHash:'',pollTimer:null,pollMs:1200,lastDriveRefresh:0,renderChunk:180,wizCache:new Map(),heavyRunCache:new Map(),treeRunCache:new Map(),lastScanKey:'',lastScanAt:0,favoritePaths:new Set(),favOnly:false,scanHistory:[],heavyAutoTimer:null};
 const i18n={
   en:{subtitle:'Desktop App',save:'Save',use:'Use',remove:'Remove',tree:'Tree',heavy:'Heavy',start:'Start Watch',stop:'Stop',dry:'dry-run',fast:'fast mode',full:'Full scan (bg)',cancel:'Stop scan',undo:'Undo Move',clean:'Empty folders',clear:'Clear Log',csv:'Export CSV',updCheck:'Check update',updApply:'Apply update',drives:'System storage',refresh:'Refresh',types:'Extensions',dups:'Duplicates',size:'Size',file:'File',act:'Actions',hint:'Folder type',ready:'ready',running:'watch running',open:'Open',reveal:'Reveal',autoMove:'Auto Move',moveTo:'Move To',del:'Delete',loading:'Scanning...',qMove:'Queue: move',qDel:'Queue: delete',qRun:'Run queue',qClear:'Clear queue',findEmpty:'Find empty folders',delEmpty:'Delete selected empty',emptyTitle:'Empty folders',selectAll:'select all',pathPlaceholder:'Move destination (optional)',schedStart:'Start schedule',schedStop:'Stop schedule',schedNow:'Run schedule now',snapshots:'Snapshots',history:'Drive history',presetScan:'Scan preset',presetApply:'Apply preset',diag:'Watch diagnostics',presetPreview:'Preset preview',risk:'risk',dupNewest:'Keep newest',dupOldest:'Keep oldest',wiz:'WizMap',spaceMap:'Space Map',extTable:'Extensions',ext:'Ext',files:'Files',back:'Back',home:'Home',fit:'Fit',hideExt:'Hide Ext',showExt:'Show Ext'},
@@ -1546,7 +1562,34 @@ el('onboardingNext').onclick=onboardNext;
 el('onboardingPrev').onclick=onboardPrev;
 el('onboardingDontShowCheckbox').addEventListener('change',()=>{}); // state read on close
 
-(async()=>{try{const d=await getDefaultsCached(true); el('path').value=d.downloads||d.home||''; el('pathQuick').value=el('path').value; el('verPill').textContent=d.version||'-'; loadClientState(); el('heavySearch').value=localStorage.getItem('icicle.heavySearch')||''; el('heavyMinSize').value=localStorage.getItem('icicle.heavyMinSize')||''; el('heavySort').value=localStorage.getItem('icicle.heavySort')||'size-desc'; await loadSaved(); await loadDrives(true); await listSnapshots(false); applyLang(); updateHeavyAuto(); const v=localStorage.getItem('icicle.view')||'analyze'; setView(v); pollLog(); setTimeout(()=>runWiz(),250); setTimeout(()=>showOnboarding(),600);}catch(e){showErr(e)}})();
+(async()=>{
+  console.log('[icicle] init starting');
+  try{
+    const d=await getDefaultsCached(true);
+    console.log('[icicle] defaults:',d?'ok':'null');
+    if(d){el('path').value=d.downloads||d.home||''; el('pathQuick').value=el('path').value; el('verPill').textContent=d.version||'-';}
+    loadClientState();
+    console.log('[icicle] client state loaded');
+    el('heavySearch').value=localStorage.getItem('icicle.heavySearch')||'';
+    el('heavyMinSize').value=localStorage.getItem('icicle.heavyMinSize')||'';
+    el('heavySort').value=localStorage.getItem('icicle.heavySort')||'size-desc';
+    try{await loadSaved(); console.log('[icicle] saved loaded');}catch(e){console.warn('[icicle] loadSaved err:',e);}
+    try{await loadDrives(true); console.log('[icicle] drives loaded');}catch(e){console.warn('[icicle] loadDrives err:',e);}
+    try{await listSnapshots(false); console.log('[icicle] snapshots loaded');}catch(e){console.warn('[icicle] listSnapshots err:',e);}
+    applyLang();
+    updateHeavyAuto();
+    const v=localStorage.getItem('icicle.view')||'dashboard';
+    console.log('[icicle] setting view:',v);
+    setView(v);
+    pollLog();
+    setTimeout(()=>runWiz(),250);
+    setTimeout(()=>showOnboarding(),600);
+    console.log('[icicle] init done');
+  }catch(e){
+    console.error('[icicle] init error:',e);
+    setView('dashboard');
+  }
+})();
 window.addEventListener('resize',()=>{ if(s.wiz) renderWiz(s.wiz); });
 </script>
 </body>
