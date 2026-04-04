@@ -10,6 +10,8 @@ import (
 	"syscall"
 )
 
+const copyBufSize = 1 << 20 // 1 MB — оптимально для больших файлов на SSD
+
 var byExtension = map[string]string{
 	".mp4":  "Videos",
 	".mov":  "Videos",
@@ -60,11 +62,18 @@ func EnsureUniquePath(path string) (string, error) {
 		return "", err
 	}
 
-	ext := filepath.Ext(path)
-	base := strings.TrimSuffix(filepath.Base(path), ext)
 	dir := filepath.Dir(path)
+	name := filepath.Base(path)
+	ext := filepath.Ext(name)
+	base := strings.TrimSuffix(name, ext)
+
 	for i := 1; i <= 9999; i++ {
-		candidate := filepath.Join(dir, fmt.Sprintf("%s (%d)%s", base, i, ext))
+		var candidate string
+		if ext != "" {
+			candidate = filepath.Join(dir, fmt.Sprintf("%s (%d)%s", base, i, ext))
+		} else {
+			candidate = filepath.Join(dir, fmt.Sprintf("%s (%d)", base, i))
+		}
 		if _, err := os.Stat(candidate); os.IsNotExist(err) {
 			return candidate, nil
 		} else if err != nil {
@@ -114,7 +123,8 @@ func copyThenDelete(srcPath, dstPath string) error {
 		return err
 	}
 	copyErr := func() error {
-		if _, err := io.Copy(dst, src); err != nil {
+		buf := make([]byte, copyBufSize)
+		if _, err := io.CopyBuffer(dst, src, buf); err != nil {
 			return err
 		}
 		if err := dst.Sync(); err != nil {

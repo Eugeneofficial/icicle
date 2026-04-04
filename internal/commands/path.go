@@ -31,10 +31,13 @@ func expandPath(in string) (string, error) {
 
 func fileEmoji(size int64, noEmoji bool) string {
 	if noEmoji {
-		return ""
+		return "  "
 	}
 	if size >= 2*1024*1024*1024 {
-		return "[HOT]"
+		return "🔥"
 	}
-	return "[COLD]"
+	if size >= 500*1024*1024 {
+		return "📦"
+	}
+	return "📄"
 }

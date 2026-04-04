@@ -336,17 +336,37 @@ func (a *App) Defaults() Defaults {
 	}
 }
 
+const (
+	maxLogBytes  = 2 * 1024 * 1024 // 2MB max log size
+	keepLogBytes = 1 * 1024 * 1024 // keep last 1MB when trimming
+)
+
 func (a *App) appendLog(line string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	a.logBuf.WriteString(line)
+
+	// Ensure line ends with newline
 	if !strings.HasSuffix(line, "\n") {
-		a.logBuf.WriteString("\n")
+		line += "\n"
 	}
-	if a.logBuf.Len() > 2*1024*1024 {
-		b := a.logBuf.Bytes()
-		a.logBuf.Reset()
-		a.logBuf.Write(b[len(b)-1024*1024:])
+	a.logBuf.WriteString(line)
+
+	// Trim from front if too large (avoid reallocation by keeping reasonable chunk)
+	if a.logBuf.Len() > maxLogBytes {
+		full := a.logBuf.Bytes()
+		cutoff := len(full) - keepLogBytes
+		if cutoff > 0 {
+			// Find next newline to avoid splitting lines
+			for cutoff < len(full) && full[cutoff] != '\n' {
+				cutoff++
+			}
+			if cutoff < len(full) {
+				cutoff++ // skip the newline
+			}
+			remaining := full[cutoff:]
+			a.logBuf.Reset()
+			a.logBuf.Write(remaining)
+		}
 	}
 }
 
@@ -376,7 +396,7 @@ func (a *App) RunTree(path string, topN int, width int) (string, error) {
 	if width <= 0 {
 		width = 22
 	}
-	stats, err := scan.ScanTree(path, topN)
+	stats, err := scan.ScanTree(path, topN, 0)
 	if err != nil {
 		return "", err
 	}
@@ -433,18 +453,7 @@ func (a *App) RunTreeFast(path string, topN int, width int, maxFiles int, worker
 	}
 	started := time.Now()
 	a.scanMu.Lock()
-	prevWorkers, hadWorkers := os.LookupEnv("ICICLE_SCAN_WORKERS")
-	if workers > 0 {
-		_ = os.Setenv("ICICLE_SCAN_WORKERS", strconv.Itoa(workers))
-	}
-	stats, seen, limited, err := scan.ScanTreeLimited(path, topN, maxFiles)
-	if workers > 0 {
-		if hadWorkers {
-			_ = os.Setenv("ICICLE_SCAN_WORKERS", prevWorkers)
-		} else {
-			_ = os.Unsetenv("ICICLE_SCAN_WORKERS")
-		}
-	}
+	stats, seen, limited, err := scan.ScanTreeLimited(path, topN, maxFiles, workers)
 	a.scanMu.Unlock()
 	if err != nil {
 		return TreeResult{}, err
@@ -500,7 +509,7 @@ func (a *App) RunHeavy(path string, n int) ([]HeavyItem, error) {
 	if n <= 0 {
 		n = 20
 	}
-	stats, err := scan.ScanTopFiles(path, n)
+	stats, err := scan.ScanTopFiles(path, n, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -531,18 +540,7 @@ func (a *App) RunHeavyFast(path string, n int, maxFiles int, workers int) (Heavy
 	started := time.Now()
 
 	a.scanMu.Lock()
-	prevWorkers, hadWorkers := os.LookupEnv("ICICLE_SCAN_WORKERS")
-	if workers > 0 {
-		_ = os.Setenv("ICICLE_SCAN_WORKERS", strconv.Itoa(workers))
-	}
-	stats, seen, limited, err := scan.ScanTopFilesLimited(path, n, maxFiles)
-	if workers > 0 {
-		if hadWorkers {
-			_ = os.Setenv("ICICLE_SCAN_WORKERS", prevWorkers)
-		} else {
-			_ = os.Unsetenv("ICICLE_SCAN_WORKERS")
-		}
-	}
+	stats, seen, limited, err := scan.ScanTopFilesLimited(path, n, maxFiles, workers)
 	a.scanMu.Unlock()
 	if err != nil {
 		return HeavyResult{}, err
@@ -970,7 +968,11 @@ func (a *App) OpenDrive(drive string) error {
 	if drive == "" {
 		return fmt.Errorf("invalid drive")
 	}
-	return exec.Command("explorer.exe", drive+`\`).Start()
+	cmd := exec.Command("explorer.exe", drive+`\`)
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to open drive %s: %w", drive, err)
+	}
+	return nil
 }
 
 func (a *App) OpenPath(path string) error {
@@ -980,12 +982,16 @@ func (a *App) OpenPath(path string) error {
 	}
 	abs, err := filepath.Abs(path)
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid path: %w", err)
 	}
 	if _, err := os.Stat(abs); err != nil {
-		return err
+		return fmt.Errorf("path not found: %w", err)
 	}
-	return exec.Command("explorer.exe", abs).Start()
+	cmd := exec.Command("explorer.exe", abs)
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to open path: %w", err)
+	}
+	return nil
 }
 
 func (a *App) RevealPath(path string) error {
@@ -995,12 +1001,16 @@ func (a *App) RevealPath(path string) error {
 	}
 	abs, err := filepath.Abs(path)
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid path: %w", err)
 	}
 	if _, err := os.Stat(abs); err != nil {
-		return err
+		return fmt.Errorf("path not found: %w", err)
 	}
-	return exec.Command("explorer.exe", "/select,"+abs).Start()
+	cmd := exec.Command("explorer.exe", "/select,"+abs)
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to reveal path: %w", err)
+	}
+	return nil
 }
 
 func (a *App) PickFolder() (string, error) {
@@ -1457,18 +1467,7 @@ func (a *App) ExtensionStatsFast(path string, limit int, maxFiles int, workers i
 	}
 	started := time.Now()
 	a.scanMu.Lock()
-	prevWorkers, hadWorkers := os.LookupEnv("ICICLE_SCAN_WORKERS")
-	if workers > 0 {
-		_ = os.Setenv("ICICLE_SCAN_WORKERS", strconv.Itoa(workers))
-	}
-	items, seen, limited, err := scan.ScanExtStatsLimited(path, maxFiles)
-	if workers > 0 {
-		if hadWorkers {
-			_ = os.Setenv("ICICLE_SCAN_WORKERS", prevWorkers)
-		} else {
-			_ = os.Unsetenv("ICICLE_SCAN_WORKERS")
-		}
-	}
+	items, seen, limited, err := scan.ScanExtStatsLimited(path, maxFiles, workers)
 	a.scanMu.Unlock()
 	if err != nil {
 		return ExtStatsResult{}, err
@@ -1512,18 +1511,7 @@ func (a *App) WizMap(path string, maxFiles int, workers int, topDirs int, topFil
 	}
 	started := time.Now()
 	a.scanMu.Lock()
-	prevWorkers, hadWorkers := os.LookupEnv("ICICLE_SCAN_WORKERS")
-	if workers > 0 {
-		_ = os.Setenv("ICICLE_SCAN_WORKERS", strconv.Itoa(workers))
-	}
-	stats, err := scan.ScanOverviewLimited(path, maxFiles, topFiles, topExt)
-	if workers > 0 {
-		if hadWorkers {
-			_ = os.Setenv("ICICLE_SCAN_WORKERS", prevWorkers)
-		} else {
-			_ = os.Unsetenv("ICICLE_SCAN_WORKERS")
-		}
-	}
+	stats, err := scan.ScanOverviewLimited(path, maxFiles, topFiles, topExt, workers)
 	a.scanMu.Unlock()
 	if err != nil {
 		return WizMapResult{}, err

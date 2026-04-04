@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"icicle/internal/meta"
+	"icicle/internal/ui"
 )
 
 func Run(args []string) int {
@@ -25,7 +26,7 @@ func Run(args []string) int {
 	case "tree":
 		return runTree(args[2:])
 	case "version", "-v", "--version":
-		fmt.Println("icicle " + meta.Version)
+		fmt.Println("icicle " + ui.Dim(meta.Version))
 		return 0
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", sub)
@@ -35,19 +36,22 @@ func Run(args []string) int {
 }
 
 func printRootUsage() {
-	fmt.Println("icicle")
-	fmt.Println("")
-	fmt.Println("Usage:")
-	fmt.Println("  icicle watch [path]   Watch a folder and auto-sort new files")
-	fmt.Println("  icicle heavy [path]   Show top largest files")
-	fmt.Println("  icicle tree [path]    Visualize size tree")
-	fmt.Println("")
-	fmt.Println("Default paths:")
-	fmt.Println("  watch -> Windows Downloads folder")
-	fmt.Println("  heavy/tree -> Windows Home folder")
-	fmt.Println("")
-	fmt.Println("Shared per-command flags:")
-	fmt.Println("  --no-color           Disable ANSI colors")
-	fmt.Println("  --no-emoji           Disable emoji in output")
-	fmt.Println("")
+	fmt.Println()
+	fmt.Println(" " + ui.Xiaomi("icicle") + " " + ui.Dim(meta.Version))
+	fmt.Println()
+	fmt.Println(" " + ui.White("commands"))
+	fmt.Println("   " + ui.Xiaomi("heavy") + "  [path]     top largest files")
+	fmt.Println("   " + ui.Xiaomi("tree") + "   [path]     size tree map")
+	fmt.Println("   " + ui.Xiaomi("watch") + "  [path]     auto-sort folder")
+	fmt.Println("   " + ui.Xiaomi("version") + "            show version")
+	fmt.Println()
+	fmt.Println(" " + ui.White("flags"))
+	fmt.Println("   " + ui.Dim("--no-color") + "         disable colors")
+	fmt.Println("   " + ui.Dim("--no-emoji") + "         disable emoji")
+	fmt.Println()
+	fmt.Println(" " + ui.White("examples"))
+	fmt.Println("   " + ui.Dim("icicle heavy --n 20 ~/Downloads"))
+	fmt.Println("   " + ui.Dim("icicle tree ~/Documents"))
+	fmt.Println("   " + ui.Dim("icicle watch ~/Downloads"))
+	fmt.Println()
 }

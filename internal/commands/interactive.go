@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"icicle/internal/ui"
 )
 
 func runInteractive() int {
@@ -17,29 +19,32 @@ func runInteractive() int {
 	}
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Println("icicle - quick start")
-	fmt.Println("1) Tree view (size map)")
-	fmt.Println("2) Heavy files (top-N)")
-	fmt.Println("3) Watch folder (auto-sort)")
-	fmt.Println("4) Help")
-	fmt.Print("Select [1-4, default 1]: ")
+	fmt.Println()
+	fmt.Println(" " + ui.Xiaomi("icicle") + " quick start")
+	fmt.Println()
+	fmt.Println("   " + ui.Xiaomi("1") + "   tree view")
+	fmt.Println("   " + ui.Xiaomi("2") + "   heavy files")
+	fmt.Println("   " + ui.Xiaomi("3") + "   watch folder")
+	fmt.Println("   " + ui.Xiaomi("4") + "   help")
+	fmt.Println()
+	fmt.Print(ui.Dim("   select [1-4]: "))
 	choice := readLineOrDefault(reader, "1")
 
 	switch choice {
 	case "1":
-		fmt.Printf("Path [default: %s]: ", home)
+		fmt.Print(ui.Dim("   path [default: " + home + "]: "))
 		path := readLineOrDefault(reader, home)
 		return runTree([]string{"--top", "5", path})
 	case "2":
-		fmt.Printf("Path [default: %s]: ", home)
+		fmt.Print(ui.Dim("   path [default: " + home + "]: "))
 		path := readLineOrDefault(reader, home)
-		fmt.Print("Top N [default: 20]: ")
+		fmt.Print(ui.Dim("   top N [default: 20]: "))
 		n := readLineOrDefault(reader, "20")
 		return runHeavy([]string{"--n", n, path})
 	case "3":
-		fmt.Printf("Path to watch [default: %s]: ", downloads)
+		fmt.Print(ui.Dim("   path [default: " + downloads + "]: "))
 		path := readLineOrDefault(reader, downloads)
-		fmt.Print("Dry run? [y/N]: ")
+		fmt.Print(ui.Dim("   dry run? [y/N]: "))
 		dry := strings.ToLower(readLineOrDefault(reader, "n"))
 		if dry == "y" || dry == "yes" {
 			return runWatch([]string{"--dry-run", path})

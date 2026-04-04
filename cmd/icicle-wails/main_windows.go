@@ -47,7 +47,7 @@ func main() {
 		MinHeight:                640,
 		DisableResize:            false,
 		Frameless:                false,
-		BackgroundColour:         &options.RGBA{R: 12, G: 18, B: 32, A: 1},
+		BackgroundColour:         &options.RGBA{R: 10, G: 10, B: 10, A: 1},
 		AssetServer:              &assetserver.Options{Assets: assets},
 		OnStartup:                app.startup,
 		OnShutdown:               app.shutdown,

@@ -1,18 +1,20 @@
 package commands
 
 import (
-	"errors"
 	"flag"
 	"fmt"
-	"io/fs"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
 
 	"icicle/internal/organize"
+	"icicle/internal/scan"
+	"icicle/internal/ui"
 )
 
 func runWatch(args []string) int {
@@ -54,42 +56,56 @@ func runWatch(args []string) int {
 		return 1
 	}
 
-	fmt.Printf("watching %s\n", watchRoot)
-	fmt.Printf("sorting destination base: %s\n", home)
+	fmt.Println()
+	fmt.Println(ui.Title("●", "WATCH MODE"))
+	fmt.Println(ui.Info("watch", ui.Cyan(watchRoot)))
+	fmt.Println(ui.Info("sort to", ui.Cyan(home)))
 	if *dryRun {
-		fmt.Println("dry-run enabled")
+		fmt.Println(ui.Info("mode", ui.Xiaomi("dry-run")))
 	}
-	fmt.Println("press Ctrl+C to stop")
+	fmt.Println(ui.Line())
+	fmt.Println(ui.Dim("   press Ctrl+C to stop"))
+	fmt.Println()
 
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+
+	moved := 0
 	cooldown := map[string]time.Time{}
 	for {
 		select {
+		case <-sigCh:
+			fmt.Println()
+			fmt.Println(ui.Line())
+			fmt.Println(ui.Info("stopped", fmt.Sprintf("%d files moved", moved)))
+			fmt.Println()
+			return 0
 		case event, ok := <-watcher.Events:
 			if !ok {
+				fmt.Println()
+				fmt.Println(ui.Info("done", fmt.Sprintf("%d files moved", moved)))
 				return 0
 			}
 			if event.Op&(fsnotify.Create|fsnotify.Rename|fsnotify.Write) == 0 {
 				continue
 			}
-
 			if info, err := os.Stat(event.Name); err == nil && info.IsDir() {
 				_ = addRecursiveWatches(watcher, event.Name)
 				continue
 			}
-
 			if shouldSkipEvent(event.Name, cooldown) {
 				continue
 			}
-
 			handled, msg := maybeMoveFile(home, event.Name, *dryRun)
 			if handled {
-				fmt.Println(msg)
+				moved++
+				fmt.Printf(" %s %s\n", ui.Xiaomi(fmt.Sprintf("%d.", moved)), msg)
 			}
 		case err, ok := <-watcher.Errors:
 			if !ok {
 				return 0
 			}
-			fmt.Fprintf(os.Stderr, "watch error: %v\n", err)
+			fmt.Fprintf(os.Stderr, " %v\n", err)
 		}
 	}
 }
@@ -98,7 +114,7 @@ func addRecursiveWatches(w *fsnotify.Watcher, root string) error {
 	warnCount := 0
 	return filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
-			if isWatchAccessDenied(err) {
+			if scan.IsAccessDenied(err) {
 				if d != nil && d.IsDir() {
 					return filepath.SkipDir
 				}
@@ -117,15 +133,8 @@ func addRecursiveWatches(w *fsnotify.Watcher, root string) error {
 		}
 		if d.IsDir() {
 			if err := w.Add(path); err != nil {
-				if isWatchAccessDenied(err) {
-					if warnCount < 6 {
-						fmt.Fprintf(os.Stderr, "watch skip (access denied): %s\n", path)
-					}
-					warnCount++
-					return filepath.SkipDir
-				}
-				if warnCount < 6 {
-					fmt.Fprintf(os.Stderr, "watch skip (%v): %s\n", err, path)
+				if warnCount < 3 {
+					fmt.Fprintf(os.Stderr, "   skip: %s\n", path)
 				}
 				warnCount++
 				return filepath.SkipDir
@@ -147,35 +156,16 @@ func shouldSkipWatchDir(d os.DirEntry) bool {
 		name == "msocache"
 }
 
-func isWatchAccessDenied(err error) bool {
-	if os.IsPermission(err) {
-		return true
-	}
-	if errors.Is(err, fs.ErrPermission) {
-		return true
-	}
-	var pe *fs.PathError
-	if errors.As(err, &pe) {
-		if os.IsPermission(pe.Err) || errors.Is(pe.Err, fs.ErrPermission) {
-			return true
-		}
-	}
-	msg := strings.ToLower(err.Error())
-	return strings.Contains(msg, "access is denied") || strings.Contains(msg, "permission denied")
-}
-
 func shouldSkipEvent(path string, cooldown map[string]time.Time) bool {
-	// Пасхалка: "блять, я не знаю как это работает, пусть будет" :)
-	// По факту это простой антидребезг, чтобы не ловить один и тот же файл по 10 раз.
 	now := time.Now()
 	last, ok := cooldown[path]
-	if ok && now.Sub(last) < 2*time.Second {
+	if ok && now.Sub(last) < CooldownDuration {
 		return true
 	}
 	cooldown[path] = now
-	if len(cooldown) > 4096 {
+	if len(cooldown) > CooldownMaxEntries {
 		for k, v := range cooldown {
-			if now.Sub(v) > 15*time.Second {
+			if now.Sub(v) > CooldownCleanupAge {
 				delete(cooldown, k)
 			}
 		}
@@ -188,12 +178,10 @@ func maybeMoveFile(home, srcPath string, dryRun bool) (bool, string) {
 	if err != nil || info.IsDir() {
 		return false, ""
 	}
-
 	dstDir, ok := organize.DestinationDir(home, srcPath)
 	if !ok {
 		return false, ""
 	}
-
 	srcAbs, err := filepath.Abs(srcPath)
 	if err != nil {
 		return false, ""
@@ -206,35 +194,23 @@ func maybeMoveFile(home, srcPath string, dryRun bool) (bool, string) {
 	if strings.EqualFold(srcAbs, dstAbs) {
 		return false, ""
 	}
-
 	dstUnique, err := organize.EnsureUniquePath(dstAbs)
 	if err != nil {
-		return true, fmt.Sprintf("skip %s (%v)", srcAbs, err)
+		return true, fmt.Sprintf("skip %s", filepath.Base(srcAbs))
 	}
-
 	if dryRun {
-		return true, fmt.Sprintf("[dry-run] %s -> %s", srcAbs, dstUnique)
+		return true, fmt.Sprintf("%s %s → %s", ui.Dim("[dry-run]"), filepath.Base(srcAbs), filepath.Base(dstUnique))
 	}
-
 	if err := moveFileWithRetry(srcAbs, dstUnique); err != nil {
-		return true, fmt.Sprintf("move failed %s (%v)", srcAbs, err)
+		return true, fmt.Sprintf("%s %s", ui.Red("fail"), filepath.Base(srcAbs))
 	}
-
-	if info.Size() > 4*1024*1024*1024 {
-		// Easter egg: exceptionally large drops get a special line.
-		return true, fmt.Sprintf("moved %s -> %s  [black-ice payload]", srcAbs, dstUnique)
-	}
-	return true, fmt.Sprintf("moved %s -> %s", srcAbs, dstUnique)
+	return true, fmt.Sprintf("%s → %s", filepath.Base(srcAbs), ui.Cyan(filepath.Base(dstUnique)))
 }
 
 func waitForStableFile(path string) (os.FileInfo, error) {
 	const attempts = 6
-	const delay = 200 * time.Millisecond
-	const settleFor = 700 * time.Millisecond
-
 	var prevSize int64 = -1
 	var prevMod time.Time
-
 	for i := 0; i < attempts; i++ {
 		info, err := os.Stat(path)
 		if err != nil {
@@ -244,7 +220,7 @@ func waitForStableFile(path string) (os.FileInfo, error) {
 			return info, nil
 		}
 		if info.Size() == prevSize && info.ModTime() == prevMod {
-			if time.Since(info.ModTime()) >= settleFor {
+			if time.Since(info.ModTime()) >= StableFileSettleTime {
 				return info, nil
 			}
 		} else {
@@ -252,10 +228,9 @@ func waitForStableFile(path string) (os.FileInfo, error) {
 			prevMod = info.ModTime()
 		}
 		if i < attempts-1 {
-			time.Sleep(delay)
+			time.Sleep(StableFileCheckDelay)
 		}
 	}
-
 	return nil, fmt.Errorf("file is still changing")
 }
 
@@ -267,11 +242,8 @@ func moveFileWithRetry(src, dst string) error {
 			return nil
 		}
 		last = err
-		msg := strings.ToLower(err.Error())
-		if strings.Contains(msg, "being used by another process") ||
-			strings.Contains(msg, "access is denied") ||
-			strings.Contains(msg, "permission denied") {
-			time.Sleep(180 * time.Millisecond)
+		if scan.IsAccessDenied(err) || strings.Contains(strings.ToLower(err.Error()), "being used by another process") {
+			time.Sleep(RetryDelay)
 			continue
 		}
 		return err

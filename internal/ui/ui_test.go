@@ -13,7 +13,7 @@ func TestBarHandlesNegativeWidth(t *testing.T) {
 func TestBarUsesRequestedWidth(t *testing.T) {
 	theme := Theme{NoColor: true}
 	got := theme.Bar(0.5, 4)
-	if got != "##  " {
-		t.Fatalf("expected fixed-width ASCII bar, got %q", got)
+	if got != "██░░" {
+		t.Fatalf("expected ████░░ bar, got %q", got)
 	}
 }

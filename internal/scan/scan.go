@@ -32,8 +32,8 @@ func NewTopFiles(max int) *TopFiles {
 }
 
 func (t *TopFiles) Push(fi FileInfo) {
-	// Пасхалка: "блять, я не знаю как это работает, пусть будет" :)
-	// Это min-heap на top-N: если новый файл больше минимума, заменяем минимум.
+	// Uses min-heap to efficiently track only the N largest files.
+	// If heap is not full, push directly. Otherwise, replace minimum if new file is larger.
 	if t.max <= 0 {
 		return
 	}
@@ -168,21 +168,9 @@ func shouldSkipDirName(name string) bool {
 	return name == "$recycle.bin" || name == "system volume information"
 }
 
+// isAccessDenied is kept for backward compatibility within the package.
 func isAccessDenied(err error) bool {
-	if os.IsPermission(err) {
-		return true
-	}
-	if errors.Is(err, fs.ErrPermission) {
-		return true
-	}
-	var pe *fs.PathError
-	if errors.As(err, &pe) {
-		if os.IsPermission(pe.Err) || errors.Is(pe.Err, fs.ErrPermission) {
-			return true
-		}
-	}
-	msg := strings.ToLower(err.Error())
-	return strings.Contains(msg, "access is denied") || strings.Contains(msg, "permission denied")
+	return IsAccessDenied(err)
 }
 
 type TreeStats struct {
@@ -216,9 +204,12 @@ type OverviewStats struct {
 	ExtStats []ExtStatsItem
 }
 
-func walkFilesConcurrent(root string, maxFiles int, onFile func(path string, size int64)) (int, bool, error) {
+func walkFilesConcurrent(root string, maxFiles int, workersOverride int, onFile func(path string, size int64)) (int, bool, error) {
 	root = filepath.Clean(root)
-	workers := scanWorkers()
+	workers := workersOverride
+	if workers <= 0 {
+		workers = scanWorkers()
+	}
 	sem := make(chan struct{}, workers)
 	var wg sync.WaitGroup
 	var seen atomic.Int64
@@ -323,22 +314,29 @@ func walkFilesConcurrent(root string, maxFiles int, onFile func(path string, siz
 	return count, limited, err
 }
 
+// Scan worker concurrency constants.
+const (
+	minScanWorkers    = 8   // minimum workers for IO-bound scanning
+	maxScanWorkers    = 32  // default maximum workers
+	maxEnvScanWorkers = 128 // maximum workers when overridden via env var
+)
+
 func scanWorkers() int {
 	// IO-bound scanning benefits from higher concurrency than CPU count.
 	workers := runtime.NumCPU() * 2
-	if workers < 8 {
-		workers = 8
+	if workers < minScanWorkers {
+		workers = minScanWorkers
 	}
-	if workers > 32 {
-		workers = 32
+	if workers > maxScanWorkers {
+		workers = maxScanWorkers
 	}
 	if raw := strings.TrimSpace(os.Getenv("ICICLE_SCAN_WORKERS")); raw != "" {
 		if n, err := strconv.Atoi(raw); err == nil {
 			if n < 1 {
 				n = 1
 			}
-			if n > 128 {
-				n = 128
+			if n > maxEnvScanWorkers {
+				n = maxEnvScanWorkers
 			}
 			workers = n
 		}
@@ -392,12 +390,12 @@ func fastLowerExt(path string) string {
 	return strings.ToLower(path[lastDot:])
 }
 
-func ScanTopFiles(root string, topN int) (*HeavyStats, error) {
+func ScanTopFiles(root string, topN int, workers int) (*HeavyStats, error) {
 	root = filepath.Clean(root)
 	stats := &HeavyStats{Root: root}
 	top := NewTopFiles(topN)
 	var mu sync.Mutex
-	_, _, err := walkFilesConcurrent(root, 0, func(path string, size int64) {
+	_, _, err := walkFilesConcurrent(root, 0, workers, func(path string, size int64) {
 		mu.Lock()
 		stats.Total += size
 		top.Push(FileInfo{Path: path, Size: size})
@@ -410,12 +408,12 @@ func ScanTopFiles(root string, topN int) (*HeavyStats, error) {
 	return stats, nil
 }
 
-func ScanTopFilesLimited(root string, topN int, maxFiles int) (*HeavyStats, int, bool, error) {
+func ScanTopFilesLimited(root string, topN int, maxFiles int, workers int) (*HeavyStats, int, bool, error) {
 	root = filepath.Clean(root)
 	stats := &HeavyStats{Root: root}
 	top := NewTopFiles(topN)
 	var mu sync.Mutex
-	seen, limited, err := walkFilesConcurrent(root, maxFiles, func(path string, size int64) {
+	seen, limited, err := walkFilesConcurrent(root, maxFiles, workers, func(path string, size int64) {
 		mu.Lock()
 		stats.Total += size
 		top.Push(FileInfo{Path: path, Size: size})
@@ -428,7 +426,7 @@ func ScanTopFilesLimited(root string, topN int, maxFiles int) (*HeavyStats, int,
 	return stats, seen, limited, nil
 }
 
-func ScanTree(root string, topN int) (*TreeStats, error) {
+func ScanTree(root string, topN int, workers int) (*TreeStats, error) {
 	root = filepath.Clean(root)
 	stats := &TreeStats{Root: root, ByChild: map[string]int64{}}
 	top := NewTopFiles(topN)
@@ -437,7 +435,7 @@ func ScanTree(root string, topN int) (*TreeStats, error) {
 		rootPrefix += string(filepath.Separator)
 	}
 	var mu sync.Mutex
-	_, _, err := walkFilesConcurrent(root, 0, func(path string, size int64) {
+	_, _, err := walkFilesConcurrent(root, 0, workers, func(path string, size int64) {
 		mu.Lock()
 		stats.Total += size
 		rel := path
@@ -471,7 +469,7 @@ func ScanTree(root string, topN int) (*TreeStats, error) {
 	return stats, nil
 }
 
-func ScanTreeLimited(root string, topN int, maxFiles int) (*TreeStats, int, bool, error) {
+func ScanTreeLimited(root string, topN int, maxFiles int, workers int) (*TreeStats, int, bool, error) {
 	root = filepath.Clean(root)
 	stats := &TreeStats{Root: root, ByChild: map[string]int64{}}
 	top := NewTopFiles(topN)
@@ -480,7 +478,7 @@ func ScanTreeLimited(root string, topN int, maxFiles int) (*TreeStats, int, bool
 		rootPrefix += string(filepath.Separator)
 	}
 	var mu sync.Mutex
-	seen, limited, err := walkFilesConcurrent(root, maxFiles, func(path string, size int64) {
+	seen, limited, err := walkFilesConcurrent(root, maxFiles, workers, func(path string, size int64) {
 		mu.Lock()
 		stats.Total += size
 		rel := path
@@ -514,11 +512,11 @@ func ScanTreeLimited(root string, topN int, maxFiles int) (*TreeStats, int, bool
 	return stats, seen, limited, nil
 }
 
-func ScanExtStatsLimited(root string, maxFiles int) ([]ExtStatsItem, int, bool, error) {
+func ScanExtStatsLimited(root string, maxFiles int, workers int) ([]ExtStatsItem, int, bool, error) {
 	root = filepath.Clean(root)
 	byExt := map[string]ExtStatsItem{}
 	var mu sync.Mutex
-	seen, limited, err := walkFilesConcurrent(root, maxFiles, func(path string, size int64) {
+	seen, limited, err := walkFilesConcurrent(root, maxFiles, workers, func(path string, size int64) {
 		ext := fastLowerExt(path)
 		mu.Lock()
 		cur := byExt[ext]
@@ -544,7 +542,7 @@ func ScanExtStatsLimited(root string, maxFiles int) ([]ExtStatsItem, int, bool, 
 	return out, seen, limited, nil
 }
 
-func ScanOverviewLimited(root string, maxFiles int, topFilesN int, topExtN int) (*OverviewStats, error) {
+func ScanOverviewLimited(root string, maxFiles int, topFilesN int, topExtN int, workers int) (*OverviewStats, error) {
 	root = filepath.Clean(root)
 	stats := &OverviewStats{
 		Root:    root,
@@ -558,7 +556,7 @@ func ScanOverviewLimited(root string, maxFiles int, topFilesN int, topExtN int) 
 	}
 
 	var mu sync.Mutex
-	seen, limited, err := walkFilesConcurrent(root, maxFiles, func(path string, size int64) {
+	seen, limited, err := walkFilesConcurrent(root, maxFiles, workers, func(path string, size int64) {
 		ext := fastLowerExt(path)
 		rel := path
 		if strings.HasPrefix(path, rootPrefix) {

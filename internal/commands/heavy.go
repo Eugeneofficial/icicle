@@ -40,24 +40,34 @@ func runHeavy(args []string) int {
 		return 1
 	}
 
-	stats, err := scan.ScanTopFiles(root, *limit)
+	stats, err := scan.ScanTopFiles(root, *limit, 0)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "scan error: %v\n", err)
 		return 1
 	}
 
-	fmt.Printf("TOP FILES in %s\n", root)
+	fmt.Println()
+	fmt.Println(ui.Title("●", "HEAVY FILES"))
+	fmt.Println(ui.Info("scan", ui.Cyan(root)))
+	fmt.Println(ui.Line())
+
 	if len(stats.TopFiles) == 0 {
-		fmt.Println("No files found.")
+		fmt.Println(ui.Info("result", ui.Dim("no files found")))
+		fmt.Println()
 		return 0
 	}
-	for _, file := range stats.TopFiles {
+
+	for i, file := range stats.TopFiles {
 		rel, relErr := filepath.Rel(root, file.Path)
 		if relErr != nil {
 			rel = file.Path
 		}
 		tag := fileEmoji(file.Size, common.noEmoji)
-		fmt.Printf("%s %8s  %s\n", tag, ui.HumanBytes(file.Size), rel)
+		fmt.Println(ui.Row(i+1, ui.Size(file.Size, ui.HumanBytes(file.Size)), tag, rel))
 	}
+
+	fmt.Println(ui.Line())
+	fmt.Println(ui.Info("total", ui.HumanBytes(stats.Total)))
+	fmt.Println()
 	return 0
 }

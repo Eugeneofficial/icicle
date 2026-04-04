@@ -25,16 +25,8 @@ func runTree(args []string) int {
 		fmt.Fprintln(os.Stderr, "usage: icicle tree [--n 20] [--w 24] [--top 5] [--no-color] [--no-emoji] [path]")
 		return 2
 	}
-	if *limit < 0 {
-		fmt.Fprintln(os.Stderr, "flag error: --n must be >= 0")
-		return 2
-	}
-	if *width < 0 {
-		fmt.Fprintln(os.Stderr, "flag error: --w must be >= 0")
-		return 2
-	}
-	if *top < 0 {
-		fmt.Fprintln(os.Stderr, "flag error: --top must be >= 0")
+	if *limit < 0 || *width < 0 || *top < 0 {
+		fmt.Fprintln(os.Stderr, "flag error: values must be >= 0")
 		return 2
 	}
 	applyCommonFlags(common)
@@ -50,14 +42,19 @@ func runTree(args []string) int {
 		return 1
 	}
 
-	stats, err := scan.ScanTree(root, *top)
+	stats, err := scan.ScanTree(root, *top, 0)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "scan error: %v\n", err)
 		return 1
 	}
 
 	theme := ui.Theme{NoColor: common.noColor, NoEmoji: common.noEmoji}
-	fmt.Printf("%s  (total: %s)\n", root, ui.HumanBytes(stats.Total))
+
+	fmt.Println()
+	fmt.Println(ui.Title("●", "DISK TREE"))
+	fmt.Println(ui.Info("path", ui.Cyan(root)))
+	fmt.Println(ui.Info("total", ui.HumanBytes(stats.Total)))
+	fmt.Println(ui.Line())
 
 	shown := 0
 	childCount := len(stats.ChildNames)
@@ -73,12 +70,11 @@ func runTree(args []string) int {
 		if stats.Total > 0 {
 			ratio = float64(size) / float64(stats.Total)
 		}
-		prefix := "|-"
-		isLastChild := shown == childCount-1
-		if isLastChild && stats.RootFiles == 0 {
-			prefix = "`-"
+		branch := "├─"
+		if shown == childCount-1 && stats.RootFiles == 0 {
+			branch = "└─"
 		}
-		fmt.Printf("%s %s %-20s %8s  %s\n", prefix, "[DIR]", name, ui.HumanBytes(size), theme.Bar(ratio, *width))
+		fmt.Println(ui.Node(branch, "📁", name, ui.HumanBytes(size), theme.Bar(ratio, *width)))
 		shown++
 	}
 	if stats.RootFiles > 0 {
@@ -86,24 +82,19 @@ func runTree(args []string) int {
 		if stats.Total > 0 {
 			ratio = float64(stats.RootFiles) / float64(stats.Total)
 		}
-		fmt.Printf("`- [FILES] %-18s %8s  %s\n", "(root)", ui.HumanBytes(stats.RootFiles), theme.Bar(ratio, *width))
+		fmt.Println(ui.Node("└─", "📄", "(root)", ui.HumanBytes(stats.RootFiles), theme.Bar(ratio, *width)))
 	}
 
 	fmt.Println()
-	fmt.Println("TOP FILES:")
-	for _, file := range stats.TopFiles {
+	for i, file := range stats.TopFiles {
 		rel, relErr := filepath.Rel(root, file.Path)
 		if relErr != nil {
 			rel = file.Path
 		}
 		tag := fileEmoji(file.Size, common.noEmoji)
-		fmt.Printf("%s %8s  %s\n", tag, ui.HumanBytes(file.Size), rel)
+		fmt.Println(ui.Row(i+1, ui.Size(file.Size, ui.HumanBytes(file.Size)), tag, rel))
 	}
 
-	// Tiny easter egg for huge folders.
-	if stats.Total >= 500*1024*1024*1024 {
-		fmt.Println("\nice alert: this path is glacier-class heavy")
-	}
-
+	fmt.Println()
 	return 0
 }

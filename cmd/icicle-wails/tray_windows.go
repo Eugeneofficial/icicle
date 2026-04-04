@@ -24,9 +24,12 @@ func startTray(openWindow func()) *trayBridge {
 			if len(trayIcon) > 0 {
 				systray.SetIcon(trayIcon)
 			}
-			systray.SetTooltip("icicle")
+			systray.SetTooltip("icicle — storage manager")
 			systray.SetTitle("icicle")
 			openItem := systray.AddMenuItem("Open icicle", "Show window")
+			systray.AddSeparator()
+			statusItem := systray.AddMenuItem("Status: running", "")
+			statusItem.Disable()
 			systray.AddSeparator()
 			exitItem := systray.AddMenuItem("Exit", "Quit app")
 			go func() {

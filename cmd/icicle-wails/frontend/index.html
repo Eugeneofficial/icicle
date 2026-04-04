@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="./app.css">
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
   <div id="loader"><div><div class="spin"></div><div class="loadText" id="loaderText">Scanning...</div></div></div>
 
   <div class="app">
@@ -37,28 +38,17 @@
     <div class="appBody">
       <aside class="rail">
         <div class="railTitle">Views</div>
-        <button class="railBtn active" data-view="dashboard" title="Dashboard"><span>&#x1F5A5;</span><span>Dashboard</span></button>
-        <button class="railBtn" data-view="analyze" title="Analyze"><span>&#x1F4CA;</span><span>Analyze</span></button>
-        <button class="railBtn" data-view="ops" title="Automation"><span>&#9881;</span><span>Automation</span></button>
+        <button class="railBtn active" data-view="dashboard" title="Dashboard"><span>&#x1F5A5;</span><span>Dashboard</span><span class="kbd">Ctrl+1</span></button>
+        <button class="railBtn" data-view="analyze" title="Analyze"><span>&#x1F4CA;</span><span>Analyze</span><span class="kbd">Ctrl+2</span></button>
+        <button class="railBtn" data-view="ops" title="Automation"><span>&#9881;</span><span>Automation</span><span class="kbd">Ctrl+3</span></button>
         <div class="railTitle">Quick Open</div>
         <button class="railBtn" id="railDownloads"><span>&#x2B07;</span><span>Downloads</span></button>
         <button class="railBtn" id="railDesktop"><span>&#x1F5C1;</span><span>Desktop</span></button>
         <button class="railBtn" id="railDocuments"><span>&#x1F4C4;</span><span>Documents</span></button>
         <div class="railMini" id="railHint">Ready</div>
-        <div class="subpanel">
-          <div class="subpanelHeader">
-            <h4>Workflow</h4>
-            <p>Fastest path through the app.</p>
-          </div>
-          <div class="signalList">
-            <div class="signalRow"><b>1</b><span>Pick a path, then open `Analyze` for treemap and heavy-file triage.</span></div>
-            <div class="signalRow"><b>2</b><span>Promote repeated actions into presets and schedules in `Automation`.</span></div>
-            <div class="signalRow"><b>3</b><span>Use `Dashboard` to spot drive pressure before it becomes cleanup debt.</span></div>
-          </div>
-        </div>
       </aside>
 
-      <main class="workspace">
+      <main class="workspace" id="main-content">
         <section id="viewDashboard" class="view active">
           <section class="panel heroPanel">
             <div class="heroTop">
@@ -275,6 +265,50 @@
   </div>
 
   <div class="overlay" id="paletteOverlay"><div class="palette"><input id="paletteInput" placeholder="Type command..."><div class="paletteList" id="paletteList"></div></div></div>
+  <div class="overlay" id="onboardingOverlay">
+    <div class="onboarding">
+      <button class="onboardingClose" id="onboardingClose">&times;</button>
+      <div class="onboardingHeader">
+        <div class="onboardingLogo">
+          <div class="brandMark">I</div>
+          <div>
+            <div class="onboardingTitle">Welcome to icicle</div>
+            <div class="onboardingSubtitle">Storage orchestration cockpit</div>
+          </div>
+        </div>
+      </div>
+      <div class="onboardingSteps">
+        <div class="onboardingStep active" data-step="0">
+          <div class="stepNum">1</div>
+          <div class="stepContent">
+            <h4>Dashboard — See the big picture</h4>
+            <p>Track drive saturation, duplicates, and extension hotspots. Refresh drives to spot pressure before it becomes a problem.</p>
+          </div>
+        </div>
+        <div class="onboardingStep" data-step="1">
+          <div class="stepNum">2</div>
+          <div class="stepContent">
+            <h4>Analyze — Visual triage + action queue</h4>
+            <p>Enter a path, then use Tree, Heavy, or WizMap. Build a cleanup queue from the results — only execute what matters.</p>
+          </div>
+        </div>
+        <div class="onboardingStep" data-step="2">
+          <div class="stepNum">3</div>
+          <div class="stepContent">
+            <h4>Automation — Repeatable operations</h4>
+            <p>Set up watch rules, scheduled cleanups, and routing policies. Turn manual routines into automated workflows.</p>
+          </div>
+        </div>
+      </div>
+      <div class="onboardingFooter">
+        <label class="onboardingDontShow"><input type="checkbox" id="onboardingDontShowCheckbox"> Don't show again</label>
+        <div class="onboardingNav">
+          <button class="onboardingBtn secondary" id="onboardingPrev" style="display:none">Previous</button>
+          <button class="onboardingBtn primary" id="onboardingNext">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="toastWrap" id="toastWrap"></div>
 
 <script>
@@ -1321,6 +1355,7 @@ function paletteCommands(){
     {name:'Simulate Full Route',run:runRouteFullSimulation},
     {name:'Export Heavy CSV',run:()=>el('expCsvBtn').click()},
     {name:'Check Update',run:()=>el('updCheckBtn').click()},
+    {name:'Show Onboarding',run:showOnboarding},
   ];
 }
 function renderPaletteList(q){
@@ -1487,7 +1522,43 @@ document.addEventListener('keydown',async(e)=>{
   if(e.key==='Backspace'){ e.preventDefault(); if(s.wizStack.length>0){ const p=s.wizStack.pop(); await runWiz(p,false);} return; }
 });
 
-(async()=>{try{const d=await getDefaultsCached(true); el('path').value=d.downloads||d.home||''; el('pathQuick').value=el('path').value; el('verPill').textContent=d.version||'-'; loadClientState(); el('heavySearch').value=localStorage.getItem('icicle.heavySearch')||''; el('heavyMinSize').value=localStorage.getItem('icicle.heavyMinSize')||''; el('heavySort').value=localStorage.getItem('icicle.heavySort')||'size-desc'; await loadSaved(); await loadDrives(true); await listSnapshots(false); applyLang(); updateHeavyAuto(); const v=localStorage.getItem('icicle.view')||'analyze'; setView(v); pollLog(); setTimeout(()=>runWiz(),250);}catch(e){showErr(e)}})();
+// ── Onboarding ──────────────────────────────────
+let onboardStep=0;
+function showOnboarding(){
+  if(localStorage.getItem('icicle.onboardDismissed')==='1') return;
+  onboardStep=0;
+  el('onboardingOverlay').classList.add('show');
+  renderOnboardStep();
+}
+function hideOnboarding(){
+  el('onboardingOverlay').classList.remove('show');
+  if(el('onboardingDontShowCheckbox').checked){
+    localStorage.setItem('icicle.onboardDismissed','1');
+  }
+}
+function renderOnboardStep(){
+  document.querySelectorAll('.onboardingStep').forEach((el,i)=>{
+    el.classList.toggle('active',i===onboardStep);
+  });
+  el('onboardingPrev').style.display=onboardStep>0?'':'none';
+  const isLast=onboardStep>=2;
+  el('onboardingNext').textContent=isLast?(s.lang==='ru'?'Готово':'Get started'):(s.lang==='ru'?'Далее':'Next');
+}
+function onboardNext(){
+  if(onboardStep>=2){ hideOnboarding(); return; }
+  onboardStep++;
+  renderOnboardStep();
+}
+function onboardPrev(){
+  if(onboardStep>0){ onboardStep--; renderOnboardStep(); }
+}
+
+el('onboardingClose').onclick=hideOnboarding;
+el('onboardingNext').onclick=onboardNext;
+el('onboardingPrev').onclick=onboardPrev;
+el('onboardingDontShowCheckbox').addEventListener('change',()=>{}); // state read on close
+
+(async()=>{try{const d=await getDefaultsCached(true); el('path').value=d.downloads||d.home||''; el('pathQuick').value=el('path').value; el('verPill').textContent=d.version||'-'; loadClientState(); el('heavySearch').value=localStorage.getItem('icicle.heavySearch')||''; el('heavyMinSize').value=localStorage.getItem('icicle.heavyMinSize')||''; el('heavySort').value=localStorage.getItem('icicle.heavySort')||'size-desc'; await loadSaved(); await loadDrives(true); await listSnapshots(false); applyLang(); updateHeavyAuto(); const v=localStorage.getItem('icicle.view')||'analyze'; setView(v); pollLog(); setTimeout(()=>runWiz(),250); setTimeout(()=>showOnboarding(),600);}catch(e){showErr(e)}})();
 window.addEventListener('resize',()=>{ if(s.wiz) renderWiz(s.wiz); });
 </script>
 </body>

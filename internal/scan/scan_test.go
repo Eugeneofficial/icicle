@@ -13,7 +13,7 @@ func TestScanTree(t *testing.T) {
 	mustWriteSized(t, filepath.Join(root, "Downloads", "c.zip"), 20)
 	mustWriteSized(t, filepath.Join(root, "note.txt"), 5)
 
-	stats, err := ScanTree(root, 2)
+	stats, err := ScanTree(root, 2, 0)
 	if err != nil {
 		t.Fatalf("ScanTree error: %v", err)
 	}
@@ -93,7 +93,7 @@ func TestScanTopFilesLimitedRespectsMaxFiles(t *testing.T) {
 		}
 	}
 
-	stats, seen, limited, err := ScanTopFilesLimited(root, 10, 5)
+	stats, seen, limited, err := ScanTopFilesLimited(root, 10, 5, 0)
 	if err != nil {
 		t.Fatalf("ScanTopFilesLimited error: %v", err)
 	}
