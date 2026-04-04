@@ -1,129 +1,233 @@
 <svg width="1440" height="720" viewBox="0 0 1440 720" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="80" y1="40" x2="1320" y2="680" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#06101A"/>
-      <stop offset="0.52" stop-color="#0B1824"/>
-      <stop offset="1" stop-color="#13283B"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="1440" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0a0a0a"/>
+      <stop offset="0.5" stop-color="#111111"/>
+      <stop offset="1" stop-color="#161616"/>
     </linearGradient>
-    <radialGradient id="glowA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(248 96) rotate(34.2) scale(512 320)">
-      <stop stop-color="#47C8FF" stop-opacity="0.42"/>
-      <stop offset="1" stop-color="#47C8FF" stop-opacity="0"/>
+    <radialGradient id="glowA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(300 100) rotate(30) scale(600 400)">
+      <stop stop-color="#FF6900" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#FF6900" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="glowB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1180 136) rotate(142) scale(388 244)">
-      <stop stop-color="#2C7BFF" stop-opacity="0.24"/>
-      <stop offset="1" stop-color="#2C7BFF" stop-opacity="0"/>
+    <radialGradient id="glowB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1150 620) rotate(-30) scale(500 350)">
+      <stop stop-color="#FF6900" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#FF6900" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#122131"/>
-      <stop offset="1" stop-color="#0D1824"/>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#1a1a1a"/>
+      <stop offset="1" stop-color="#141414"/>
     </linearGradient>
-    <linearGradient id="panelSoft" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#172A3D"/>
-      <stop offset="1" stop-color="#102030"/>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#FF6900"/>
+      <stop offset="1" stop-color="#e55d00"/>
     </linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#85E0FF"/>
-      <stop offset="0.55" stop-color="#35A8ED"/>
-      <stop offset="1" stop-color="#1566C8"/>
+    <linearGradient id="accentDim" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#FF6900" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#FF6900" stop-opacity="0.06"/>
     </linearGradient>
-    <linearGradient id="accentSoft" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#234664"/>
-      <stop offset="1" stop-color="#18324A"/>
-    </linearGradient>
-    <filter id="shadow" x="-40" y="-40" width="1520" height="800" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
-      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-      <feOffset dy="24"/>
-      <feGaussianBlur stdDeviation="26"/>
-      <feColorMatrix type="matrix" values="0 0 0 0 0.00784314 0 0 0 0 0.0627451 0 0 0 0 0.113725 0 0 0 0.42 0"/>
-      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_hero"/>
-      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_hero" result="shape"/>
+    <filter id="shadow" x="-20" y="-20" width="1480" height="760" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="8" stdDeviation="24" flood-color="#000" flood-opacity="0.5"/>
     </filter>
+    <filter id="glow" x="-10" y="-10" width="200" height="40" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feFlood flood-color="#FF6900" flood-opacity="0.4"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="mainClip">
+      <rect x="40" y="36" width="1360" height="648" rx="24"/>
+    </clipPath>
   </defs>
 
+  <!-- Background -->
   <rect width="1440" height="720" fill="url(#bg)"/>
   <rect width="1440" height="720" fill="url(#glowA)"/>
   <rect width="1440" height="720" fill="url(#glowB)"/>
 
+  <!-- Main window -->
   <g filter="url(#shadow)">
-    <rect x="54" y="46" width="1332" height="628" rx="30" fill="#0A131D" fill-opacity="0.72" stroke="#203547"/>
+    <rect x="40" y="36" width="1360" height="648" rx="24" fill="#111" stroke="#2a2a2a" stroke-width="1.5"/>
 
-    <rect x="90" y="82" width="1260" height="86" rx="24" fill="url(#panelSoft)" stroke="#26465F"/>
-    <rect x="118" y="104" width="54" height="44" rx="14" fill="url(#accent)"/>
-    <text x="134" y="134" fill="#06131C" font-family="Segoe UI, Arial" font-size="28" font-weight="700">I</text>
-    <text x="198" y="124" fill="#EDF7FF" font-family="Segoe UI, Arial" font-size="40" font-weight="700">icicle</text>
-    <text x="198" y="147" fill="#8FB5D3" font-family="Segoe UI, Arial" font-size="14" letter-spacing="2">STORAGE ORCHESTRATION COCKPIT</text>
+    <!-- Header bar -->
+    <rect x="40" y="36" width="1360" height="52" rx="24" fill="#141414"/>
+    <rect x="40" y="64" width="1360" height="24" fill="#141414"/>
 
-    <rect x="476" y="105" width="136" height="34" rx="17" fill="#12273A" stroke="#274865"/>
-    <text x="502" y="127" fill="#A7C7E4" font-family="Segoe UI, Arial" font-size="13" letter-spacing="1">MODE: TURBO</text>
-    <rect x="624" y="105" width="198" height="34" rx="17" fill="#12273A" stroke="#274865"/>
-    <text x="648" y="127" fill="#A7C7E4" font-family="Segoe UI, Arial" font-size="13" letter-spacing="1">PATH: D:\ARCHIVE</text>
-    <rect x="834" y="105" width="128" height="34" rx="17" fill="#12273A" stroke="#274865"/>
-    <text x="860" y="127" fill="#A7C7E4" font-family="Segoe UI, Arial" font-size="13" letter-spacing="1">FILES: 182K</text>
+    <!-- Logo -->
+    <rect x="62" y="46" width="32" height="32" rx="8" fill="url(#accent)"/>
+    <text x="78" y="68" text-anchor="middle" fill="#000" font-family="Segoe UI, system-ui, sans-serif" font-size="16" font-weight="800">I</text>
+    <text x="104" y="68" fill="#FF6900" font-family="Segoe UI, system-ui, sans-serif" font-size="20" font-weight="800" letter-spacing="-0.5">icicle</text>
+    <rect x="176" y="50" width="56" height="22" rx="6" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="204" y="65" text-anchor="middle" fill="#666" font-family="Segoe UI, system-ui, sans-serif" font-size="10" letter-spacing="0.5">v5.0.0</text>
 
-    <rect x="1100" y="103" width="102" height="40" rx="18" fill="url(#accent)" />
-    <text x="1125" y="129" fill="#FFFFFF" font-family="Segoe UI, Arial" font-size="16" font-weight="700">Scan</text>
-    <rect x="1214" y="103" width="110" height="40" rx="18" fill="#142639" stroke="#2B4B66"/>
-    <text x="1243" y="129" fill="#DCEBFA" font-family="Segoe UI, Arial" font-size="16" font-weight="700">Palette</text>
+    <!-- Chips -->
+    <rect x="260" y="48" width="72" height="24" rx="6" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="296" y="64" text-anchor="middle" fill="#666" font-family="Segoe UI, system-ui, sans-serif" font-size="10" font-weight="500">balanced</text>
+    <rect x="338" y="48" width="80" height="24" rx="6" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="378" y="64" text-anchor="middle" fill="#666" font-family="Segoe UI, system-ui, sans-serif" font-size="10" font-weight="500">-</text>
+    <rect x="424" y="48" width="72" height="24" rx="6" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="460" y="64" text-anchor="middle" fill="#666" font-family="Segoe UI, system-ui, sans-serif" font-size="10" font-weight="500">0 files</text>
+    <rect x="502" y="48" width="64" height="24" rx="6" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="534" y="64" text-anchor="middle" fill="#666" font-family="Segoe UI, system-ui, sans-serif" font-size="10" font-weight="500">ready</text>
 
-    <rect x="90" y="188" width="226" height="448" rx="28" fill="url(#panel)" stroke="#23425A"/>
-    <text x="120" y="228" fill="#6EAED5" font-family="Segoe UI, Arial" font-size="13" letter-spacing="2">VIEWS</text>
-    <rect x="114" y="246" width="178" height="52" rx="18" fill="url(#accent)"/>
-    <text x="146" y="279" fill="#FFFFFF" font-family="Segoe UI, Arial" font-size="18" font-weight="700">Dashboard</text>
-    <rect x="114" y="308" width="178" height="52" rx="18" fill="#13273A" stroke="#264862"/>
-    <text x="146" y="341" fill="#D2E5F8" font-family="Segoe UI, Arial" font-size="18" font-weight="700">Analyze</text>
-    <rect x="114" y="370" width="178" height="52" rx="18" fill="#13273A" stroke="#264862"/>
-    <text x="146" y="403" fill="#D2E5F8" font-family="Segoe UI, Arial" font-size="18" font-weight="700">Automation</text>
+    <!-- Action buttons -->
+    <rect x="1140" y="44" width="52" height="28" rx="7" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="1166" y="63" text-anchor="middle" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="12">⚡ Scan</text>
+    <rect x="1198" y="44" width="36" height="28" rx="7" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="1216" y="63" text-anchor="middle" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="12">Auto</text>
+    <rect x="1240" y="44" width="40" height="28" rx="7" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="1260" y="63" text-anchor="middle" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="12">⌘K</text>
+    <rect x="1286" y="44" width="32" height="28" rx="7" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="1302" y="63" text-anchor="middle" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="14">☾</text>
+    <rect x="1324" y="44" width="40" height="28" rx="7" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="1344" y="63" text-anchor="middle" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="12">EN</text>
 
-    <text x="120" y="468" fill="#6EAED5" font-family="Segoe UI, Arial" font-size="13" letter-spacing="2">WORKFLOW</text>
-    <rect x="114" y="486" width="178" height="126" rx="20" fill="#112131" stroke="#23425A"/>
-    <text x="132" y="519" fill="#A7C7E4" font-family="Segoe UI, Arial" font-size="14">1  Scan for pressure points</text>
-    <text x="132" y="548" fill="#A7C7E4" font-family="Segoe UI, Arial" font-size="14">2  Queue targeted actions</text>
-    <text x="132" y="577" fill="#A7C7E4" font-family="Segoe UI, Arial" font-size="14">3  Promote into schedules</text>
+    <!-- Sidebar -->
+    <rect x="40" y="88" width="200" height="596" fill="#141414" stroke-right="#2a2a2a"/>
+    <line x1="240" y1="88" x2="240" y2="684" stroke="#2a2a2a" stroke-width="1"/>
 
-    <rect x="344" y="188" width="714" height="176" rx="28" fill="url(#panel)" stroke="#24445D"/>
-    <text x="386" y="240" fill="#72B7E1" font-family="Segoe UI, Arial" font-size="13" letter-spacing="2">RELEASE 5.0</text>
-    <text x="386" y="286" fill="#F0F8FF" font-family="Segoe UI, Arial" font-size="42" font-weight="700">Desktop redesign for</text>
-    <text x="386" y="332" fill="#F0F8FF" font-family="Segoe UI, Arial" font-size="42" font-weight="700">storage operations.</text>
-    <text x="386" y="360" fill="#9CBAD4" font-family="Segoe UI, Arial" font-size="20">WizMap, queue-based cleanup, automation control, and</text>
-    <text x="386" y="388" fill="#9CBAD4" font-family="Segoe UI, Arial" font-size="20">safer watch mode in one unified cockpit.</text>
+    <!-- Sidebar: Views -->
+    <text x="62" y="114" fill="#FF6900" font-family="Segoe UI, system-ui, sans-serif" font-size="10" font-weight="700" letter-spacing="1.5">VIEWS</text>
 
-    <rect x="1084" y="188" width="266" height="176" rx="28" fill="url(#panelSoft)" stroke="#284964"/>
-    <text x="1112" y="232" fill="#71B5E0" font-family="Segoe UI, Arial" font-size="13" letter-spacing="2">HEALTH</text>
-    <rect x="1112" y="248" width="210" height="32" rx="12" fill="#12273A"/>
-    <text x="1130" y="269" fill="#DDF0FF" font-family="Segoe UI, Arial" font-size="14">Tree: 148 ms</text>
-    <rect x="1112" y="290" width="210" height="32" rx="12" fill="#12273A"/>
-    <text x="1130" y="311" fill="#DDF0FF" font-family="Segoe UI, Arial" font-size="14">Heavy: 264 ms</text>
-    <rect x="1112" y="332" width="210" height="32" rx="12" fill="#12273A"/>
-    <text x="1130" y="353" fill="#DDF0FF" font-family="Segoe UI, Arial" font-size="14">Watch: stable</text>
+    <!-- Dashboard (active) -->
+    <rect x="56" y="124" width="168" height="44" rx="10" fill="url(#accent)"/>
+    <text x="74" y="151" fill="#000" font-family="Segoe UI, system-ui, sans-serif" font-size="14" font-weight="700">🖥 Dashboard</text>
 
-    <rect x="344" y="386" width="508" height="250" rx="28" fill="url(#panel)" stroke="#24445D"/>
-    <text x="376" y="428" fill="#71B5E0" font-family="Segoe UI, Arial" font-size="13" letter-spacing="2">ANALYZE</text>
-    <rect x="376" y="448" width="444" height="36" rx="16" fill="#112334" stroke="#25455F"/>
-    <text x="396" y="471" fill="#A4C5E0" font-family="Consolas, monospace" font-size="15">D:\archive\projects\release-candidates</text>
+    <!-- Analyze -->
+    <rect x="56" y="174" width="168" height="44" rx="10" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="74" y="201" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="14" font-weight="600">📊 Analyze</text>
+    <rect x="184" y="182" width="32" height="20" rx="4" fill="#222" stroke="#333"/>
+    <text x="200" y="196" text-anchor="middle" fill="#666" font-family="monospace" font-size="9">Ctrl+2</text>
 
-    <rect x="376" y="502" width="290" height="100" rx="18" fill="#0A1420" stroke="#284964"/>
-    <rect x="388" y="514" width="172" height="44" fill="#316D8F"/>
-    <rect x="564" y="514" width="90" height="44" fill="#5E2E7D"/>
-    <rect x="388" y="562" width="116" height="28" fill="#2F7D94"/>
-    <rect x="508" y="562" width="146" height="28" fill="#3B4AC6"/>
+    <!-- Automation -->
+    <rect x="56" y="224" width="168" height="44" rx="10" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="74" y="251" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="14" font-weight="600">⚙ Automation</text>
+    <rect x="184" y="232" width="32" height="20" rx="4" fill="#222" stroke="#333"/>
+    <text x="200" y="246" text-anchor="middle" fill="#666" font-family="monospace" font-size="9">Ctrl+3</text>
 
-    <rect x="686" y="502" width="134" height="100" rx="18" fill="#122334" stroke="#26465E"/>
-    <rect x="702" y="520" width="94" height="10" rx="5" fill="#406789"/>
-    <rect x="702" y="542" width="80" height="10" rx="5" fill="#365977"/>
-    <rect x="702" y="564" width="88" height="10" rx="5" fill="#2B4A63"/>
-    <text x="704" y="594" fill="#D6E9FA" font-family="Segoe UI, Arial" font-size="13">WizMap + ext table</text>
+    <!-- Quick Open -->
+    <text x="62" y="310" fill="#FF6900" font-family="Segoe UI, system-ui, sans-serif" font-size="10" font-weight="700" letter-spacing="1.5">QUICK OPEN</text>
+    <rect x="56" y="320" width="168" height="36" rx="8" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="74" y="343" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="13">⬇ Downloads</text>
+    <rect x="56" y="362" width="168" height="36" rx="8" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="74" y="385" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="13">🗂 Desktop</text>
+    <rect x="56" y="404" width="168" height="36" rx="8" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="74" y="427" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="13">📄 Documents</text>
 
-    <rect x="876" y="386" width="474" height="250" rx="28" fill="url(#panel)" stroke="#24445D"/>
-    <text x="908" y="428" fill="#71B5E0" font-family="Segoe UI, Arial" font-size="13" letter-spacing="2">QUEUE</text>
-    <rect x="908" y="448" width="410" height="44" rx="18" fill="#112334" stroke="#25455F"/>
-    <text x="930" y="476" fill="#E9F5FF" font-family="Segoe UI, Arial" font-size="18" font-weight="700">Heavy-file action queue</text>
-    <text x="908" y="524" fill="#A3C1DB" font-family="Segoe UI, Arial" font-size="15">Filter  Select  Queue  Export  Execute</text>
+    <!-- Hint -->
+    <rect x="56" y="460" width="168" height="44" rx="8" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="66" y="478" fill="#666" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Ready</text>
+    <text x="66" y="494" fill="#555" font-family="Segoe UI, system-ui, sans-serif" font-size="10">Press Ctrl+K</text>
 
-    <rect x="908" y="548" width="410" height="16" rx="8" fill="#132739"/>
-    <rect x="908" y="548" width="258" height="16" rx="8" fill="url(#accent)"/>
-    <text x="908" y="596" fill="#E7F4FF" font-family="Segoe UI, Arial" font-size="18" font-weight="700">182K rows indexed   43 selected   9 queued</text>
-    <text x="908" y="622" fill="#9FBBD6" font-family="Segoe UI, Arial" font-size="15">Safer watch mode   Better limits</text>
-    <text x="908" y="646" fill="#9FBBD6" font-family="Segoe UI, Arial" font-size="15">Release-ready desktop shell</text>
+    <!-- MAIN CONTENT AREA - Dashboard view -->
+
+    <!-- Drive Board -->
+    <rect x="260" y="104" width="760" height="340" rx="14" fill="#141414" stroke="#2a2a2a"/>
+    <!-- Drive toolbar -->
+    <text x="280" y="128" fill="#666" font-family="Segoe UI, system-ui, sans-serif" font-size="10" font-weight="600" letter-spacing="1">SYSTEM STORAGE</text>
+    <rect x="600" y="114" width="60" height="24" rx="6" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="630" y="130" text-anchor="middle" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Refresh</text>
+    <rect x="666" y="114" width="70" height="24" rx="6" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="701" y="130" text-anchor="middle" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Extensions</text>
+    <rect x="742" y="114" width="60" height="24" rx="6" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="772" y="130" text-anchor="middle" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="11">WizMap</text>
+
+    <!-- Drive C: -->
+    <rect x="280" y="150" width="170" height="130" rx="10" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <rect x="280" y="150" width="170" height="2" rx="1" fill="#FF6900" opacity="0.6"/>
+    <text x="294" y="176" fill="#f0f0f0" font-family="Segoe UI, system-ui, sans-serif" font-size="16" font-weight="700">C:</text>
+    <text x="430" y="176" text-anchor="end" fill="#888" font-family="monospace" font-size="13">67%</text>
+    <text x="294" y="198" fill="#888" font-family="monospace" font-size="12">156 GB / 232 GB</text>
+    <rect x="294" y="210" width="142" height="5" rx="3" fill="#222"/>
+    <rect x="294" y="210" width="95" height="5" rx="3" fill="url(#accent)"/>
+    <rect x="294" y="246" width="76" height="26" rx="5" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="332" y="263" text-anchor="middle" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Tree</text>
+    <rect x="374" y="246" width="76" height="26" rx="5" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="412" y="263" text-anchor="middle" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Heavy</text>
+
+    <!-- Drive D: -->
+    <rect x="466" y="150" width="170" height="130" rx="10" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <rect x="466" y="150" width="170" height="2" rx="1" fill="#FF6900" opacity="0.6"/>
+    <text x="480" y="176" fill="#f0f0f0" font-family="Segoe UI, system-ui, sans-serif" font-size="16" font-weight="700">D:</text>
+    <text x="616" y="176" text-anchor="end" fill="#888" font-family="monospace" font-size="13">42%</text>
+    <text x="480" y="198" fill="#888" font-family="monospace" font-size="12">196 GB / 465 GB</text>
+    <rect x="480" y="210" width="142" height="5" rx="3" fill="#222"/>
+    <rect x="480" y="210" width="60" height="5" rx="3" fill="url(#accent)"/>
+    <rect x="480" y="246" width="76" height="26" rx="5" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="518" y="263" text-anchor="middle" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Tree</text>
+    <rect x="560" y="246" width="76" height="26" rx="5" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="598" y="263" text-anchor="middle" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Heavy</text>
+
+    <!-- Drive E: -->
+    <rect x="652" y="150" width="170" height="130" rx="10" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <rect x="652" y="150" width="170" height="2" rx="1" fill="#FF6900" opacity="0.6"/>
+    <text x="666" y="176" fill="#f0f0f0" font-family="Segoe UI, system-ui, sans-serif" font-size="16" font-weight="700">E:</text>
+    <text x="802" y="176" text-anchor="end" fill="#888" font-family="monospace" font-size="13">⭐ 89%</text>
+    <text x="666" y="198" fill="#888" font-family="monospace" font-size="12">838 GB / 931 GB</text>
+    <rect x="666" y="210" width="142" height="5" rx="3" fill="#222"/>
+    <rect x="666" y="210" width="126" height="5" rx="3" fill="url(#accent)"/>
+    <rect x="666" y="246" width="76" height="26" rx="5" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="704" y="263" text-anchor="middle" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Tree</text>
+    <rect x="746" y="246" width="76" height="26" rx="5" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="784" y="263" text-anchor="middle" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Heavy</text>
+
+    <!-- WizMap preview -->
+    <rect x="280" y="296" width="250" height="130" rx="10" fill="#141414" stroke="#2a2a2a"/>
+    <text x="294" y="318" fill="#666" font-family="Segoe UI, system-ui, sans-serif" font-size="9" letter-spacing="1">WIZMAP PREVIEW</text>
+    <!-- Treemap blocks -->
+    <rect x="294" y="328" width="120" height="50" rx="3" fill="#FF6900" opacity="0.15"/>
+    <rect x="418" y="328" width="98" height="50" rx="3" fill="#FF6900" opacity="0.08"/>
+    <rect x="294" y="382" width="70" height="36" rx="3" fill="#FF6900" opacity="0.12"/>
+    <rect x="368" y="382" width="80" height="36" rx="3" fill="#FF6900" opacity="0.20"/>
+    <rect x="452" y="382" width="64" height="36" rx="3" fill="#FF6900" opacity="0.06"/>
+
+    <!-- Duplicates panel -->
+    <rect x="546" y="296" width="230" height="130" rx="10" fill="#141414" stroke="#2a2a2a"/>
+    <text x="560" y="318" fill="#666" font-family="Segoe UI, system-ui, sans-serif" font-size="9" letter-spacing="1">DUPLICATES</text>
+    <text x="560" y="344" fill="#f0f0f0" font-family="monospace" font-size="14">1,247 groups</text>
+    <text x="560" y="366" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="12">34.2 GB reclaimable</text>
+    <rect x="560" y="384" width="90" height="26" rx="5" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="605" y="401" text-anchor="middle" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Quick name</text>
+    <rect x="654" y="384" width="100" height="26" rx="5" fill="#1a1a1a" stroke="#2a2a2a"/>
+    <text x="704" y="401" text-anchor="middle" fill="#888" font-family="Segoe UI, system-ui, sans-serif" font-size="11">SHA-1 hash</text>
+
+    <!-- Extensions panel -->
+    <rect x="792" y="296" width="212" height="130" rx="10" fill="#141414" stroke="#2a2a2a"/>
+    <text x="806" y="318" fill="#666" font-family="Segoe UI, system-ui, sans-serif" font-size="9" letter-spacing="1">TOP EXTENSIONS</text>
+    <rect x="806" y="330" width="182" height="18" rx="3" fill="#1a1a1a"/>
+    <rect x="806" y="330" width="140" height="18" rx="3" fill="#FF6900" opacity="0.25"/>
+    <text x="814" y="343" fill="#f0f0f0" font-family="monospace" font-size="10">.mp4  28.4 GB (34%)</text>
+    <rect x="806" y="352" width="182" height="18" rx="3" fill="#1a1a1a"/>
+    <rect x="806" y="352" width="100" height="18" rx="3" fill="#FF6900" opacity="0.18"/>
+    <text x="814" y="365" fill="#f0f0f0" font-family="monospace" font-size="10">.zip   18.1 GB (22%)</text>
+    <rect x="806" y="374" width="182" height="18" rx="3" fill="#1a1a1a"/>
+    <rect x="806" y="374" width="70" height="18" rx="3" fill="#FF6900" opacity="0.12"/>
+    <text x="814" y="387" fill="#f0f0f0" font-family="monospace" font-size="10">.iso   12.6 GB (15%)</text>
+    <rect x="806" y="396" width="182" height="18" rx="3" fill="#1a1a1a"/>
+    <rect x="806" y="396" width="44" height="18" rx="3" fill="#FF6900" opacity="0.08"/>
+    <text x="814" y="409" fill="#f0f0f0" font-family="monospace" font-size="10">.dll    7.2 GB  (9%)</text>
+
+    <!-- RIGHT STACK - Activity Log -->
+    <rect x="1040" y="104" width="340" height="560" rx="14" fill="#141414" stroke="#2a2a2a"/>
+    <text x="1060" y="128" fill="#FF6900" font-family="monospace" font-size="10" font-weight="600" letter-spacing="1">ACTIVITY LOG</text>
+    <rect x="1060" y="140" width="300" height="500" rx="6" fill="#0a0a0a" stroke="#222"/>
+    <text x="1070" y="160" fill="#555" font-family="Consolas, monospace" font-size="11">[12:44:01] &gt; heavy --n 20 D:\archive</text>
+    <text x="1070" y="180" fill="#555" font-family="Consolas, monospace" font-size="11">[12:44:02] 2.1 GB  release-v3.2.iso</text>
+    <text x="1070" y="200" fill="#555" font-family="Consolas, monospace" font-size="11">[12:44:02] 1.8 GB  backup-2024.tar.gz</text>
+    <text x="1070" y="220" fill="#555" font-family="Consolas, monospace" font-size="11">[12:44:02] 960 MB  node_modules.zip</text>
+    <text x="1070" y="240" fill="#555" font-family="Consolas, monospace" font-size="11">[12:44:02] 640 MB  old_vm.vmdk</text>
+    <text x="1070" y="260" fill="#555" font-family="Consolas, monospace" font-size="11">[12:44:02] 520 MB  dataset.parquet</text>
+    <text x="1070" y="280" fill="#444" font-family="Consolas, monospace" font-size="11">[12:44:03] queue: move 3 files → E:\archive</text>
+    <text x="1070" y="300" fill="#444" font-family="Consolas, monospace" font-size="11">[12:44:04] queue: delete 2 files (recycle)</text>
+    <text x="1070" y="320" fill="#444" font-family="Consolas, monospace" font-size="11">[12:44:05] done: seen=142847 ms=1847</text>
+    <text x="1070" y="340" fill="#555" font-family="Consolas, monospace" font-size="11">[12:45:10] &gt; tree E:\projects</text>
+    <text x="1070" y="360" fill="#555" font-family="Consolas, monospace" font-size="11">[12:45:11] E:\projects  (total: 48.2 GB)</text>
+    <text x="1070" y="380" fill="#555" font-family="Consolas, monospace" font-size="11">[12:45:11] |- [DIR] node_modules  28.1 GB</text>
+    <text x="1070" y="400" fill="#555" font-family="Consolas, monospace" font-size="11">[12:45:11] |- [DIR] dist          12.4 GB</text>
+    <text x="1070" y="420" fill="#555" font-family="Consolas, monospace" font-size="11">[12:45:11] `- [DIR] src            7.7 GB</text>
+    <text x="1070" y="440" fill="#444" font-family="Consolas, monospace" font-size="11">[12:45:12] ready</text>
+
+    <!-- Bottom status -->
+    <rect x="40" y="660" width="1360" height="24" rx="0" fill="#141414"/>
+    <text x="62" y="676" fill="#555" font-family="Segoe UI, system-ui, sans-serif" font-size="10">Tree: 184ms | Heavy: 2.1s | Wiz: 840ms | ready</text>
   </g>
 </svg>
