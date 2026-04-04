@@ -16,7 +16,7 @@ jobs:
       GOFLAGS: -trimpath -buildvcs=false
       CGO_ENABLED: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-go@v5
         with:
           go-version: '1.22.x'
@@ -54,7 +54,7 @@ jobs:
     env:
       GOFLAGS: -trimpath -buildvcs=false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-go@v5
         with:
           go-version: '1.22.x'
@@ -72,7 +72,7 @@ jobs:
       SIGN_PFX_PASSWORD: ${{ secrets.ICICLE_SIGN_PFX_PASSWORD }}
       SIGN_CERT_SHA1: ${{ secrets.ICICLE_SIGN_CERT_SHA1 }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-go@v5
         with:
           go-version: '1.22.x'
