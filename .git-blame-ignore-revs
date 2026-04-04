@@ -1,0 +1,14 @@
+# .git-blame-ignore-revs
+# Contains commits that should be ignored in git blame.
+# Useful for large formatting/refactoring commits.
+#
+# Usage: git blame --ignore-revs-file .git-blame-ignore-revs <file>
+# Or configure in gitconfig: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Initial commit formatting
+# refactor: code quality pass and UI improvements
+# refactor: add section markers and architecture docs
+# refactor: extract handlers from app_windows.go (phase 2)
+# refactor: extract remaining handlers from app_windows.go (phase 2 complete)
+# docs: rewrite README into professional single-page format
+# redesign(ui): minimalist task-oriented interface

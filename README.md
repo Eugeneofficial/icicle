@@ -14,6 +14,8 @@
   <a href="go.mod"><img src="https://img.shields.io/badge/Go-1.22+-00ADD8?style=for-the-badge&logo=go" alt="Go Version"/></a>
   <a href="https://github.com/Eugeneofficial/icicle/releases"><img src="https://img.shields.io/github/v/release/Eugeneofficial/icicle?style=for-the-badge&logo=github&color=gray" alt="Latest Release"/></a>
   <a href="https://github.com/Eugeneofficial/icicle/actions/workflows/ci.yml"><img src="https://github.com/Eugeneofficial/icicle/actions/workflows/ci.yml/badge.svg?style=for-the-badge" alt="CI Status"/></a>
+  <a href="https://github.com/Eugeneofficial/icicle/actions/workflows/codeql.yml"><img src="https://github.com/Eugeneofficial/icicle/actions/workflows/codeql.yml/badge.svg?style=for-the-badge" alt="CodeQL"/></a>
+  <a href="https://github.com/Eugeneofficial/icicle/commits/main"><img src="https://img.shields.io/github/last-commit/Eugeneofficial/icicle?style=for-the-badge&logo=git&color=purple" alt="Last Commit"/></a>
 </p>
 
 ---

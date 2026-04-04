@@ -42,6 +42,11 @@ jobs:
         env:
           CGO_ENABLED: 1
         run: go test -race ./internal/scan ./internal/organize
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout=5m --issues-exit-code=0
 
   build-windows:
     runs-on: windows-latest

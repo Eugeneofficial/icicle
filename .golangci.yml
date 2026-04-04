@@ -1,0 +1,49 @@
+# golangci-lint configuration
+# https://golangci-lint.run/usage/configuration/
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gocyclo
+    - gofmt
+    - goimports
+    - misspell
+    - unconvert
+    - bodyclose
+    - noctx
+    - prealloc
+    - revive
+
+linters-settings:
+  gocyclo:
+    min-complexity: 20
+  misspell:
+    locale: US
+  revive:
+    rules:
+      - name: exported
+        disabled: true
+      - name: unused-parameter
+        disabled: true
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - gosec
+    - path: cmd/icicle-wails/
+      linters:
+        - gocyclo
+  max-same-issues: 50
+  max-issues-per-linter: 100
